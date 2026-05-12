@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  # Service chạy code Laravel
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cinedot_app
+    restart: always
+    volumes:
+      - .:/var/www/html
+    environment:
+      DB_HOST: db # Kết nối tới service db bên dưới
+    ports:
+      - "8080:8000"
+    depends_on:
+      - db
+
+  # Service Database
+  db:
+    image: postgres:15-alpine
+    container_name: cinedot_pgsql
+    restart: always
+    environment:
+      POSTGRES_DB: ${DB_DATABASE}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+volumes:
+  db_data:
