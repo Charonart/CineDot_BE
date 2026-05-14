@@ -9,11 +9,30 @@ use Illuminate\Http\Request;
 class MovieController extends Controller
 {
     /**
-     * Lấy danh sách tất cả các phim kèm theo thể loại
+     * Lấy danh sách tất cả các phim kèm theo thể loại (hỗ trợ lọc và tìm kiếm)
      */
-    public function index()
+    public function index(Request $request)
     {
-        $movies = Movie::with('genres')->get();
+        $query = Movie::with('genres');
+
+        // 1. Lọc theo trạng thái phim (now_showing, coming_soon, ended)
+        if ($request->has('status')) {
+            $query->where('status', $request->status);
+        }
+
+        // 2. Tìm kiếm theo tên phim
+        if ($request->has('search')) {
+            $query->where('title', 'like', '%' . $request->search . '%');
+        }
+
+        // 3. Lọc theo thể loại phim
+        if ($request->has('genre_id')) {
+            $query->whereHas('genres', function ($q) use ($request) {
+                $q->where('genres.id', $request->genre_id);
+            });
+        }
+
+        $movies = $query->get();
 
         return response()->json([
             'status' => 'success',
