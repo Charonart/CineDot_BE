@@ -11,13 +11,46 @@ class Movie extends Model
 
     protected $fillable = [
         'title',
-        'description',
+        'overview',
         'poster_url',
+        'backdrop_url',
         'trailer_url',
         'status',
-        'duration',
-        'release_date'
+        'runtime',
+        'release_date',
+        'rating',
+        'vote_count',
     ];
+
+    protected $casts = [
+        'rating'       => 'float',
+        'vote_count'   => 'integer',
+        'runtime'      => 'integer',
+        'release_date' => 'string',
+    ];
+
+    /**
+     * Trả về dữ liệu dạng camelCase cho FE
+     */
+    public function toArray()
+    {
+        $array = parent::toArray();
+
+        return [
+            'id'          => $array['id'],
+            'title'       => $array['title'],
+            'overview'    => $array['overview'],
+            'posterUrl'   => $array['poster_url'],
+            'backdropUrl' => $array['backdrop_url'],
+            'releaseDate' => $array['release_date'],
+            'rating'      => $array['rating'],
+            'voteCount'   => $array['vote_count'],
+            'runtime'     => $array['runtime'],
+            'genres'      => $this->relationLoaded('genres')
+                ? $this->genres->map(fn($g) => ['id' => $g->id, 'name' => $g->name])->values()
+                : [],
+        ];
+    }
 
     public function genres()
     {
