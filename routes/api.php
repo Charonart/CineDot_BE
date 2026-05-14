@@ -2,23 +2,20 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\MovieController;
 
 /*
 |--------------------------------------------------------------------------
 | API Routes
 |--------------------------------------------------------------------------
-|
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "api" middleware group. Make something great!
-|
 */
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-use App\Http\Controllers\Api\MovieController;
-
-Route::get('/movies', [MovieController::class, 'index']);
-Route::get('/movies/{id}', [MovieController::class, 'show']);
+// Movie routes
+Route::get('/movies/trending', [MovieController::class, 'trending']);  // GET /api/movies/trending
+Route::get('/movies/popular',  [MovieController::class, 'popular']);   // GET /api/movies/popular
+Route::get('/movies',          [MovieController::class, 'index']);     // GET /api/movies?search=&status=&genre_id=
+Route::get('/movies/{id}',     [MovieController::class, 'show']);      // GET /api/movies/{id}
