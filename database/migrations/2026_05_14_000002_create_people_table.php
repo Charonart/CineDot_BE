@@ -15,6 +15,7 @@ return new class extends Migration
         Schema::create('people', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->tinyInteger('gender')->nullable()->comment('1: Female, 2: Male, 0: Unknown');
             $table->string('profile_url')->nullable();
             $table->timestamps();
         });

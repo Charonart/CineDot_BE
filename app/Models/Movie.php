@@ -46,23 +46,10 @@ class Movie extends Model
             'rating'           => $array['rating'],
             'voteCount'        => $array['vote_count'],
             'runtime'          => $array['runtime'],
-            'runtimeFormatted' => $this->formatRuntime($array['runtime']),
             'genres'           => $this->relationLoaded('genres')
                 ? $this->genres->map(fn($g) => ['id' => $g->id, 'name' => $g->name])->values()
                 : [],
         ];
-    }
-
-    /**
-     * Chuyển số phút thành dạng "Xh Yphút"
-     * Ví dụ: 139 → "2h19phút", 120 → "2h0phút", 45 → "0h45phút"
-     */
-    private function formatRuntime(?int $minutes): ?string
-    {
-        if ($minutes === null || $minutes <= 0) return null;
-        $h = intdiv($minutes, 60);
-        $m = $minutes % 60;
-        return $h > 0 ? "{$h}h{$m}phút" : "{$m}phút";
     }
 
     public function genres()
