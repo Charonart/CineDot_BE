@@ -71,4 +71,10 @@ class Movie extends Model
         return $this->belongsToMany(Person::class, 'movie_crew', 'movie_id', 'person_id')
                     ->withPivot('job', 'department');
     }
+
+    /** Lịch chiếu của phim */
+    public function showtimes()
+    {
+        return $this->hasMany(Showtime::class);
+    }
 }
