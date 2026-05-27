@@ -40,7 +40,7 @@ class ShowtimeController extends Controller
         }
 
         if ($request->filled('format')) {
-            $query->where('format', $request->format);
+            $query->where('format', $request->input('format'));
         }
 
         if ($request->filled('city')) {
