@@ -9,29 +9,47 @@ class Cinema extends Model
 {
     use HasFactory;
 
+    protected $primaryKey = 'cinema_id';
+    public $timestamps = false;
+
+    const CREATED_AT = 'create_at';
+
     protected $fillable = [
-        'name',
-        'chain',
-        'city',
-        'address',
-        'slug',
-        'screen_count',
+        'cinema_name',
+        'cinema_address',
+        'province_id',
+        'phone',
+        'email',
+        'description',
+        'is_active',
     ];
 
-    /**
-     * Một rạp có nhiều lịch chiếu
-     */
-    public function showtimes()
+    protected $casts = [
+        'is_active' => 'boolean',
+    ];
+
+    public function province()
     {
-        return $this->hasMany(Showtime::class);
+        return $this->belongsTo(Province::class, 'province_id', 'province_id');
+    }
+
+    public function rooms()
+    {
+        return $this->hasMany(Room::class, 'cinema_id', 'cinema_id');
     }
 
     /**
-     * Các phim đang chiếu tại rạp này (qua showtimes)
+     * Các lịch chiếu tại rạp này (qua rooms)
      */
-    public function movies()
+    public function schedules()
     {
-        return $this->belongsToMany(Movie::class, 'showtimes')
-                    ->withPivot('show_date', 'start_time', 'end_time', 'screen', 'format', 'price', 'available_seats');
+        return $this->hasManyThrough(
+            Schedule::class,
+            Room::class,
+            'cinema_id',   // FK on rooms
+            'room_id',     // FK on schedules
+            'cinema_id',   // local key on cinemas
+            'room_id'      // local key on rooms
+        );
     }
 }

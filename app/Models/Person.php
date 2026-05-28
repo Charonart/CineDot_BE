@@ -9,19 +9,51 @@ class Person extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'profile_url'];
+    protected $table = 'persons';
+    protected $primaryKey = 'person_id';
+
+    protected $fillable = [
+        'tmdb_person_id',
+        'name',
+        'original_name',
+        'gender',
+        'profile_path',
+        'adult',
+        'popularity',
+        'known_for_department',
+        'biography',
+        'birthday',
+        'deathday',
+        'place_of_birth',
+        'imdb_id',
+        'homepage',
+    ];
+
+    protected $casts = [
+        'adult'      => 'boolean',
+        'popularity' => 'decimal:3',
+        'gender'     => 'integer',
+        'birthday'   => 'date',
+        'deathday'   => 'date',
+    ];
+
+    /** Tất cả credits (cast + crew) */
+    public function credits()
+    {
+        return $this->hasMany(Credit::class, 'person_id', 'person_id');
+    }
 
     /** Phim mà người này đóng (cast) */
-    public function castMovies()
+    public function castCredits()
     {
-        return $this->belongsToMany(Movie::class, 'movie_cast', 'person_id', 'movie_id')
-                    ->withPivot('character', 'order');
+        return $this->hasMany(Credit::class, 'person_id', 'person_id')
+                    ->where('credit_type', 'cast');
     }
 
     /** Phim mà người này làm crew */
-    public function crewMovies()
+    public function crewCredits()
     {
-        return $this->belongsToMany(Movie::class, 'movie_crew', 'person_id', 'movie_id')
-                    ->withPivot('job', 'department');
+        return $this->hasMany(Credit::class, 'person_id', 'person_id')
+                    ->where('credit_type', 'crew');
     }
 }

@@ -3,23 +3,21 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Showtime;
+use App\Models\Schedule;
 use App\Models\Movie;
-use App\Models\Cinema;
 use Illuminate\Http\Request;
 
 class ShowtimeController extends Controller
 {
     /**
      * GET /api/showtimes
-     * Xem lịch chiếu theo Ngày và/hoặc Cụm rạp.
+     * Xem lịch chiếu theo Ngày và/hoặc Rạp.
      *
      * Query params:
-     *   ?date=2025-06-01          → lọc theo ngày chiếu (bắt buộc hoặc mặc định hôm nay)
+     *   ?date=2025-06-01          → lọc theo ngày chiếu (mặc định hôm nay)
      *   ?cinema_id=1              → lọc theo rạp cụ thể
      *   ?movie_id=3               → lọc theo phim cụ thể
-     *   ?city=Hà+Nội              → lọc theo thành phố (qua cinema)
-     *   ?format=IMAX              → lọc theo định dạng chiếu
+     *   ?province=Hà Nội          → lọc theo tỉnh/thành
      *
      * Response group theo movie → cinemas → showtimes
      */
@@ -27,51 +25,46 @@ class ShowtimeController extends Controller
     {
         $date = $request->get('date', now()->toDateString());
 
-        $query = Showtime::with(['movie.genres', 'cinema'])
-            ->where('show_date', $date)
-            ->orderBy('start_time');
+        $query = Schedule::with(['movie.genres', 'room.cinema.province'])
+            ->where('schedule_date', $date)
+            ->orderBy('schedule_start');
 
         if ($request->filled('cinema_id')) {
-            $query->where('cinema_id', $request->cinema_id);
+            $query->whereHas('room', fn($q) => $q->where('cinema_id', $request->cinema_id));
         }
 
         if ($request->filled('movie_id')) {
             $query->where('movie_id', $request->movie_id);
         }
 
-        if ($request->filled('format')) {
-            $query->where('format', $request->input('format'));
+        if ($request->filled('province')) {
+            $query->whereHas('room.cinema.province', fn($q) => $q->where('province_name', $request->province));
         }
 
-        if ($request->filled('city')) {
-            $query->whereHas('cinema', fn($q) => $q->where('city', $request->city));
-        }
-
-        $showtimes = $query->get();
+        $schedules = $query->get();
 
         // Group: movie → cinemas → showtimes
-        $grouped = $showtimes->groupBy('movie_id')->map(function ($items) {
+        $grouped = $schedules->groupBy('movie_id')->map(function ($items) {
             $movie = $items->first()->movie;
 
-            $cinemaGroups = $items->groupBy('cinema_id')->map(function ($cinemaItems) {
-                $cinema = $cinemaItems->first()->cinema;
+            $cinemaGroups = $items->groupBy(fn($s) => $s->room->cinema_id)->map(function ($cinemaItems) {
+                $cinema = $cinemaItems->first()->room->cinema;
 
                 return [
                     'cinema' => [
-                        'id'      => $cinema->id,
-                        'name'    => $cinema->name,
-                        'chain'   => $cinema->chain,
-                        'city'    => $cinema->city,
-                        'address' => $cinema->address,
+                        'id'       => $cinema->cinema_id,
+                        'name'     => $cinema->cinema_name,
+                        'province' => $cinema->province?->province_name,
+                        'address'  => $cinema->cinema_address,
                     ],
                     'times' => $cinemaItems->map(fn($s) => [
-                        'id'             => $s->id,
-                        'startTime'      => $s->start_time,
-                        'endTime'        => $s->end_time,
-                        'screen'         => $s->screen,
-                        'format'         => $s->format,
-                        'price'          => $s->price,
-                        'availableSeats' => $s->available_seats,
+                        'id'             => $s->schedule_id,
+                        'startTime'      => $s->schedule_start,
+                        'endTime'        => $s->schedule_end,
+                        'screen'         => $s->room->room_name,
+                        'format'         => $s->room->room_type,
+                        'price'          => $s->base_price,
+                        'availableSeats' => $s->scheduleSeats()->where('status', 'available')->count(),
                     ])->values(),
                 ];
             })->values();
@@ -97,28 +90,35 @@ class ShowtimeController extends Controller
      */
     public function show($id)
     {
-        $showtime = Showtime::with(['movie.genres', 'cinema'])->find($id);
+        $schedule = Schedule::with(['movie.genres', 'room.cinema.province'])->find($id);
 
-        if (!$showtime) {
+        if (!$schedule) {
             return response()->json([
                 'success' => false,
                 'message' => 'Không tìm thấy suất chiếu',
             ], 404);
         }
 
+        $cinema = $schedule->room->cinema;
+
         return response()->json([
             'success' => true,
             'data'    => [
-                'id'             => $showtime->id,
-                'showDate'       => $showtime->show_date,
-                'startTime'      => $showtime->start_time,
-                'endTime'        => $showtime->end_time,
-                'screen'         => $showtime->screen,
-                'format'         => $showtime->format,
-                'price'          => $showtime->price,
-                'availableSeats' => $showtime->available_seats,
-                'movie'          => $showtime->movie,
-                'cinema'         => $showtime->cinema,
+                'id'             => $schedule->schedule_id,
+                'showDate'       => $schedule->schedule_date->format('Y-m-d'),
+                'startTime'      => $schedule->schedule_start,
+                'endTime'        => $schedule->schedule_end,
+                'screen'         => $schedule->room->room_name,
+                'format'         => $schedule->room->room_type,
+                'price'          => $schedule->base_price,
+                'availableSeats' => $schedule->scheduleSeats()->where('status', 'available')->count(),
+                'movie'          => $schedule->movie,
+                'cinema'         => [
+                    'id'       => $cinema->cinema_id,
+                    'name'     => $cinema->cinema_name,
+                    'province' => $cinema->province?->province_name,
+                    'address'  => $cinema->cinema_address,
+                ],
             ],
         ]);
     }
@@ -139,44 +139,43 @@ class ShowtimeController extends Controller
             ], 404);
         }
 
-        $query = Showtime::with('cinema')
+        $query = Schedule::with('room.cinema.province')
             ->where('movie_id', $movieId)
-            ->orderBy('show_date')
-            ->orderBy('start_time');
+            ->orderBy('schedule_date')
+            ->orderBy('schedule_start');
 
         if ($request->filled('date')) {
-            $query->where('show_date', $request->date);
+            $query->where('schedule_date', $request->date);
         } else {
             // Mặc định: từ hôm nay trở đi
-            $query->where('show_date', '>=', now()->toDateString());
+            $query->where('schedule_date', '>=', now()->toDateString());
         }
 
         if ($request->filled('cinema_id')) {
-            $query->where('cinema_id', $request->cinema_id);
+            $query->whereHas('room', fn($q) => $q->where('cinema_id', $request->cinema_id));
         }
 
-        $showtimes = $query->get();
+        $schedules = $query->get();
 
         // Group theo ngày → rạp
-        $grouped = $showtimes->groupBy(fn($s) => $s->show_date->format('Y-m-d'))
+        $grouped = $schedules->groupBy(fn($s) => $s->schedule_date->format('Y-m-d'))
             ->map(function ($dateItems, $date) {
-                $cinemaGroups = $dateItems->groupBy('cinema_id')->map(function ($cinemaItems) {
-                    $cinema = $cinemaItems->first()->cinema;
+                $cinemaGroups = $dateItems->groupBy(fn($s) => $s->room->cinema_id)->map(function ($cinemaItems) {
+                    $cinema = $cinemaItems->first()->room->cinema;
 
                     return [
                         'cinema' => [
-                            'id'    => $cinema->id,
-                            'name'  => $cinema->name,
-                            'chain' => $cinema->chain,
-                            'city'  => $cinema->city,
+                            'id'       => $cinema->cinema_id,
+                            'name'     => $cinema->cinema_name,
+                            'province' => $cinema->province?->province_name,
                         ],
                         'times' => $cinemaItems->map(fn($s) => [
-                            'id'             => $s->id,
-                            'startTime'      => $s->start_time,
-                            'endTime'        => $s->end_time,
-                            'format'         => $s->format,
-                            'price'          => $s->price,
-                            'availableSeats' => $s->available_seats,
+                            'id'             => $s->schedule_id,
+                            'startTime'      => $s->schedule_start,
+                            'endTime'        => $s->schedule_end,
+                            'format'         => $s->room->room_type,
+                            'price'          => $s->base_price,
+                            'availableSeats' => $s->scheduleSeats()->where('status', 'available')->count(),
                         ])->values(),
                     ];
                 })->values();
@@ -190,7 +189,7 @@ class ShowtimeController extends Controller
         return response()->json([
             'success' => true,
             'data'    => [
-                'movie'   => ['id' => $movie->id, 'title' => $movie->title, 'posterUrl' => $movie->poster_url],
+                'movie'   => ['id' => $movie->id, 'title' => $movie->title, 'posterUrl' => $movie->poster_path],
                 'results' => $grouped,
             ],
         ]);
