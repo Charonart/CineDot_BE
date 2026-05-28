@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Movie;
+use App\Models\Credit;
 
 class CreditController extends Controller
 {
@@ -23,21 +24,32 @@ class CreditController extends Controller
             ], 404);
         }
 
-        $cast = $movie->cast()->get()->map(fn($p) => [
-            'id'         => $p->id,
-            'name'       => $p->name,
-            'character'  => $p->pivot->character,
-            'profileUrl' => $p->profile_url,
-            'order'      => $p->pivot->order,
-        ])->values();
+        // Cast
+        $cast = Credit::with('person')
+            ->where('movie_id', $id)
+            ->where('credit_type', 'cast')
+            ->orderBy('order')
+            ->get()
+            ->map(fn($c) => [
+                'id'         => $c->person->person_id,
+                'name'       => $c->person->name,
+                'character'  => $c->character_name,
+                'profileUrl' => $c->person->profile_path,
+                'order'      => $c->order,
+            ])->values();
 
-        $crew = $movie->crew()->get()->map(fn($p) => [
-            'id'         => $p->id,
-            'name'       => $p->name,
-            'job'        => $p->pivot->job,
-            'department' => $p->pivot->department,
-            'profileUrl' => $p->profile_url,
-        ])->values();
+        // Crew
+        $crew = Credit::with('person')
+            ->where('movie_id', $id)
+            ->where('credit_type', 'crew')
+            ->get()
+            ->map(fn($c) => [
+                'id'         => $c->person->person_id,
+                'name'       => $c->person->name,
+                'job'        => $c->job,
+                'department' => $c->department,
+                'profileUrl' => $c->person->profile_path,
+            ])->values();
 
         return response()->json([
             'success' => true,

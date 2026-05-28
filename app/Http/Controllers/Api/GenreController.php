@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Genre;
+use Illuminate\Support\Str;
 
 class GenreController extends Controller
 {
@@ -14,7 +15,11 @@ class GenreController extends Controller
      */
     public function index()
     {
-        $genres = Genre::orderBy('name')->get(['id', 'name', 'slug']);
+        $genres = Genre::orderBy('genre_name')->get()->map(fn($g) => [
+            'id'   => $g->genre_id,
+            'name' => $g->genre_name,
+            'slug' => $g->slug,
+        ]);
 
         return response()->json([
             'success' => true,
@@ -29,7 +34,10 @@ class GenreController extends Controller
     public function movies($id)
     {
         $genre = Genre::with(['movies' => function ($q) {
-            $q->with('genres')->orderByDesc('rating');
+            $q->with('genres')
+              ->withAvg('reviews', 'rating')
+              ->withCount('reviews')
+              ->orderByDesc('reviews_avg_rating');
         }])->find($id);
 
         if (!$genre) {
@@ -42,7 +50,7 @@ class GenreController extends Controller
         return response()->json([
             'success' => true,
             'data'    => [
-                'genre'        => ['id' => $genre->id, 'name' => $genre->name, 'slug' => $genre->slug],
+                'genre'        => ['id' => $genre->genre_id, 'name' => $genre->genre_name, 'slug' => $genre->slug],
                 'totalResults' => $genre->movies->count(),
                 'results'      => $genre->movies->values(),
             ],

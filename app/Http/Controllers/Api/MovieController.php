@@ -11,11 +11,12 @@ class MovieController extends Controller
     /**
      * GET /api/movies
      * Lấy danh sách phim với pagination, lọc theo status và search theo title.
-     * Response format khớp với movies-popular.json / movies-trending.json / movies-search.json từ FE.
      */
     public function index(Request $request)
     {
-        $query = Movie::with('genres');
+        $query = Movie::with('genres')
+            ->withAvg('reviews', 'rating')
+            ->withCount('reviews');
 
         // 1. Lọc theo trạng thái (now_showing, coming_soon, ended)
         if ($request->filled('status')) {
@@ -30,7 +31,7 @@ class MovieController extends Controller
         // 3. Lọc theo thể loại
         if ($request->filled('genre_id')) {
             $query->whereHas('genres', function ($q) use ($request) {
-                $q->where('genres.id', $request->genre_id);
+                $q->where('genres.genre_id', $request->genre_id);
             });
         }
 
@@ -52,11 +53,13 @@ class MovieController extends Controller
     /**
      * GET /api/movies/{id}
      * Lấy chi tiết một bộ phim theo ID.
-     * Response format khớp với movie-detail.json từ FE.
      */
     public function show($id)
     {
-        $movie = Movie::with('genres')->find($id);
+        $movie = Movie::with('genres')
+            ->withAvg('reviews', 'rating')
+            ->withCount('reviews')
+            ->find($id);
 
         if (!$movie) {
             return response()->json([
@@ -73,14 +76,15 @@ class MovieController extends Controller
 
     /**
      * GET /api/movies/trending
-     * Phim trending (sắp xếp theo rating giảm dần).
-     * Response format khớp với movies-trending.json từ FE.
+     * Phim trending (sắp xếp theo rating trung bình giảm dần).
      */
     public function trending(Request $request)
     {
         $perPage   = (int) $request->get('per_page', 20);
         $paginated = Movie::with('genres')
-            ->orderByDesc('rating')
+            ->withAvg('reviews', 'rating')
+            ->withCount('reviews')
+            ->orderByDesc('reviews_avg_rating')
             ->paginate($perPage);
 
         return response()->json([
@@ -96,14 +100,15 @@ class MovieController extends Controller
 
     /**
      * GET /api/movies/popular
-     * Phim phổ biến (sắp xếp theo vote_count giảm dần).
-     * Response format khớp với movies-popular.json từ FE.
+     * Phim phổ biến (sắp xếp theo số lượng review giảm dần).
      */
     public function popular(Request $request)
     {
         $perPage   = (int) $request->get('per_page', 20);
         $paginated = Movie::with('genres')
-            ->orderByDesc('vote_count')
+            ->withAvg('reviews', 'rating')
+            ->withCount('reviews')
+            ->orderByDesc('reviews_count')
             ->paginate($perPage);
 
         return response()->json([
@@ -120,7 +125,6 @@ class MovieController extends Controller
     /**
      * GET /api/movies/{id}/similar
      * Phim tương tự (cùng genre, trừ chính phim đó).
-     * Response format khớp với movie-similar.json từ FE.
      */
     public function similar(Request $request, $id)
     {
@@ -133,13 +137,15 @@ class MovieController extends Controller
             ], 404);
         }
 
-        $genreIds = $movie->genres->pluck('id');
+        $genreIds = $movie->genres->pluck('genre_id');
         $perPage  = (int) $request->get('per_page', 20);
 
         $paginated = Movie::with('genres')
+            ->withAvg('reviews', 'rating')
+            ->withCount('reviews')
             ->where('id', '!=', $id)
-            ->whereHas('genres', fn($q) => $q->whereIn('genres.id', $genreIds))
-            ->orderByDesc('rating')
+            ->whereHas('genres', fn($q) => $q->whereIn('genres.genre_id', $genreIds))
+            ->orderByDesc('reviews_avg_rating')
             ->paginate($perPage);
 
         return response()->json([

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class Movie extends Model
 {
@@ -11,22 +12,29 @@ class Movie extends Model
 
     protected $fillable = [
         'title',
+        'original_title',
         'overview',
-        'poster_url',
-        'backdrop_url',
-        'trailer_url',
-        'status',
-        'runtime',
         'release_date',
+        'original_language',
+        'adult',
+        'video',
+        'popularity',
+        'backdrop_path',
+        'poster_path',
+        'duration_minutes',
+        'status',
     ];
 
     protected $casts = [
-        'runtime'      => 'integer',
-        'release_date' => 'string',
+        'adult'            => 'boolean',
+        'video'            => 'boolean',
+        'popularity'       => 'decimal:3',
+        'duration_minutes' => 'integer',
+        'release_date'     => 'string',
     ];
 
     /**
-     * Trả về dữ liệu dạng camelCase cho FE
+     * Trả về dữ liệu dạng camelCase cho FE – giữ nguyên response format cũ
      */
     public function toArray()
     {
@@ -35,40 +43,62 @@ class Movie extends Model
         return [
             'id'               => $array['id'],
             'title'            => $array['title'],
-            'overview'         => $array['overview'],
-            'posterUrl'        => $array['poster_url'],
-            'backdropUrl'      => $array['backdrop_url'],
-            'releaseDate'      => $array['release_date'],
-            'runtime'          => $array['runtime'],
+            'overview'         => $array['overview'] ?? null,
+            'posterUrl'        => $array['poster_path'] ?? null,
+            'backdropUrl'      => $array['backdrop_path'] ?? null,
+            'releaseDate'      => $array['release_date'] ?? null,
+            'runtime'          => $array['duration_minutes'] ?? null,
+            'rating'           => isset($array['reviews_avg_rating'])
+                                    ? round((float) $array['reviews_avg_rating'], 1)
+                                    : null,
+            'voteCount'        => $array['reviews_count'] ?? 0,
             'genres'           => $this->relationLoaded('genres')
-                ? $this->genres->map(fn($g) => ['id' => $g->id, 'name' => $g->name])->values()
+                ? $this->genres->map(fn($g) => ['id' => $g->genre_id, 'name' => $g->genre_name])->values()
                 : [],
         ];
     }
 
     public function genres()
     {
-        return $this->belongsToMany(Genre::class, 'movie_genre');
+        return $this->belongsToMany(Genre::class, 'movie_genres', 'movie_id', 'genre_id');
     }
 
-    /** Danh sách diễn viên (cast) */
-    public function cast()
+    /** Credits (all) */
+    public function credits()
     {
-        return $this->belongsToMany(Person::class, 'movie_cast', 'movie_id', 'person_id')
-                    ->withPivot('character', 'order')
-                    ->orderBy('movie_cast.order');
+        return $this->hasMany(Credit::class, 'movie_id', 'id');
     }
 
-    /** Danh sách đoàn làm phim (crew) */
-    public function crew()
+    /** Danh sách diễn viên (cast) qua credits table */
+    public function castCredits()
     {
-        return $this->belongsToMany(Person::class, 'movie_crew', 'movie_id', 'person_id')
-                    ->withPivot('job', 'department');
+        return $this->hasMany(Credit::class, 'movie_id', 'id')
+                    ->where('credit_type', 'cast')
+                    ->orderBy('order');
     }
 
-    /** Lịch chiếu của phim */
-    public function showtimes()
+    /** Danh sách crew qua credits table */
+    public function crewCredits()
     {
-        return $this->hasMany(Showtime::class);
+        return $this->hasMany(Credit::class, 'movie_id', 'id')
+                    ->where('credit_type', 'crew');
+    }
+
+    /** Reviews */
+    public function reviews()
+    {
+        return $this->hasMany(Review::class, 'movie_id', 'id');
+    }
+
+    /** Videos */
+    public function videos()
+    {
+        return $this->hasMany(Video::class, 'movie_id', 'id');
+    }
+
+    /** Lịch chiếu */
+    public function schedules()
+    {
+        return $this->hasMany(Schedule::class, 'movie_id', 'id');
     }
 }

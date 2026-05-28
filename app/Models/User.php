@@ -12,11 +12,7 @@ class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
 
-    /**
-     * Custom timestamp column names.
-     */
-    const CREATED_AT = 'create_at';
-    const UPDATED_AT = 'update_at';
+    protected $primaryKey = 'user_id';
 
     /**
      * The attributes that are mass assignable.
@@ -31,8 +27,9 @@ class User extends Authenticatable
         'avatar',
         'birthday',
         'gender',
-        'city',
+        'province_id',
         'phone',
+        'point',
         'last_login',
     ];
 
@@ -54,7 +51,21 @@ class User extends Authenticatable
         'password'   => 'hashed',
         'birthday'   => 'date',
         'last_login' => 'datetime',
-        'create_at'  => 'datetime',
-        'update_at'  => 'datetime',
+        'point'      => 'integer',
     ];
+
+    public function province()
+    {
+        return $this->belongsTo(Province::class, 'province_id', 'province_id');
+    }
+
+    public function reviews()
+    {
+        return $this->hasMany(Review::class, 'user_id', 'user_id');
+    }
+
+    public function bookings()
+    {
+        return $this->hasMany(Booking::class, 'user_id', 'user_id');
+    }
 }

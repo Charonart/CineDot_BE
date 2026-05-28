@@ -10,24 +10,29 @@ class CinemaController extends Controller
 {
     /**
      * GET /api/cinemas
-     * Danh sách tất cả rạp, lọc theo city nếu có.
+     * Danh sách tất cả rạp, lọc theo province nếu có.
      * Query params:
-     *   ?city=Hà Nội   → lọc theo thành phố
-     *   ?chain=CGV     → lọc theo chuỗi rạp
+     *   ?province=Hà Nội   → lọc theo tỉnh/thành
      */
     public function index(Request $request)
     {
-        $query = Cinema::query();
+        $query = Cinema::with('province');
 
-        if ($request->filled('city')) {
-            $query->where('city', $request->city);
+        if ($request->filled('province')) {
+            $query->whereHas('province', function ($q) use ($request) {
+                $q->where('province_name', $request->province);
+            });
         }
 
-        if ($request->filled('chain')) {
-            $query->where('chain', $request->chain);
-        }
-
-        $cinemas = $query->orderBy('chain')->orderBy('name')->get();
+        $cinemas = $query->orderBy('cinema_name')->get()->map(fn($c) => [
+            'id'       => $c->cinema_id,
+            'name'     => $c->cinema_name,
+            'address'  => $c->cinema_address,
+            'province' => $c->province?->province_name,
+            'phone'    => $c->phone,
+            'email'    => $c->email,
+            'isActive' => $c->is_active,
+        ]);
 
         return response()->json([
             'success' => true,
@@ -41,7 +46,7 @@ class CinemaController extends Controller
      */
     public function show($id)
     {
-        $cinema = Cinema::find($id);
+        $cinema = Cinema::with(['province', 'rooms'])->find($id);
 
         if (!$cinema) {
             return response()->json([
@@ -52,7 +57,23 @@ class CinemaController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $cinema,
+            'data'    => [
+                'id'          => $cinema->cinema_id,
+                'name'        => $cinema->cinema_name,
+                'address'     => $cinema->cinema_address,
+                'province'    => $cinema->province?->province_name,
+                'phone'       => $cinema->phone,
+                'email'       => $cinema->email,
+                'description' => $cinema->description,
+                'isActive'    => $cinema->is_active,
+                'rooms'       => $cinema->rooms->map(fn($r) => [
+                    'id'         => $r->room_id,
+                    'name'       => $r->room_name,
+                    'type'       => $r->room_type,
+                    'totalSeats' => $r->total_seats,
+                    'isActive'   => $r->is_active,
+                ]),
+            ],
         ]);
     }
 }
