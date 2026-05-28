@@ -3,8 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Movie;
 use App\Models\Credit;
+use App\Models\Movie;
+use Illuminate\Support\Facades\Cache;
 
 class CreditController extends Controller
 {
@@ -15,22 +16,27 @@ class CreditController extends Controller
      */
     public function show($id)
     {
-        $movie = Movie::find($id);
+        // Kiểm tra phim tồn tại (cache lâu vì ít thay đổi)
+        $movieExists = Cache::remember("movie.exists.{$id}", now()->addHours(1), function () use ($id) {
+            return Movie::where('id', $id)->exists();
+        });
 
-        if (!$movie) {
+        if (!$movieExists) {
             return response()->json([
                 'success' => false,
                 'message' => 'Không tìm thấy phim',
             ], 404);
         }
 
-        // Cast
-        $cast = Credit::with('person')
-            ->where('movie_id', $id)
-            ->where('credit_type', 'cast')
-            ->orderBy('order')
-            ->get()
-            ->map(fn($c) => [
+        $data = Cache::remember("movie.credits.{$id}", now()->addHours(1), function () use ($id) {
+            // FIX: 1 query duy nhất thay vì 2 query riêng cho cast và crew
+            $credits = Credit::with('person')
+                ->where('movie_id', $id)
+                ->orderBy('credit_type') // cast < crew theo alphabet
+                ->orderBy('order')
+                ->get();
+
+            $cast = $credits->where('credit_type', 'cast')->map(fn($c) => [
                 'id'         => $c->person->person_id,
                 'name'       => $c->person->name,
                 'character'  => $c->character_name,
@@ -38,12 +44,7 @@ class CreditController extends Controller
                 'order'      => $c->order,
             ])->values();
 
-        // Crew
-        $crew = Credit::with('person')
-            ->where('movie_id', $id)
-            ->where('credit_type', 'crew')
-            ->get()
-            ->map(fn($c) => [
+            $crew = $credits->where('credit_type', 'crew')->map(fn($c) => [
                 'id'         => $c->person->person_id,
                 'name'       => $c->person->name,
                 'job'        => $c->job,
@@ -51,12 +52,12 @@ class CreditController extends Controller
                 'profileUrl' => $c->person->profile_path,
             ])->values();
 
+            return ['cast' => $cast, 'crew' => $crew];
+        });
+
         return response()->json([
             'success' => true,
-            'data'    => [
-                'cast' => $cast,
-                'crew' => $crew,
-            ],
+            'data'    => $data,
         ]);
     }
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Cinema;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class CinemaController extends Controller
 {
@@ -16,23 +17,27 @@ class CinemaController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Cinema::with('province');
+        $province = $request->get('province', 'all');
+        $cacheKey = "cinemas.list.province.{$province}";
 
-        if ($request->filled('province')) {
-            $query->whereHas('province', function ($q) use ($request) {
-                $q->where('province_name', $request->province);
-            });
-        }
+        // Cache lâu vì danh sách rạp ít thay đổi
+        $cinemas = Cache::remember($cacheKey, now()->addHours(1), function () use ($province) {
+            $query = Cinema::with('province');
 
-        $cinemas = $query->orderBy('cinema_name')->get()->map(fn($c) => [
-            'id'       => $c->cinema_id,
-            'name'     => $c->cinema_name,
-            'address'  => $c->cinema_address,
-            'province' => $c->province?->province_name,
-            'phone'    => $c->phone,
-            'email'    => $c->email,
-            'isActive' => $c->is_active,
-        ]);
+            if ($province !== 'all') {
+                $query->whereHas('province', fn($q) => $q->where('province_name', $province));
+            }
+
+            return $query->orderBy('cinema_name')->get()->map(fn($c) => [
+                'id'       => $c->cinema_id,
+                'name'     => $c->cinema_name,
+                'address'  => $c->cinema_address,
+                'province' => $c->province?->province_name,
+                'phone'    => $c->phone,
+                'email'    => $c->email,
+                'isActive' => $c->is_active,
+            ]);
+        });
 
         return response()->json([
             'success' => true,
@@ -46,18 +51,14 @@ class CinemaController extends Controller
      */
     public function show($id)
     {
-        $cinema = Cinema::with(['province', 'rooms'])->find($id);
+        $data = Cache::remember("cinema.{$id}", now()->addHours(1), function () use ($id) {
+            $cinema = Cinema::with(['province', 'rooms'])->find($id);
 
-        if (!$cinema) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Không tìm thấy rạp',
-            ], 404);
-        }
+            if (!$cinema) {
+                return null;
+            }
 
-        return response()->json([
-            'success' => true,
-            'data'    => [
+            return [
                 'id'          => $cinema->cinema_id,
                 'name'        => $cinema->cinema_name,
                 'address'     => $cinema->cinema_address,
@@ -73,7 +74,19 @@ class CinemaController extends Controller
                     'totalSeats' => $r->total_seats,
                     'isActive'   => $r->is_active,
                 ]),
-            ],
+            ];
+        });
+
+        if (!$data) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không tìm thấy rạp',
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data'    => $data,
         ]);
     }
 }

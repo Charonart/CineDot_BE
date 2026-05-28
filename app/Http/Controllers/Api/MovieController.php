@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Movie;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class MovieController extends Controller
 {
@@ -80,21 +81,28 @@ class MovieController extends Controller
      */
     public function trending(Request $request)
     {
-        $perPage   = (int) $request->get('per_page', 20);
-        $paginated = Movie::with('genres')
-            ->withAvg('reviews', 'rating')
-            ->withCount('reviews')
-            ->orderByDesc('reviews_avg_rating')
-            ->paginate($perPage);
+        $perPage  = (int) $request->get('per_page', 20);
+        $page     = (int) $request->get('page', 1);
+        $cacheKey = "movies.trending.page{$page}.perPage{$perPage}";
 
-        return response()->json([
-            'success' => true,
-            'data'    => [
+        $data = Cache::remember($cacheKey, now()->addMinutes(10), function () use ($perPage) {
+            $paginated = Movie::with('genres')
+                ->withAvg('reviews', 'rating')
+                ->withCount('reviews')
+                ->orderByDesc('reviews_avg_rating')
+                ->paginate($perPage);
+
+            return [
                 'page'         => $paginated->currentPage(),
                 'results'      => $paginated->items(),
                 'totalPages'   => $paginated->lastPage(),
                 'totalResults' => $paginated->total(),
-            ],
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data'    => $data,
         ]);
     }
 
@@ -104,21 +112,28 @@ class MovieController extends Controller
      */
     public function popular(Request $request)
     {
-        $perPage   = (int) $request->get('per_page', 20);
-        $paginated = Movie::with('genres')
-            ->withAvg('reviews', 'rating')
-            ->withCount('reviews')
-            ->orderByDesc('reviews_count')
-            ->paginate($perPage);
+        $perPage = (int) $request->get('per_page', 20);
+        $page    = (int) $request->get('page', 1);
+        $cacheKey = "movies.popular.page{$page}.perPage{$perPage}";
 
-        return response()->json([
-            'success' => true,
-            'data'    => [
+        $data = Cache::remember($cacheKey, now()->addMinutes(10), function () use ($perPage) {
+            $paginated = Movie::with('genres')
+                ->withAvg('reviews', 'rating')
+                ->withCount('reviews')
+                ->orderByDesc('reviews_count')
+                ->paginate($perPage);
+
+            return [
                 'page'         => $paginated->currentPage(),
                 'results'      => $paginated->items(),
                 'totalPages'   => $paginated->lastPage(),
                 'totalResults' => $paginated->total(),
-            ],
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data'    => $data,
         ]);
     }
 
