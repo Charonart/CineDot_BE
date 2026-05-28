@@ -18,13 +18,9 @@ class Movie extends Model
         'status',
         'runtime',
         'release_date',
-        'rating',
-        'vote_count',
     ];
 
     protected $casts = [
-        'rating'       => 'float',
-        'vote_count'   => 'integer',
         'runtime'      => 'integer',
         'release_date' => 'string',
     ];
@@ -43,8 +39,6 @@ class Movie extends Model
             'posterUrl'        => $array['poster_url'],
             'backdropUrl'      => $array['backdrop_url'],
             'releaseDate'      => $array['release_date'],
-            'rating'           => $array['rating'],
-            'voteCount'        => $array['vote_count'],
             'runtime'          => $array['runtime'],
             'genres'           => $this->relationLoaded('genres')
                 ? $this->genres->map(fn($g) => ['id' => $g->id, 'name' => $g->name])->values()

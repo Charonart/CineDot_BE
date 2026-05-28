@@ -24,9 +24,150 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // ============================================================
+        // USERS (10 user test)
+        // ============================================================
+        $users = [
+            [
+                'username' => 'admin',
+                'password' => Hash::make('password123'),
+                'email'    => 'admin@cinedot.vn',
+                'fullname' => 'Nguyễn Văn Admin',
+                'avatar'   => 'https://ui-avatars.com/api/?name=Admin&background=e11d48&color=fff',
+                'birthday' => '1990-01-15',
+                'gender'   => 'male',
+                'city'     => 'Hà Nội',
+                'phone'    => '0901234567',
+
+                'last_login' => now(),
+            ],
+            [
+                'username' => 'minh_tran',
+                'password' => Hash::make('password123'),
+                'email'    => 'minh.tran@gmail.com',
+                'fullname' => 'Trần Minh',
+                'avatar'   => 'https://ui-avatars.com/api/?name=Minh+Tran&background=7c3aed&color=fff',
+                'birthday' => '1995-03-22',
+                'gender'   => 'male',
+                'city'     => 'TP. Hồ Chí Minh',
+                'phone'    => '0912345678',
+
+                'last_login' => now()->subDays(1),
+            ],
+            [
+                'username' => 'linh_nguyen',
+                'password' => Hash::make('password123'),
+                'email'    => 'linh.nguyen@yahoo.com',
+                'fullname' => 'Nguyễn Thị Linh',
+                'avatar'   => 'https://ui-avatars.com/api/?name=Linh+Nguyen&background=0891b2&color=fff',
+                'birthday' => '1998-07-10',
+                'gender'   => 'female',
+                'city'     => 'Đà Nẵng',
+                'phone'    => '0923456789',
+
+                'last_login' => now()->subDays(2),
+            ],
+            [
+                'username' => 'hung_le',
+                'password' => Hash::make('password123'),
+                'email'    => 'hung.le@outlook.com',
+                'fullname' => 'Lê Hùng',
+                'avatar'   => 'https://ui-avatars.com/api/?name=Hung+Le&background=059669&color=fff',
+                'birthday' => '1993-11-05',
+                'gender'   => 'male',
+                'city'     => 'Cần Thơ',
+                'phone'    => '0934567890',
+                'last_login' => now()->subDays(3),
+            ],
+            [
+                'username' => 'thu_pham',
+                'password' => Hash::make('password123'),
+                'email'    => 'thu.pham@gmail.com',
+                'fullname' => 'Phạm Thị Thu',
+                'avatar'   => 'https://ui-avatars.com/api/?name=Thu+Pham&background=d97706&color=fff',
+                'birthday' => '2000-06-18',
+                'gender'   => 'female',
+                'city'     => 'Hải Phòng',
+                'phone'    => '0945678901',
+
+                'last_login' => now()->subDays(4),
+            ],
+            [
+                'username' => 'duc_hoang',
+                'password' => Hash::make('password123'),
+                'email'    => 'duc.hoang@gmail.com',
+                'fullname' => 'Hoàng Đức',
+                'avatar'   => 'https://ui-avatars.com/api/?name=Duc+Hoang&background=dc2626&color=fff',
+                'birthday' => '1997-02-28',
+                'gender'   => 'male',
+                'city'     => 'Huế',
+                'phone'    => '0956789012',
+
+                'last_login' => now()->subDays(5),
+            ],
+            [
+                'username' => 'mai_vo',
+                'password' => Hash::make('password123'),
+                'email'    => 'mai.vo@cinedot.vn',
+                'fullname' => 'Võ Thị Mai',
+                'avatar'   => 'https://ui-avatars.com/api/?name=Mai+Vo&background=be185d&color=fff',
+                'birthday' => '1996-09-14',
+                'gender'   => 'female',
+                'city'     => 'Biên Hoà',
+                'phone'    => '0967890123',
+               'last_login' => now()->subDays(10),
+            ],
+            [
+                'username' => 'tuan_bui',
+                'password' => Hash::make('password123'),
+                'email'    => 'tuan.bui@gmail.com',
+                'fullname' => 'Bùi Tuấn',
+                'avatar'   => 'https://ui-avatars.com/api/?name=Tuan+Bui&background=1d4ed8&color=fff',
+                'birthday' => '1992-04-30',
+                'gender'   => 'male',
+                'city'     => 'Vũng Tàu',
+                'phone'    => '0978901234',
+
+                'last_login' => now()->subHours(3),
+            ],
+            [
+                'username' => 'hoa_dang',
+                'password' => Hash::make('password123'),
+                'email'    => 'hoa.dang@gmail.com',
+                'fullname' => 'Đặng Thị Hoa',
+                'avatar'   => 'https://ui-avatars.com/api/?name=Hoa+Dang&background=7e22ce&color=fff',
+                'birthday' => '2001-12-25',
+                'gender'   => 'female',
+                'city'     => 'Nha Trang',
+                'phone'    => '0989012345',
+                'last_login' => now()->subDays(7),
+            ],
+            [
+                'username' => 'khoa_phan',
+                'password' => Hash::make('password123'),
+                'email'    => 'khoa.phan@gmail.com',
+                'fullname' => 'Phan Khoa',
+                'avatar'   => 'https://ui-avatars.com/api/?name=Khoa+Phan&background=0f766e&color=fff',
+                'birthday' => '1999-08-08',
+                'gender'   => 'male',
+                'city'     => 'Cần Thơ',
+                'phone'    => '0990123456',
+
+                'last_login' => now()->subDays(2),
+            ],
+        ];
+
+        foreach ($users as $userData) {
+            User::firstOrCreate(
+                ['email' => $userData['email']],
+                $userData
+            );
+        }
+
+        // ============================================================
         // GENRES
         // ============================================================
         $documentary = Genre::firstOrCreate(['slug' => 'documentary'], ['name' => 'Documentary']);
+
         $tech        = Genre::firstOrCreate(['slug' => 'tech'],        ['name' => 'Tech']);
         $action      = Genre::firstOrCreate(['slug' => 'action'],      ['name' => 'Action']);
         $crime       = Genre::firstOrCreate(['slug' => 'crime'],       ['name' => 'Crime']);
@@ -243,24 +384,6 @@ class DatabaseSeeder extends Seeder
             ['name' => 'Andrzej Sekula',   'profile_url'=> null,                                                                  'job' => 'Director of Photography', 'department' => 'Camera'],
         ]);
 
-        // ============================================================
-        // USERS (test accounts)
-        // ============================================================
-        User::create([
-            'name'     => 'Admin CineDot',
-            'email'    => 'admin@cinedot.com',
-            'password' => Hash::make('password'),
-        ]);
-        User::create([
-            'name'     => 'Editor CineDot',
-            'email'    => 'editor@cinedot.com',
-            'password' => Hash::make('password'),
-        ]);
-        User::create([
-            'name'     => 'Viewer Test',
-            'email'    => 'viewer@cinedot.com',
-            'password' => Hash::make('password'),
-        ]);
 
         // ============================================================
         // CINEMAS (5 rạp: HN + HCM)

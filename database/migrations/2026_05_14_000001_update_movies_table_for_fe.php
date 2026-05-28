@@ -22,8 +22,8 @@ return new class extends Migration
 
             // Thêm các cột mới từ FE
             $table->string('backdrop_url')->nullable()->after('poster_url');
-            $table->decimal('rating', 3, 1)->default(0)->after('release_date');
-            $table->integer('vote_count')->default(0)->after('rating');
+            // $table->decimal('rating', 3, 1)->default(0)->after('release_date');
+            // $table->integer('vote_count')->default(0)->after('rating');
         });
     }
 
