@@ -116,4 +116,40 @@ class MovieController extends Controller
             ],
         ]);
     }
+
+    /**
+     * GET /api/movies/{id}/similar
+     * Phim tương tự (cùng genre, trừ chính phim đó).
+     * Response format khớp với movie-similar.json từ FE.
+     */
+    public function similar(Request $request, $id)
+    {
+        $movie = Movie::with('genres')->find($id);
+
+        if (!$movie) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không tìm thấy phim',
+            ], 404);
+        }
+
+        $genreIds = $movie->genres->pluck('id');
+        $perPage  = (int) $request->get('per_page', 20);
+
+        $paginated = Movie::with('genres')
+            ->where('id', '!=', $id)
+            ->whereHas('genres', fn($q) => $q->whereIn('genres.id', $genreIds))
+            ->orderByDesc('rating')
+            ->paginate($perPage);
+
+        return response()->json([
+            'success' => true,
+            'data'    => [
+                'page'         => $paginated->currentPage(),
+                'results'      => $paginated->items(),
+                'totalPages'   => $paginated->lastPage(),
+                'totalResults' => $paginated->total(),
+            ],
+        ]);
+    }
 }
