@@ -2,6 +2,7 @@
 	"info": {
 		"_postman_id": "cinedot-api-collection-id-123",
 		"name": "CineDot API",
+		"description": "Complete collection of CineDot API endpoints after PG database rebuild.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -23,7 +24,8 @@
 								"movies",
 								"trending"
 							]
-						}
+						},
+						"description": "Get trending movies sorted by average rating in descending order."
 					},
 					"response": []
 				},
@@ -42,7 +44,8 @@
 								"movies",
 								"popular"
 							]
-						}
+						},
+						"description": "Get popular movies sorted by total review counts in descending order."
 					},
 					"response": []
 				},
@@ -52,7 +55,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/api/movies?search=&status=&genre_id=",
+							"raw": "{{base_url}}/api/movies?search=Predator&status=now_showing&genre_id=28&per_page=20",
 							"host": [
 								"{{base_url}}"
 							],
@@ -63,18 +66,27 @@
 							"query": [
 								{
 									"key": "search",
-									"value": ""
+									"value": "Predator",
+									"description": "Search by movie title"
 								},
 								{
 									"key": "status",
-									"value": ""
+									"value": "now_showing",
+									"description": "now_showing, coming_soon, or ended"
 								},
 								{
 									"key": "genre_id",
-									"value": ""
+									"value": "28",
+									"description": "Genre ID to filter by"
+								},
+								{
+									"key": "per_page",
+									"value": "20",
+									"description": "Pagination limits"
 								}
 							]
-						}
+						},
+						"description": "Search or filter movies dynamically."
 					},
 					"response": []
 				},
@@ -96,10 +108,12 @@
 							"variable": [
 								{
 									"key": "id",
-									"value": "1"
+									"value": "120",
+									"description": "Movie ID (e.g. 120 for LOTR, 155 for Dark Knight)"
 								}
 							]
-						}
+						},
+						"description": "Get detailed attributes of a movie, including dynamic rating averages and vote counts."
 					},
 					"response": []
 				},
@@ -122,10 +136,12 @@
 							"variable": [
 								{
 									"key": "id",
-									"value": "1"
+									"value": "1",
+									"description": "Movie ID"
 								}
 							]
-						}
+						},
+						"description": "Get cast and crew credits of a movie."
 					},
 					"response": []
 				},
@@ -148,10 +164,238 @@
 							"variable": [
 								{
 									"key": "id",
-									"value": "1"
+									"value": "120",
+									"description": "Movie ID"
 								}
 							]
-						}
+						},
+						"description": "Get similar movies within the same genres."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Movie Showtimes",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/movies/:id/showtimes?date=2026-05-28",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"movies",
+								":id",
+								"showtimes"
+							],
+							"query": [
+								{
+									"key": "date",
+									"value": "2026-05-28",
+									"description": "Filter by showing date (defaults to >= today)"
+								},
+								{
+									"key": "cinema_id",
+									"value": "",
+									"description": "Filter by cinema",
+									"disabled": true
+								}
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "120",
+									"description": "Movie ID"
+								}
+							]
+						},
+						"description": "Get all showtimes / schedules of a movie, grouped by date and cinema."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Genres",
+			"item": [
+				{
+					"name": "List All Genres",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/genres",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"genres"
+							]
+						},
+						"description": "Get all movie genres, including their dynamic slug paths."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Movies By Genre",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/genres/:id/movies",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"genres",
+								":id",
+								"movies"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "28",
+									"description": "Genre ID (e.g. 28 for Action)"
+								}
+							]
+						},
+						"description": "Get list of movies associated with a specific genre."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Cinemas",
+			"item": [
+				{
+					"name": "List Cinemas",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/cinemas?province=Hà Nội",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"cinemas"
+							],
+							"query": [
+								{
+									"key": "province",
+									"value": "Hà Nội",
+									"description": "Filter cinemas by province (e.g. Hà Nội, TP. Hồ Chí Minh, Đà Nẵng)"
+								}
+							]
+						},
+						"description": "List all cinemas, optionally filtered by province."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Cinema Detail",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/cinemas/:id",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"cinemas",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1",
+									"description": "Cinema ID"
+								}
+							]
+						},
+						"description": "Get details of a cinema including its room list."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Showtimes",
+			"item": [
+				{
+					"name": "List Showtimes",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/showtimes?date=2026-05-28&province=TP. Hồ Chí Minh",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"showtimes"
+							],
+							"query": [
+								{
+									"key": "date",
+									"value": "2026-05-28",
+									"description": "Showtime date (defaults to today)"
+								},
+								{
+									"key": "province",
+									"value": "TP. Hồ Chí Minh",
+									"description": "Filter by province"
+								},
+								{
+									"key": "cinema_id",
+									"value": "",
+									"description": "Filter by cinema ID",
+									"disabled": true
+								},
+								{
+									"key": "movie_id",
+									"value": "",
+									"description": "Filter by movie ID",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Get schedules grouped by movie and cinema for a specific date and province."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Showtime Detail",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/showtimes/:id",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"showtimes",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1",
+									"description": "Showtime/Schedule ID"
+								}
+							]
+						},
+						"description": "Get detailed seats and attributes of a specific showtime schedule."
 					},
 					"response": []
 				}
@@ -180,7 +424,8 @@
 								"api",
 								"user"
 							]
-						}
+						},
+						"description": "Retrieve current authenticated user data."
 					},
 					"response": []
 				}
