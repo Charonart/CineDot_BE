@@ -13,7 +13,7 @@ services:
     environment:
       DB_HOST: db # Kết nối tới service db bên dưới
     ports:
-      - "8080:8000"
+      - "8000:8000"
     depends_on:
       - db
 

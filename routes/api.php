@@ -7,6 +7,8 @@ use App\Http\Controllers\Api\CreditController;
 use App\Http\Controllers\Api\GenreController;
 use App\Http\Controllers\Api\CinemaController;
 use App\Http\Controllers\Api\ShowtimeController;
+use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\UserController;
 
 /*
 |--------------------------------------------------------------------------
@@ -14,29 +16,45 @@ use App\Http\Controllers\Api\ShowtimeController;
 |--------------------------------------------------------------------------
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
+// ── Auth & Users ──────────────────────────────────────────────────────────
+Route::prefix('auth')->group(function () {
+    Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
+});
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/users/profile', [UserController::class, 'profile']);
+    Route::put('/users/profile', [UserController::class, 'updateProfile']);
+
+    // ── Bookings ──────────────────────────────────────────────────────────────
+    Route::post('/bookings/hold-seats', [App\Http\Controllers\Api\BookingController::class, 'holdSeats']);
+    Route::get('/users/bookings',       [App\Http\Controllers\Api\BookingController::class, 'myBookings']);
+    Route::get('/bookings/{id}',        [App\Http\Controllers\Api\BookingController::class, 'show']);
+    
+    // ── Payments ──────────────────────────────────────────────────────────────
+    Route::post('/payments',            [App\Http\Controllers\Api\PaymentController::class, 'process']);
 });
 
 // ── Genres ────────────────────────────────────────────────────────────────
-Route::get('/genres',           [GenreController::class, 'index']);   // GET /api/genres
-Route::get('/genres/{id}/movies',[GenreController::class, 'movies']); // GET /api/genres/{id}/movies
+Route::get('/genres',           [GenreController::class, 'index']);
+Route::get('/genres/{id}/movies',[GenreController::class, 'movies']);
 
-// ── Movie list routes (phải đứng trước /{id}) ──────────────────────────────
-Route::get('/movies/trending',  [MovieController::class, 'trending']); // GET /api/movies/trending
-Route::get('/movies/popular',   [MovieController::class, 'popular']);  // GET /api/movies/popular
-Route::get('/movies',           [MovieController::class, 'index']);    // GET /api/movies?search=&status=&genre_id=
+// ── Movies ────────────────────────────────────────────────────────────────
+Route::get('/movies/trending',  [MovieController::class, 'trending']);
+Route::get('/movies/popular',   [MovieController::class, 'popular']);
+Route::get('/movies',           [MovieController::class, 'index']);
 
-// ── Movie detail & sub-resources ──────────────────────────────────────────
-Route::get('/movies/{id}',              [MovieController::class,  'show']);    // GET /api/movies/{id}
-Route::get('/movies/{id}/credits',      [CreditController::class, 'show']);    // GET /api/movies/{id}/credits
-Route::get('/movies/{id}/similar',      [MovieController::class,  'similar']); // GET /api/movies/{id}/similar
-Route::get('/movies/{id}/showtimes',    [ShowtimeController::class,'byMovie']); // GET /api/movies/{id}/showtimes?date=
+Route::get('/movies/{id}',              [MovieController::class, 'show']);
+Route::get('/movies/{id}/credits',      [CreditController::class, 'show']);
+Route::get('/movies/{id}/similar',      [MovieController::class, 'similar']);
+Route::get('/movies/{id}/showtimes',    [ShowtimeController::class, 'byMovie']);
 
 // ── Cinemas ───────────────────────────────────────────────────────────────
-Route::get('/cinemas',          [CinemaController::class, 'index']); // GET /api/cinemas?city=&chain=
-Route::get('/cinemas/{id}',     [CinemaController::class, 'show']);  // GET /api/cinemas/{id}
+Route::get('/cinemas',          [CinemaController::class, 'index']);
+Route::get('/cinemas/{id}',     [CinemaController::class, 'show']);
 
 // ── Showtimes ─────────────────────────────────────────────────────────────
-Route::get('/showtimes',        [ShowtimeController::class, 'index']); // GET /api/showtimes?date=&cinema_id=&movie_id=
-Route::get('/showtimes/{id}',   [ShowtimeController::class, 'show']);  // GET /api/showtimes/{id}
+Route::get('/showtimes',              [ShowtimeController::class, 'index']);
+Route::get('/showtimes/{id}',         [ShowtimeController::class, 'show']);
+Route::get('/showtimes/{id}/seats',   [ShowtimeController::class, 'seats']);
