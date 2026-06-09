@@ -34,7 +34,14 @@ Route::middleware('auth:sanctum')->group(function () {
     
     // ── Payments ──────────────────────────────────────────────────────────────
     Route::post('/payments',            [App\Http\Controllers\Api\PaymentController::class, 'process']);
+    
+    // ── Reviews ───────────────────────────────────────────────────────────────
+    Route::post('/movies/{id}/reviews', [App\Http\Controllers\Api\ReviewController::class, 'store']);
 });
+
+// ── Master Data ───────────────────────────────────────────────────────────
+Route::get('/provinces',        [App\Http\Controllers\Api\ProvinceController::class, 'index']);
+Route::get('/persons/{id}',     [App\Http\Controllers\Api\PersonController::class, 'show']);
 
 // ── Genres ────────────────────────────────────────────────────────────────
 Route::get('/genres',           [GenreController::class, 'index']);
@@ -49,10 +56,13 @@ Route::get('/movies/{id}',              [MovieController::class, 'show']);
 Route::get('/movies/{id}/credits',      [CreditController::class, 'show']);
 Route::get('/movies/{id}/similar',      [MovieController::class, 'similar']);
 Route::get('/movies/{id}/showtimes',    [ShowtimeController::class, 'byMovie']);
+Route::get('/movies/{id}/videos',       [MovieController::class, 'videos']);
+Route::get('/movies/{id}/reviews',      [App\Http\Controllers\Api\ReviewController::class, 'index']);
 
-// ── Cinemas ───────────────────────────────────────────────────────────────
+// ── Cinemas & Rooms ───────────────────────────────────────────────────────
 Route::get('/cinemas',          [CinemaController::class, 'index']);
 Route::get('/cinemas/{id}',     [CinemaController::class, 'show']);
+Route::get('/rooms/{id}/seats', [App\Http\Controllers\Api\RoomController::class, 'seats']);
 
 // ── Showtimes ─────────────────────────────────────────────────────────────
 Route::get('/showtimes',              [ShowtimeController::class, 'index']);

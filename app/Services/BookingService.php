@@ -6,6 +6,7 @@ use App\Models\Booking;
 use App\Models\BookingSeat;
 use App\Models\ScheduleSeat;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Redis;
 use Illuminate\Validation\ValidationException;
 
 class BookingService
@@ -13,10 +14,10 @@ class BookingService
     public function holdSeats(int $userId, int $scheduleId, array $scheduleSeatIds)
     {
         return DB::transaction(function () use ($userId, $scheduleId, $scheduleSeatIds) {
-            // Bước 1: Query các ghế đang chọn VÀ KHOÁ DÒNG (Pessimistic Locking)
+            // Khoá dòng dữ liệu để xử lý đồng thời an toàn
             $seats = ScheduleSeat::whereIn('schedule_seat_id', $scheduleSeatIds)
                 ->where('schedule_id', $scheduleId)
-                ->lockForUpdate() // Khoá dòng dữ liệu
+                ->lockForUpdate()
                 ->get();
 
             if ($seats->count() !== count($scheduleSeatIds)) {
@@ -26,26 +27,37 @@ class BookingService
             }
 
             $totalAmount = 0;
-            // Bước 2: Kiểm tra xem tất cả ghế có đang trống không
             foreach ($seats as $seat) {
-                if ($seat->status !== 'available') {
+                // Kiểm tra DB xem có bị bán chưa
+                if ($seat->status === 'booked') {
                     throw ValidationException::withMessages([
-                        'seats' => 'Một số ghế bạn chọn đã có người nhanh tay hơn đặt mất. Vui lòng chọn ghế khác.'
+                        'seats' => 'Một số ghế bạn chọn đã bị bán. Vui lòng chọn ghế khác.'
                     ]);
                 }
+                
+                // Kiểm tra Redis xem có đang bị ai đó giữ không
+                $redisKey = "hold:schedule:{$scheduleId}:seat:{$seat->schedule_seat_id}";
+                if (Redis::exists($redisKey)) {
+                    throw ValidationException::withMessages([
+                        'seats' => 'Một số ghế bạn chọn đang có người khác giữ. Vui lòng thử lại sau.'
+                    ]);
+                }
+                
                 $totalAmount += $seat->price;
             }
 
-            // Bước 3: Đổi trạng thái sang Đang Giữ (held) và tạo đơn hàng
             $booking = Booking::create([
                 'user_id'      => $userId,
                 'schedule_id'  => $scheduleId,
                 'total_amount' => $totalAmount,
                 'status'       => 'pending',
+                'booking_code' => 'CD' . time() . rand(100, 999),
             ]);
 
             foreach ($seats as $seat) {
-                $seat->update(['status' => 'held']);
+                // Đẩy trạng thái HELD lên Redis với TTL 10 phút (600 giây)
+                $redisKey = "hold:schedule:{$scheduleId}:seat:{$seat->schedule_seat_id}";
+                Redis::setex($redisKey, 600, $booking->booking_id);
 
                 BookingSeat::create([
                     'booking_id'       => $booking->booking_id,
@@ -69,9 +81,13 @@ class BookingService
 
             $booking->update(['status' => 'success']);
 
-            // Đổi trạng thái ghế sang Đã Bán (booked)
             $scheduleSeatIds = BookingSeat::where('booking_id', $booking->booking_id)->pluck('schedule_seat_id');
             ScheduleSeat::whereIn('schedule_seat_id', $scheduleSeatIds)->update(['status' => 'booked']);
+
+            // Xóa thủ công key trên Redis vì ghế đã bán thành công
+            foreach ($scheduleSeatIds as $seatId) {
+                Redis::del("hold:schedule:{$booking->schedule_id}:seat:{$seatId}");
+            }
 
             return $booking;
         });

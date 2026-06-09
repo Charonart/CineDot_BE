@@ -27,4 +27,12 @@ class Handler extends ExceptionHandler
             //
         });
     }
+
+    /**
+     * Tự động trả về JSON thay vì View nếu đường dẫn là /api/*
+     */
+    protected function shouldReturnJson($request, Throwable $e)
+    {
+        return $request->expectsJson() || $request->is('api/*');
+    }
 }

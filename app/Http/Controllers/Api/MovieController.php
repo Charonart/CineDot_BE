@@ -86,4 +86,14 @@ class MovieController extends Controller
             ],
         ]);
     }
+
+    public function videos($id)
+    {
+        $movie = \App\Models\Movie::findOrFail($id);
+
+        return response()->json([
+            'success' => true,
+            'data'    => \App\Http\Resources\VideoResource::collection($movie->videos),
+        ]);
+    }
 }
