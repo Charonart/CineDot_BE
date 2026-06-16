@@ -554,6 +554,7 @@ class DatabaseSeeder extends Seeder
         foreach ($moviesData as $md) {
             $genreSlugs = $md['genres'];
             unset($md['genres']);
+            $md['slug'] = Str::slug($md['title']);
             $movie = Movie::create($md);
             $movies[$movie->title] = $movie;
 

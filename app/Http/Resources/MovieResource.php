@@ -16,6 +16,7 @@ class MovieResource extends JsonResource
     {
         return [
             'id'          => $this->id,
+            'slug'        => $this->slug,
             'title'       => $this->title,
             'posterUrl'   => $this->poster_path,
             'backdropUrl' => $this->backdrop_path,

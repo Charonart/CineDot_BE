@@ -13,8 +13,13 @@ class MovieService
             ->withAvg('reviews', 'rating')
             ->withCount('reviews');
 
-        if (!empty($filters['status'])) {
-            $query->where('status', $filters['status']);
+        if (!empty($filters['category'])) {
+            $category = $filters['category'];
+            if ($category === 'now-showing') {
+                $query->where('status', 'now_showing');
+            } elseif ($category === 'coming-soon') {
+                $query->where('status', 'coming_soon');
+            }
         }
 
         if (!empty($filters['search'])) {
@@ -27,7 +32,7 @@ class MovieService
             });
         }
 
-        $perPage = $filters['per_page'] ?? 20;
+        $perPage = $filters['limit'] ?? ($filters['per_page'] ?? 20);
         return $query->paginate($perPage);
     }
 
@@ -47,6 +52,46 @@ class MovieService
             ->withCount('reviews')
             ->orderByDesc('reviews_count')
             ->paginate($perPage);
+    }
+
+    public function getNavbar()
+    {
+        $nowShowing = Movie::where('status', 'now_showing')
+            ->orderByDesc('popularity')
+            ->limit(5)
+            ->get();
+
+        $trending = Movie::withAvg('reviews', 'rating')
+            ->orderByDesc('reviews_avg_rating')
+            ->limit(5)
+            ->get();
+
+        return [
+            'now_showing' => $nowShowing,
+            'trending'    => $trending,
+        ];
+    }
+
+    public function search(string $keyword, int $perPage = 20)
+    {
+        return Movie::with('genres')
+            ->withAvg('reviews', 'rating')
+            ->withCount('reviews')
+            ->where(function ($q) use ($keyword) {
+                $q->where('title', 'ilike', '%' . $keyword . '%')
+                  ->orWhere('original_title', 'ilike', '%' . $keyword . '%');
+            })
+            ->orderByDesc('popularity')
+            ->paginate($perPage);
+    }
+
+    public function getDetailBySlug(string $slug)
+    {
+        return Movie::with('genres')
+            ->withAvg('reviews', 'rating')
+            ->withCount('reviews')
+            ->where('slug', $slug)
+            ->firstOrFail();
     }
 
     public function getDetail(int $id)

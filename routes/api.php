@@ -59,15 +59,17 @@ Route::prefix('v1')->group(function () {
     Route::get('/genres/{id}/movies',[GenreController::class, 'movies']);
 
     // ── Movies ────────────────────────────────────────────────────────────────
+    Route::get('/movies/navbar',    [MovieController::class, 'navbar']);
+    Route::get('/movies/search',    [MovieController::class, 'search']);
     Route::get('/movies/trending',  [MovieController::class, 'trending']);
     Route::get('/movies/popular',   [MovieController::class, 'popular']);
     Route::get('/movies',           [MovieController::class, 'index']);
 
-    Route::get('/movies/{id}',              [MovieController::class, 'show']);
+    Route::get('/movies/detail/{slug}',     [MovieController::class, 'showBySlug']);
     Route::get('/movies/{id}/credits',      [CreditController::class, 'show']);
     Route::get('/movies/{id}/similar',      [MovieController::class, 'similar']);
-    Route::get('/movies/{id}/showtimes',    [ShowtimeController::class, 'byMovie']);
     Route::get('/movies/{id}/videos',       [MovieController::class, 'videos']);
+    Route::get('/movies/{id}/reviews',      [ReviewController::class, 'index']);
     Route::get('/movies/{id}/reviews',      [App\Http\Controllers\Api\ReviewController::class, 'index']);
 
     // ── Cinemas & Rooms ───────────────────────────────────────────────────────

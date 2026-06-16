@@ -7,6 +7,7 @@ use App\Http\Requests\GetMoviesRequest;
 use App\Http\Resources\MovieResource;
 use App\Http\Resources\MovieDetailResource;
 use App\Services\MovieService;
+use Illuminate\Http\Request;
 
 class MovieController extends Controller
 {
@@ -29,9 +30,39 @@ class MovieController extends Controller
         ]);
     }
 
-    public function show($id)
+    public function navbar()
     {
-        $movie = $this->movieService->getDetail($id);
+        $data = $this->movieService->getNavbar();
+
+        return response()->json([
+            'success' => true,
+            'data'    => [
+                'now_showing' => MovieResource::collection($data['now_showing']),
+                'trending'    => MovieResource::collection($data['trending']),
+            ],
+        ]);
+    }
+
+    public function search(Request $request)
+    {
+        $keyword = $request->get('keyword', '');
+        $perPage = (int) $request->get('limit', 20);
+        $paginated = $this->movieService->search($keyword, $perPage);
+
+        return response()->json([
+            'success' => true,
+            'data'    => [
+                'page'         => $paginated->currentPage(),
+                'results'      => MovieResource::collection($paginated->items()),
+                'totalPages'   => $paginated->lastPage(),
+                'totalResults' => $paginated->total(),
+            ],
+        ]);
+    }
+
+    public function showBySlug($slug)
+    {
+        $movie = $this->movieService->getDetailBySlug($slug);
 
         return response()->json([
             'success' => true,

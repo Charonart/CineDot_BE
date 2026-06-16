@@ -11,6 +11,7 @@ return new class extends Migration
         Schema::create('movies', function (Blueprint $table) {
             $table->id();
             $table->string('title');
+            $table->string('slug')->unique()->index();
             $table->string('original_title')->nullable();
             $table->text('overview')->nullable();
             $table->date('release_date')->nullable();
