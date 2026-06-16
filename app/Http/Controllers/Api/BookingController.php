@@ -16,10 +16,13 @@ class BookingController extends Controller
 
     public function holdSeats(HoldSeatsRequest $request)
     {
+        $combos = $request->input('combos', []);
+        
         $booking = $this->bookingService->holdSeats(
             $request->user()->user_id,
             $request->schedule_id,
-            $request->schedule_seat_ids
+            $request->schedule_seat_ids,
+            $combos
         );
 
         return response()->json([
@@ -31,7 +34,7 @@ class BookingController extends Controller
 
     public function show($id, Request $request)
     {
-        $booking = Booking::with(['schedule.movie', 'bookingSeats.scheduleSeat.seat', 'schedule.room.cinema'])
+        $booking = Booking::with(['schedule.movie', 'bookingSeats.scheduleSeat.seat', 'schedule.room.cinema', 'bookingCombos.combo', 'voucher'])
             ->where('user_id', $request->user()->user_id)
             ->findOrFail($id);
 
@@ -43,7 +46,7 @@ class BookingController extends Controller
 
     public function myBookings(Request $request)
     {
-        $bookings = Booking::with(['schedule.movie', 'schedule.room.cinema'])
+        $bookings = Booking::with(['schedule.movie', 'schedule.room.cinema', 'bookingCombos.combo', 'voucher'])
             ->where('user_id', $request->user()->user_id)
             ->orderByDesc('created_at')
             ->get();

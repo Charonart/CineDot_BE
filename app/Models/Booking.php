@@ -11,14 +11,18 @@ class Booking extends Model
     protected $fillable = [
         'user_id',
         'schedule_id',
+        'voucher_id',
         'total_amount',
+        'discount_amount',
         'booking_status',
         'booking_code',
         'notes',
+        'status',
     ];
 
     protected $casts = [
         'total_amount' => 'integer',
+        'discount_amount' => 'integer',
     ];
 
     public function user()
@@ -34,6 +38,16 @@ class Booking extends Model
     public function bookingSeats()
     {
         return $this->hasMany(BookingSeat::class, 'booking_id', 'booking_id');
+    }
+
+    public function bookingCombos()
+    {
+        return $this->hasMany(BookingCombo::class, 'booking_id', 'booking_id');
+    }
+
+    public function voucher()
+    {
+        return $this->belongsTo(Voucher::class, 'voucher_id', 'voucher_id');
     }
 
     public function payment()

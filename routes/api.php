@@ -31,6 +31,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/bookings/hold-seats', [App\Http\Controllers\Api\BookingController::class, 'holdSeats']);
     Route::get('/users/bookings',       [App\Http\Controllers\Api\BookingController::class, 'myBookings']);
     Route::get('/bookings/{id}',        [App\Http\Controllers\Api\BookingController::class, 'show']);
+    Route::post('/bookings/{id}/apply-voucher', [App\Http\Controllers\Api\VoucherController::class, 'apply']);
+    Route::post('/bookings/{id}/remove-voucher', [App\Http\Controllers\Api\VoucherController::class, 'remove']);
     
     // ── Payments ──────────────────────────────────────────────────────────────
     Route::post('/payments',            [App\Http\Controllers\Api\PaymentController::class, 'process']);
@@ -42,6 +44,7 @@ Route::middleware('auth:sanctum')->group(function () {
 // ── Master Data ───────────────────────────────────────────────────────────
 Route::get('/provinces',        [App\Http\Controllers\Api\ProvinceController::class, 'index']);
 Route::get('/persons/{id}',     [App\Http\Controllers\Api\PersonController::class, 'show']);
+Route::get('/combos',           [App\Http\Controllers\Api\ComboController::class, 'index']);
 
 // ── Genres ────────────────────────────────────────────────────────────────
 Route::get('/genres',           [GenreController::class, 'index']);

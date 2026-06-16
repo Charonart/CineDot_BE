@@ -1,7 +1,7 @@
 {
 	"info": {
 		"_postman_id": "cinedot-api-collection-v2-id-456",
-		"name": "CineDot API (Phase 3 Complete)",
+		"name": "CineDot API (Phase 4 - F&B and Vouchers)",
 		"description": "Complete collection of CineDot API endpoints including Redis Booking, Reviews, Videos, and Provinces. All requests have Accept: application/json.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -14,17 +14,31 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{"key": "Accept", "value": "application/json", "type": "text"}
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
 						],
 						"body": {
 							"mode": "raw",
 							"raw": "{\n    \"email\": \"test@example.com\",\n    \"username\": \"testuser\",\n    \"password\": \"password123\",\n    \"password_confirmation\": \"password123\"\n}",
-							"options": {"raw": {"language": "json"}}
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
 						},
 						"url": {
 							"raw": "{{base_url}}/api/auth/register",
-							"host": ["{{base_url}}"],
-							"path": ["api", "auth", "register"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"register"
+							]
 						}
 					}
 				},
@@ -33,17 +47,31 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{"key": "Accept", "value": "application/json", "type": "text"}
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
 						],
 						"body": {
 							"mode": "raw",
 							"raw": "{\n    \"email\": \"test@example.com\",\n    \"password\": \"password123\"\n}",
-							"options": {"raw": {"language": "json"}}
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
 						},
 						"url": {
 							"raw": "{{base_url}}/api/auth/login",
-							"host": ["{{base_url}}"],
-							"path": ["api", "auth", "login"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"login"
+							]
 						}
 					}
 				},
@@ -52,13 +80,27 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{"key": "Accept", "value": "application/json", "type": "text"},
-							{"key": "Authorization", "value": "Bearer {{token}}", "type": "text"}
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
 						],
 						"url": {
 							"raw": "{{base_url}}/api/auth/logout",
-							"host": ["{{base_url}}"],
-							"path": ["api", "auth", "logout"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"logout"
+							]
 						}
 					}
 				},
@@ -67,13 +109,27 @@
 					"request": {
 						"method": "GET",
 						"header": [
-							{"key": "Accept", "value": "application/json", "type": "text"},
-							{"key": "Authorization", "value": "Bearer {{token}}", "type": "text"}
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
 						],
 						"url": {
 							"raw": "{{base_url}}/api/users/profile",
-							"host": ["{{base_url}}"],
-							"path": ["api", "users", "profile"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"users",
+								"profile"
+							]
 						}
 					}
 				},
@@ -82,18 +138,36 @@
 					"request": {
 						"method": "PUT",
 						"header": [
-							{"key": "Accept", "value": "application/json", "type": "text"},
-							{"key": "Authorization", "value": "Bearer {{token}}", "type": "text"}
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
 						],
 						"body": {
 							"mode": "raw",
 							"raw": "{\n    \"full_name\": \"John Doe\",\n    \"phone\": \"0123456789\",\n    \"date_of_birth\": \"1990-01-01\"\n}",
-							"options": {"raw": {"language": "json"}}
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
 						},
 						"url": {
 							"raw": "{{base_url}}/api/users/profile",
-							"host": ["{{base_url}}"],
-							"path": ["api", "users", "profile"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"users",
+								"profile"
+							]
 						}
 					}
 				}
@@ -107,12 +181,21 @@
 					"request": {
 						"method": "GET",
 						"header": [
-							{"key": "Accept", "value": "application/json", "type": "text"}
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
 						],
 						"url": {
 							"raw": "{{base_url}}/api/provinces",
-							"host": ["{{base_url}}"],
-							"path": ["api", "provinces"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"provinces"
+							]
 						}
 					}
 				},
@@ -121,12 +204,45 @@
 					"request": {
 						"method": "GET",
 						"header": [
-							{"key": "Accept", "value": "application/json", "type": "text"}
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
 						],
 						"url": {
 							"raw": "{{base_url}}/api/persons/1",
-							"host": ["{{base_url}}"],
-							"path": ["api", "persons", "1"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"persons",
+								"1"
+							]
+						}
+					}
+				},
+				{
+					"name": "List Combos",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/combos",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"combos"
+							]
 						}
 					}
 				}
@@ -140,14 +256,26 @@
 					"request": {
 						"method": "GET",
 						"header": [
-							{"key": "Accept", "value": "application/json", "type": "text"}
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
 						],
 						"url": {
 							"raw": "{{base_url}}/api/movies?status=now_showing",
-							"host": ["{{base_url}}"],
-							"path": ["api", "movies"],
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"movies"
+							],
 							"query": [
-								{"key": "status", "value": "now_showing"}
+								{
+									"key": "status",
+									"value": "now_showing"
+								}
 							]
 						}
 					}
@@ -157,12 +285,22 @@
 					"request": {
 						"method": "GET",
 						"header": [
-							{"key": "Accept", "value": "application/json", "type": "text"}
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
 						],
 						"url": {
 							"raw": "{{base_url}}/api/movies/1",
-							"host": ["{{base_url}}"],
-							"path": ["api", "movies", "1"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"movies",
+								"1"
+							]
 						}
 					}
 				},
@@ -171,12 +309,23 @@
 					"request": {
 						"method": "GET",
 						"header": [
-							{"key": "Accept", "value": "application/json", "type": "text"}
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
 						],
 						"url": {
 							"raw": "{{base_url}}/api/movies/1/videos",
-							"host": ["{{base_url}}"],
-							"path": ["api", "movies", "1", "videos"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"movies",
+								"1",
+								"videos"
+							]
 						}
 					}
 				},
@@ -185,12 +334,23 @@
 					"request": {
 						"method": "GET",
 						"header": [
-							{"key": "Accept", "value": "application/json", "type": "text"}
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
 						],
 						"url": {
 							"raw": "{{base_url}}/api/movies/1/reviews",
-							"host": ["{{base_url}}"],
-							"path": ["api", "movies", "1", "reviews"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"movies",
+								"1",
+								"reviews"
+							]
 						}
 					}
 				},
@@ -199,18 +359,37 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{"key": "Accept", "value": "application/json", "type": "text"},
-							{"key": "Authorization", "value": "Bearer {{token}}", "type": "text"}
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
 						],
 						"body": {
 							"mode": "raw",
 							"raw": "{\n    \"rating\": 9,\n    \"comment\": \"Phim quá hay!\"\n}",
-							"options": {"raw": {"language": "json"}}
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
 						},
 						"url": {
 							"raw": "{{base_url}}/api/movies/1/reviews",
-							"host": ["{{base_url}}"],
-							"path": ["api", "movies", "1", "reviews"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"movies",
+								"1",
+								"reviews"
+							]
 						}
 					}
 				}
@@ -224,12 +403,21 @@
 					"request": {
 						"method": "GET",
 						"header": [
-							{"key": "Accept", "value": "application/json", "type": "text"}
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
 						],
 						"url": {
 							"raw": "{{base_url}}/api/cinemas",
-							"host": ["{{base_url}}"],
-							"path": ["api", "cinemas"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"cinemas"
+							]
 						}
 					}
 				},
@@ -238,12 +426,23 @@
 					"request": {
 						"method": "GET",
 						"header": [
-							{"key": "Accept", "value": "application/json", "type": "text"}
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
 						],
 						"url": {
 							"raw": "{{base_url}}/api/rooms/1/seats",
-							"host": ["{{base_url}}"],
-							"path": ["api", "rooms", "1", "seats"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"rooms",
+								"1",
+								"seats"
+							]
 						}
 					}
 				},
@@ -252,14 +451,26 @@
 					"request": {
 						"method": "GET",
 						"header": [
-							{"key": "Accept", "value": "application/json", "type": "text"}
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
 						],
 						"url": {
 							"raw": "{{base_url}}/api/showtimes?date=2026-05-28",
-							"host": ["{{base_url}}"],
-							"path": ["api", "showtimes"],
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"showtimes"
+							],
 							"query": [
-								{"key": "date", "value": "2026-05-28"}
+								{
+									"key": "date",
+									"value": "2026-05-28"
+								}
 							]
 						}
 					}
@@ -269,12 +480,23 @@
 					"request": {
 						"method": "GET",
 						"header": [
-							{"key": "Accept", "value": "application/json", "type": "text"}
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
 						],
 						"url": {
 							"raw": "{{base_url}}/api/showtimes/1/seats",
-							"host": ["{{base_url}}"],
-							"path": ["api", "showtimes", "1", "seats"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"showtimes",
+								"1",
+								"seats"
+							]
 						}
 					}
 				}
@@ -288,18 +510,36 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{"key": "Accept", "value": "application/json", "type": "text"},
-							{"key": "Authorization", "value": "Bearer {{token}}", "type": "text"}
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"schedule_id\": 1,\n    \"schedule_seat_ids\": [1, 2, 3]\n}",
-							"options": {"raw": {"language": "json"}}
+							"raw": "{\n    \"schedule_id\": 1,\n    \"schedule_seat_ids\": [\n        1,\n        2,\n        3\n    ],\n    \"combos\": [\n        {\n            \"combo_id\": 1,\n            \"quantity\": 2\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
 						},
 						"url": {
 							"raw": "{{base_url}}/api/bookings/hold-seats",
-							"host": ["{{base_url}}"],
-							"path": ["api", "bookings", "hold-seats"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"bookings",
+								"hold-seats"
+							]
 						}
 					}
 				},
@@ -308,18 +548,35 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{"key": "Accept", "value": "application/json", "type": "text"},
-							{"key": "Authorization", "value": "Bearer {{token}}", "type": "text"}
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
 						],
 						"body": {
 							"mode": "raw",
 							"raw": "{\n    \"booking_id\": 1,\n    \"payment_method\": \"momo\"\n}",
-							"options": {"raw": {"language": "json"}}
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
 						},
 						"url": {
 							"raw": "{{base_url}}/api/payments",
-							"host": ["{{base_url}}"],
-							"path": ["api", "payments"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"payments"
+							]
 						}
 					}
 				},
@@ -328,13 +585,96 @@
 					"request": {
 						"method": "GET",
 						"header": [
-							{"key": "Accept", "value": "application/json", "type": "text"},
-							{"key": "Authorization", "value": "Bearer {{token}}", "type": "text"}
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
 						],
 						"url": {
 							"raw": "{{base_url}}/api/users/bookings",
-							"host": ["{{base_url}}"],
-							"path": ["api", "users", "bookings"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"users",
+								"bookings"
+							]
+						}
+					}
+				},
+				{
+					"name": "Apply Voucher",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"voucher_code\": \"WELCOME50\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/bookings/1/apply-voucher",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"bookings",
+								"1",
+								"apply-voucher"
+							]
+						}
+					}
+				},
+				{
+					"name": "Remove Voucher",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/bookings/1/remove-voucher",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"bookings",
+								"1",
+								"remove-voucher"
+							]
 						}
 					}
 				}

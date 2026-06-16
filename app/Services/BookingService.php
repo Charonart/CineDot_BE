@@ -11,9 +11,9 @@ use Illuminate\Validation\ValidationException;
 
 class BookingService
 {
-    public function holdSeats(int $userId, int $scheduleId, array $scheduleSeatIds)
+    public function holdSeats(int $userId, int $scheduleId, array $scheduleSeatIds, array $combos = [])
     {
-        return DB::transaction(function () use ($userId, $scheduleId, $scheduleSeatIds) {
+        return DB::transaction(function () use ($userId, $scheduleId, $scheduleSeatIds, $combos) {
             // Khoá dòng dữ liệu để xử lý đồng thời an toàn
             $seats = ScheduleSeat::whereIn('schedule_seat_id', $scheduleSeatIds)
                 ->where('schedule_id', $scheduleId)
@@ -46,6 +46,30 @@ class BookingService
                 $totalAmount += $seat->price;
             }
 
+            $comboData = [];
+            if (!empty($combos)) {
+                $comboIds = array_column($combos, 'combo_id');
+                $dbCombos = \App\Models\Combo::whereIn('combo_id', $comboIds)
+                    ->where('is_active', true)
+                    ->get()
+                    ->keyBy('combo_id');
+
+                foreach ($combos as $comboInput) {
+                    $cId = $comboInput['combo_id'];
+                    $qty = $comboInput['quantity'];
+                    if (!isset($dbCombos[$cId])) {
+                        throw ValidationException::withMessages(['combos' => 'Combo không hợp lệ hoặc đã ngừng bán.']);
+                    }
+                    $price = $dbCombos[$cId]->price;
+                    $totalAmount += ($price * $qty);
+                    $comboData[] = [
+                        'combo_id' => $cId,
+                        'quantity' => $qty,
+                        'price_at_booking' => $price,
+                    ];
+                }
+            }
+
             $booking = Booking::create([
                 'user_id'      => $userId,
                 'schedule_id'  => $scheduleId,
@@ -66,7 +90,12 @@ class BookingService
                 ]);
             }
 
-            return $booking->load(['schedule.movie', 'bookingSeats.scheduleSeat.seat']);
+            foreach ($comboData as $cData) {
+                $cData['booking_id'] = $booking->booking_id;
+                \App\Models\BookingCombo::create($cData);
+            }
+
+            return $booking->load(['schedule.movie', 'bookingSeats.scheduleSeat.seat', 'bookingCombos.combo']);
         });
     }
 
