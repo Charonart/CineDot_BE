@@ -19,7 +19,7 @@ class VoucherController extends Controller
 
         return DB::transaction(function () use ($request, $bookingId) {
             $booking = Booking::where('user_id', $request->user()->user_id)
-                ->where('status', 'pending')
+                ->where('booking_status', 'pending')
                 ->lockForUpdate()
                 ->findOrFail($bookingId);
 
@@ -37,8 +37,14 @@ class VoucherController extends Controller
                 return response()->json(['success' => false, 'message' => 'Mã giảm giá không trong thời gian sử dụng.'], 400);
             }
 
-            if ($voucher->usage_limit !== null && $voucher->used_count >= $voucher->usage_limit) {
-                return response()->json(['success' => false, 'message' => 'Mã giảm giá đã hết lượt sử dụng.'], 400);
+            if ($voucher->usage_limit !== null) {
+                $usedCount = Booking::where('voucher_id', $voucher->voucher_id)
+                    ->where('booking_status', '!=', 'cancelled')
+                    ->count();
+
+                if ($usedCount >= $voucher->usage_limit) {
+                    return response()->json(['success' => false, 'message' => 'Mã giảm giá đã hết lượt sử dụng.'], 400);
+                }
             }
 
             // Restore previous discount if there was a voucher applied before
@@ -81,7 +87,7 @@ class VoucherController extends Controller
     {
         return DB::transaction(function () use ($request, $bookingId) {
             $booking = Booking::where('user_id', $request->user()->user_id)
-                ->where('status', 'pending')
+                ->where('booking_status', 'pending')
                 ->lockForUpdate()
                 ->findOrFail($bookingId);
 

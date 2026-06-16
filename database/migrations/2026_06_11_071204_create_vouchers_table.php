@@ -18,7 +18,6 @@ return new class extends Migration
             $table->dateTime('valid_from');
             $table->dateTime('valid_until');
             $table->integer('usage_limit')->nullable();
-            $table->integer('used_count')->default(0);
             $table->boolean('is_active')->default(true);
             $table->timestamps();
         });

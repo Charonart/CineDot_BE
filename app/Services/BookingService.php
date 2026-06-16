@@ -14,9 +14,10 @@ class BookingService
     public function holdSeats(int $userId, int $scheduleId, array $scheduleSeatIds, array $combos = [])
     {
         return DB::transaction(function () use ($userId, $scheduleId, $scheduleSeatIds, $combos) {
-            // Khoá dòng dữ liệu để xử lý đồng thời an toàn
+            // Khoá dòng dữ liệu để xử lý đồng thời an toàn (thêm orderBy để chống deadlock)
             $seats = ScheduleSeat::whereIn('schedule_seat_id', $scheduleSeatIds)
                 ->where('schedule_id', $scheduleId)
+                ->orderBy('schedule_seat_id')
                 ->lockForUpdate()
                 ->get();
 
@@ -30,17 +31,13 @@ class BookingService
             foreach ($seats as $seat) {
                 // Kiểm tra DB xem có bị bán chưa
                 if ($seat->status === 'booked') {
-                    throw ValidationException::withMessages([
-                        'seats' => 'Một số ghế bạn chọn đã bị bán. Vui lòng chọn ghế khác.'
-                    ]);
+                    throw new \Symfony\Component\HttpKernel\Exception\HttpException(409, 'Một số ghế bạn chọn đã bị bán. Vui lòng chọn ghế khác.');
                 }
                 
                 // Kiểm tra Redis xem có đang bị ai đó giữ không
                 $redisKey = "hold:schedule:{$scheduleId}:seat:{$seat->schedule_seat_id}";
                 if (Redis::exists($redisKey)) {
-                    throw ValidationException::withMessages([
-                        'seats' => 'Một số ghế bạn chọn đang có người khác giữ. Vui lòng thử lại sau.'
-                    ]);
+                    throw new \Symfony\Component\HttpKernel\Exception\HttpException(409, 'Một số ghế bạn chọn đang có người khác giữ. Vui lòng thử lại sau.');
                 }
                 
                 $totalAmount += $seat->price;

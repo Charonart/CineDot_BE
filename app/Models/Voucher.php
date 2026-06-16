@@ -17,7 +17,6 @@ class Voucher extends Model
         'valid_from',
         'valid_until',
         'usage_limit',
-        'used_count',
         'is_active',
     ];
 
