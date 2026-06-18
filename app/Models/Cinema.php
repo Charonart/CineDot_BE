@@ -16,6 +16,7 @@ class Cinema extends Model
 
     protected $fillable = [
         'cinema_name',
+        'slug',
         'cinema_address',
         'province_id',
         'phone',

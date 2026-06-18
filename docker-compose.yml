@@ -1,21 +1,22 @@
 version: '3.8'
 
 services:
-  # Service chạy code Laravel
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: cinedot_app
-    restart: always
-    volumes:
-      - .:/var/www/html
-    environment:
-      DB_HOST: db # Kết nối tới service db bên dưới
-    ports:
-      - "8080:8000"
-    depends_on:
-      - db
+#  app:
+#    build:
+#      context: .
+#      dockerfile: Dockerfile
+#    container_name: cinedot_app
+#    restart: always
+#    volumes:
+#      - .:/var/www/html
+#    environment:
+#      DB_HOST: db
+#      REDIS_HOST: redis
+#    ports:
+#      - "8000:8000"
+#    depends_on:
+#      - db
+#      - redis
 
   # Service Database
   db:
@@ -23,13 +24,24 @@ services:
     container_name: cinedot_pgsql
     restart: always
     environment:
-      POSTGRES_DB: ${DB_DATABASE}
-      POSTGRES_USER: ${DB_USERNAME}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_DATABASE:-cinedot}
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
     ports:
       - "${DB_PORT:-5432}:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
 
+  # Service Redis
+  redis:
+    image: redis:7-alpine
+    container_name: cinedot_redis
+    restart: always
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+
 volumes:
   db_data:
+  redis_data:

@@ -12,6 +12,7 @@ class Movie extends Model
 
     protected $fillable = [
         'title',
+        'slug',
         'original_title',
         'overview',
         'release_date',
@@ -33,30 +34,6 @@ class Movie extends Model
         'release_date'     => 'string',
     ];
 
-    /**
-     * Trả về dữ liệu dạng camelCase cho FE – giữ nguyên response format cũ
-     */
-    public function toArray()
-    {
-        $array = parent::toArray();
-
-        return [
-            'id'               => $array['id'],
-            'title'            => $array['title'],
-            'overview'         => $array['overview'] ?? null,
-            'posterUrl'        => $array['poster_path'] ?? null,
-            'backdropUrl'      => $array['backdrop_path'] ?? null,
-            'releaseDate'      => $array['release_date'] ?? null,
-            'runtime'          => $array['duration_minutes'] ?? null,
-            'rating'           => isset($array['reviews_avg_rating'])
-                                    ? round((float) $array['reviews_avg_rating'], 1)
-                                    : null,
-            'voteCount'        => $array['reviews_count'] ?? 0,
-            'genres'           => $this->relationLoaded('genres')
-                ? $this->genres->map(fn($g) => ['id' => $g->genre_id, 'name' => $g->genre_name])->values()
-                : [],
-        ];
-    }
 
     public function genres()
     {

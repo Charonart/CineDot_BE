@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  # PHP-FPM Service
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    image: cinedot_app_prod
+    container_name: cinedot_app_prod
+    restart: always
+    volumes:
+      - .:/var/www/html
+      - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    environment:
+      DB_HOST: db
+      REDIS_HOST: redis
+    depends_on:
+      - db
+      - redis
+
+  # Nginx Service
+  web:
+    image: nginx:alpine
+    container_name: cinedot_nginx_prod
+    restart: always
+    ports:
+      - "8000:80"
+    volumes:
+      - .:/var/www/html
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d
+    depends_on:
+      - app
+
+  # Database Service
+  db:
+    image: postgres:15-alpine
+    container_name: cinedot_pgsql_prod
+    restart: always
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-cinedot}
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - db_data_prod:/var/lib/postgresql/data
+
+  # Redis Service
+  redis:
+    image: redis:7-alpine
+    container_name: cinedot_redis_prod
+    restart: always
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data_prod:/data
+
+volumes:
+  db_data_prod:
+  redis_data_prod:
