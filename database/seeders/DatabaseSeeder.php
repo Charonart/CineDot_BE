@@ -747,6 +747,7 @@ class DatabaseSeeder extends Seeder
             $prov = $provinces[$cd['province']] ?? null;
             $cinema = Cinema::create([
                 'cinema_name'    => $cd['name'],
+                'slug'           => Str::slug($cd['name']),
                 'cinema_address' => $cd['address'],
                 'province_id'    => $prov ? $prov->province_id : null,
                 'phone'          => $cd['phone'],

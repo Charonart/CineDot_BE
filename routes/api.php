@@ -74,8 +74,13 @@ Route::prefix('v1')->group(function () {
 
     // ── Cinemas & Rooms ───────────────────────────────────────────────────────
     Route::get('/cinemas',          [CinemaController::class, 'index']);
-    Route::get('/cinemas/{id}',     [CinemaController::class, 'show']);
+    Route::get('/cinemas/pricing',  [CinemaController::class, 'pricing']);
+    Route::get('/cinemas/detail/{slug}', [CinemaController::class, 'showBySlug']);
+    Route::get('/cinemas/detail/{slug}/showtimes', [CinemaController::class, 'showtimes']);
     Route::get('/rooms/{id}/seats', [App\Http\Controllers\Api\RoomController::class, 'seats']);
+
+    // ── Special Theaters ──────────────────────────────────────────────────────
+    Route::get('/special-theaters/{type}', [CinemaController::class, 'specialTheaters']);
 
     // ── Showtimes ─────────────────────────────────────────────────────────────
     Route::get('/showtimes',              [ShowtimeController::class, 'index']);

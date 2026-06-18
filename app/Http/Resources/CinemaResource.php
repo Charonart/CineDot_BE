@@ -16,6 +16,7 @@ class CinemaResource extends JsonResource
     {
         return [
             'id'          => $this->cinema_id,
+            'slug'        => $this->slug,
             'name'        => $this->cinema_name,
             'address'     => $this->cinema_address,
             'province'    => $this->whenLoaded('province', fn() => $this->province?->province_name),

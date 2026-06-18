@@ -11,6 +11,7 @@ return new class extends Migration
         Schema::create('cinemas', function (Blueprint $table) {
             $table->id('cinema_id');
             $table->string('cinema_name');
+            $table->string('slug')->unique()->index();
             $table->string('cinema_address')->nullable();
             $table->unsignedBigInteger('province_id')->nullable();
             $table->string('phone', 20)->nullable();
