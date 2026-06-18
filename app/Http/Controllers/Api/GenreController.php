@@ -9,6 +9,7 @@ use App\Http\Resources\MovieResource;
 use App\Services\GenreService;
 use App\Models\Movie;
 use App\Models\Genre;
+use Illuminate\Support\Str;
 
 class GenreController extends Controller
 {

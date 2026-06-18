@@ -55,6 +55,8 @@ class ShowtimeController extends Controller
         $showtimeData['movie'] = new MovieResource($schedule->movie);
         $showtimeData['cinema'] = new CinemaResource($cinema);
 
+        $cinema = $schedule->room->cinema;
+
         return response()->json([
             'success' => true,
             'data'    => $showtimeData,
