@@ -1,0 +1,51 @@
+FROM php:8.2-fpm
+
+# Cài đặt các dependencies cho hệ điều hành
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libpng-dev \
+    libjpeg62-turbo-dev \
+    libfreetype6-dev \
+    locales \
+    zip \
+    jpegoptim optipng pngquant gifsicle \
+    vim \
+    unzip \
+    git \
+    curl \
+    libpq-dev \
+    libonig-dev \
+    libxml2-dev \
+    libzip-dev
+
+# Xóa cache
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Cài đặt PHP extensions
+RUN docker-php-ext-install pdo_mysql pdo_pgsql mbstring exif pcntl bcmath gd zip
+
+# Cài đặt Redis extension
+RUN pecl install redis && docker-php-ext-enable redis
+
+# Lấy Composer mới nhất
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Thiết lập thư mục làm việc
+WORKDIR /var/www/html
+
+# Tạo user để chạy ứng dụng Laravel và cấp quyền
+RUN groupadd -g 1000 www
+RUN useradd -u 1000 -ms /bin/bash -g www www
+
+# Copy toàn bộ code vào container
+COPY . /var/www/html/
+
+# Phân quyền cho user www
+COPY --chown=www:www . /var/www/html/
+
+# Đổi sang user www
+USER www
+
+# Expose port 9000 và khởi động PHP-FPM
+EXPOSE 9000
+CMD ["php-fpm"]
