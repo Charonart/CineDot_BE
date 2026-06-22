@@ -15,6 +15,7 @@ return new class extends Migration
             $table->string('room_type')->nullable();
             $table->integer('total_seats')->default(0);
             $table->boolean('is_active')->default(true);
+            $table->softDeletes();
             $table->timestamp('created_at')->nullable();
 
             $table->foreign('cinema_id')->references('cinema_id')->on('cinemas')->onDelete('cascade');

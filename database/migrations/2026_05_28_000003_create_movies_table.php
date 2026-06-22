@@ -23,6 +23,7 @@ return new class extends Migration
             $table->string('poster_path')->nullable();
             $table->integer('duration_minutes')->nullable();
             $table->string('status')->default('now_showing');
+            $table->softDeletes();
             $table->timestamps();
         });
     }

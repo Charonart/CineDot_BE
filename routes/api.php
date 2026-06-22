@@ -104,6 +104,36 @@ Route::prefix('v1')->group(function () {
         }
     });
 
+    // ── Admin Routes ──────────────────────────────────────────────────────────
+    Route::prefix('admin')->middleware(['auth:sanctum', 'role:admin'])->group(function () {
+        // Movies
+        Route::apiResource('movies', \App\Http\Controllers\Api\Admin\MovieController::class);
+        
+        // Movie Credits
+        Route::get('movies/{movie}/credits', [\App\Http\Controllers\Api\Admin\MovieCreditController::class, 'index']);
+        Route::post('movies/{movie}/credits', [\App\Http\Controllers\Api\Admin\MovieCreditController::class, 'store']);
+        Route::delete('movies/{movie}/credits/{credit}', [\App\Http\Controllers\Api\Admin\MovieCreditController::class, 'destroy']);
+        
+        // Cinemas
+        Route::apiResource('cinemas', \App\Http\Controllers\Api\Admin\CinemaController::class);
+        // Rooms
+        Route::apiResource('cinemas.rooms', \App\Http\Controllers\Api\Admin\RoomController::class)->shallow();
+        
+        // Seats
+        Route::apiResource('rooms.seats', \App\Http\Controllers\Api\Admin\SeatController::class)->shallow()->except(['show']);
+        
+        // Schedules
+        Route::apiResource('schedules', \App\Http\Controllers\Api\Admin\ScheduleController::class);
+        
+        // Users
+        Route::get('users', [\App\Http\Controllers\Api\Admin\UserController::class, 'index']);
+        Route::put('users/{id}/role', [\App\Http\Controllers\Api\Admin\UserController::class, 'updateRole']);
+        
+        // Bookings
+        Route::get('bookings', [\App\Http\Controllers\Api\Admin\BookingController::class, 'index']);
+        Route::get('bookings/{id}', [\App\Http\Controllers\Api\Admin\BookingController::class, 'show']);
+    });
+
 }); // End of v1 prefix
 
 // Xác thực email link

@@ -17,6 +17,7 @@ return new class extends Migration
             $table->integer('position_x')->nullable();
             $table->integer('position_y')->nullable();
             $table->boolean('is_active')->default(true);
+            $table->softDeletes();
             $table->timestamp('created_at')->nullable();
 
             $table->foreign('room_id')->references('room_id')->on('rooms')->onDelete('cascade');

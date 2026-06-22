@@ -830,6 +830,404 @@
                     }
                 }
             ]
+        },
+        {
+            "name": "Admin - Movies",
+            "item": [
+                {
+                    "name": "List Movies",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {"key": "Accept", "value": "application/json", "type": "text"},
+                            {"key": "Authorization", "value": "Bearer {{token}}", "type": "text"}
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/admin/movies",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "admin", "movies"]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Movie",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {"key": "Accept", "value": "application/json", "type": "text"},
+                            {"key": "Authorization", "value": "Bearer {{token}}", "type": "text"}
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"title\": \"New Movie\",\n    \"status\": \"now_showing\",\n    \"genre_ids\": [1, 2]\n}",
+                            "options": {"raw": {"language": "json"}}
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/admin/movies",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "admin", "movies"]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Movie Detail",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {"key": "Accept", "value": "application/json", "type": "text"},
+                            {"key": "Authorization", "value": "Bearer {{token}}", "type": "text"}
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/admin/movies/1",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "admin", "movies", "1"]
+                        }
+                    }
+                },
+                {
+                    "name": "Update Movie",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {"key": "Accept", "value": "application/json", "type": "text"},
+                            {"key": "Authorization", "value": "Bearer {{token}}", "type": "text"}
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"title\": \"Updated Title\",\n    \"status\": \"stopped\"\n}",
+                            "options": {"raw": {"language": "json"}}
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/admin/movies/1",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "admin", "movies", "1"]
+                        }
+                    }
+                },
+                {
+                    "name": "Delete Movie",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {"key": "Accept", "value": "application/json", "type": "text"},
+                            {"key": "Authorization", "value": "Bearer {{token}}", "type": "text"}
+                        ],
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Admin - Movie Credits",
+            "item": [
+                {
+                    "name": "Get Credits",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {"key": "Accept", "value": "application/json", "type": "text"},
+                            {"key": "Authorization", "value": "Bearer {{token}}", "type": "text"}
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/movies/1/credits",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "movies", "1", "credits"]
+                        }
+                    }
+                },
+                {
+                    "name": "Add Credit",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {"key": "Accept", "value": "application/json", "type": "text"},
+                            {"key": "Authorization", "value": "Bearer {{token}}", "type": "text"}
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"person_id\": 1,\n    \"credit_type\": \"cast\",\n    \"character_name\": \"John Doe\",\n    \"order\": 1\n}",
+                            "options": {"raw": {"language": "json"}}
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/movies/1/credits",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "movies", "1", "credits"]
+                        }
+                    }
+                },
+                {
+                    "name": "Delete Credit",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {"key": "Accept", "value": "application/json", "type": "text"},
+                            {"key": "Authorization", "value": "Bearer {{token}}", "type": "text"}
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/movies/1/credits/1?type=cast",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "movies", "1", "credits", "1"],
+                            "query": [
+                                {"key": "type", "value": "cast"}
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Admin - Cinemas",
+            "item": [
+                {
+                    "name": "List Cinemas",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {"key": "Accept", "value": "application/json", "type": "text"},
+                            {"key": "Authorization", "value": "Bearer {{token}}", "type": "text"}
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/cinemas",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "cinemas"]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Cinema",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {"key": "Accept", "value": "application/json", "type": "text"},
+                            {"key": "Authorization", "value": "Bearer {{token}}", "type": "text"}
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"cinema_name\": \"CineDot Center\",\n    \"cinema_address\": \"123 Main St\",\n    \"phone\": \"0123456789\",\n    \"is_active\": true\n}",
+                            "options": {"raw": {"language": "json"}}
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/cinemas",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "cinemas"]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Cinema",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {"key": "Accept", "value": "application/json", "type": "text"},
+                            {"key": "Authorization", "value": "Bearer {{token}}", "type": "text"}
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/cinemas/1",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "cinemas", "1"]
+                        }
+                    }
+                },
+                {
+                    "name": "Update Cinema",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {"key": "Accept", "value": "application/json", "type": "text"},
+                            {"key": "Authorization", "value": "Bearer {{token}}", "type": "text"}
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"cinema_name\": \"CineDot Center VIP\"\n}",
+                            "options": {"raw": {"language": "json"}}
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/cinemas/1",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "cinemas", "1"]
+                        }
+                    }
+                },
+                {
+                    "name": "Delete Cinema",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {"key": "Accept", "value": "application/json", "type": "text"},
+                            {"key": "Authorization", "value": "Bearer {{token}}", "type": "text"}
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/cinemas/1",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "cinemas", "1"]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Admin - Rooms",
+            "item": [
+                {
+                    "name": "List Rooms by Cinema",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {"key": "Accept", "value": "application/json", "type": "text"},
+                            {"key": "Authorization", "value": "Bearer {{token}}", "type": "text"}
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/cinemas/1/rooms",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "cinemas", "1", "rooms"]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Room",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {"key": "Accept", "value": "application/json", "type": "text"},
+                            {"key": "Authorization", "value": "Bearer {{token}}", "type": "text"}
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"room_name\": \"Cinema 1\",\n    \"room_type\": \"2D\",\n    \"total_seats\": 100,\n    \"is_active\": true\n}",
+                            "options": {"raw": {"language": "json"}}
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/cinemas/1/rooms",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "cinemas", "1", "rooms"]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Room",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {"key": "Accept", "value": "application/json", "type": "text"},
+                            {"key": "Authorization", "value": "Bearer {{token}}", "type": "text"}
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/rooms/1",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "rooms", "1"]
+                        }
+                    }
+                },
+                {
+                    "name": "Update Room",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {"key": "Accept", "value": "application/json", "type": "text"},
+                            {"key": "Authorization", "value": "Bearer {{token}}", "type": "text"}
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"room_name\": \"Cinema 1 VIP\"\n}",
+                            "options": {"raw": {"language": "json"}}
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/rooms/1",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "rooms", "1"]
+                        }
+                    }
+                },
+                {
+                    "name": "Delete Room",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {"key": "Accept", "value": "application/json", "type": "text"},
+                            {"key": "Authorization", "value": "Bearer {{token}}", "type": "text"}
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/rooms/1",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "rooms", "1"]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Admin - Seats",
+            "item": [
+                {
+                    "name": "List Seats by Room",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {"key": "Accept", "value": "application/json", "type": "text"},
+                            {"key": "Authorization", "value": "Bearer {{token}}", "type": "text"}
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/rooms/1/seats",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "rooms", "1", "seats"]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Seat",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {"key": "Accept", "value": "application/json", "type": "text"},
+                            {"key": "Authorization", "value": "Bearer {{token}}", "type": "text"}
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"seat_row\": \"A\",\n    \"seat_number\": 1,\n    \"seat_type\": \"standard\",\n    \"is_active\": true\n}",
+                            "options": {"raw": {"language": "json"}}
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/rooms/1/seats",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "rooms", "1", "seats"]
+                        }
+                    }
+                },
+                {
+                    "name": "Update Seat",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {"key": "Accept", "value": "application/json", "type": "text"},
+                            {"key": "Authorization", "value": "Bearer {{token}}", "type": "text"}
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"seat_type\": \"vip\"\n}",
+                            "options": {"raw": {"language": "json"}}
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/seats/1",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "seats", "1"]
+                        }
+                    }
+                },
+                {
+                    "name": "Delete Seat",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {"key": "Accept", "value": "application/json", "type": "text"},
+                            {"key": "Authorization", "value": "Bearer {{token}}", "type": "text"}
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/seats/1",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "seats", "1"]
+                        }
+                    }
+                }
+            ]
         }
     ],
     "variable": [
