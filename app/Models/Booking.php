@@ -17,7 +17,6 @@ class Booking extends Model
         'booking_status',
         'booking_code',
         'notes',
-        'status',
     ];
 
     protected $casts = [
