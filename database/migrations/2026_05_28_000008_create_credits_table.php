@@ -22,6 +22,9 @@ return new class extends Migration
 
             $table->foreign('movie_id')->references('id')->on('movies')->onDelete('cascade');
             $table->foreign('person_id')->references('person_id')->on('persons')->onDelete('cascade');
+
+            $table->index('movie_id', 'idx_credits_movie_id');
+            $table->index(['movie_id', 'credit_type'], 'idx_credits_movie_type');
         });
     }
 

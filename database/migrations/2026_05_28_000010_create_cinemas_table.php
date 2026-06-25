@@ -21,6 +21,8 @@ return new class extends Migration
             $table->timestamp('create_at')->nullable();
 
             $table->foreign('province_id')->references('province_id')->on('provinces')->onDelete('set null');
+
+            $table->index('province_id', 'idx_cinemas_province_id');
         });
     }
 

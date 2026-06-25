@@ -25,6 +25,10 @@ return new class extends Migration
             $table->string('status')->default('now_showing');
             $table->softDeletes();
             $table->timestamps();
+            
+            $table->index('status', 'idx_movies_status');
+            $table->index('popularity', 'idx_movies_popularity');
+            $table->index('title', 'idx_movies_title');
         });
     }
 

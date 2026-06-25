@@ -19,6 +19,8 @@ return new class extends Migration
             $table->foreign('seat_id')->references('seat_id')->on('seats')->onDelete('cascade');
 
             $table->unique(['schedule_id', 'seat_id']);
+
+            $table->index(['schedule_id', 'status'], 'idx_schedule_seats_id_status');
         });
     }
 

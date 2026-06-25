@@ -50,6 +50,10 @@ Route::prefix('v1')->group(function () {
         Route::post('/movies/{id}/reviews', [App\Http\Controllers\Api\ReviewController::class, 'store']);
     });
 
+    // ── Payment Webhooks & Callbacks ──────────────────────────────────────────
+    Route::get('/payments/vnpay/ipn', [App\Http\Controllers\Api\PaymentCallbackController::class, 'vnpayIpn']);
+    Route::get('/payments/vnpay/return', [App\Http\Controllers\Api\PaymentCallbackController::class, 'vnpayReturn']);
+
     // ── Master Data ───────────────────────────────────────────────────────────
     Route::get('/provinces',        [App\Http\Controllers\Api\ProvinceController::class, 'index']);
     Route::get('/persons/{id}',     [App\Http\Controllers\Api\PersonController::class, 'show']);

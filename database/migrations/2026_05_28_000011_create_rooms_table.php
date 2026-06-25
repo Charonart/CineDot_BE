@@ -19,6 +19,8 @@ return new class extends Migration
             $table->timestamp('created_at')->nullable();
 
             $table->foreign('cinema_id')->references('cinema_id')->on('cinemas')->onDelete('cascade');
+
+            $table->index('cinema_id', 'idx_rooms_cinema_id');
         });
     }
 

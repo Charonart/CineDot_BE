@@ -596,7 +596,7 @@
                     }
                 },
                 {
-                    "name": "Mock Payment Process",
+                    "name": "VNPay Create Payment URL",
                     "request": {
                         "method": "POST",
                         "header": [
@@ -613,7 +613,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n    \"booking_id\": 1,\n    \"payment_method\": \"momo\"\n}",
+                            "raw": "{\n    \"booking_id\": 1\n}",
                             "options": {
                                 "raw": {
                                     "language": "json"
@@ -624,6 +624,86 @@
                             "raw": "{{base_url}}/api/v1/payments",
                             "host": ["{{base_url}}"],
                             "path": ["api", "v1", "payments"]
+                        }
+                    }
+                },
+                {
+                    "name": "VNPay IPN Webhook",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/payments/vnpay/ipn?vnp_Amount=10000000&vnp_BankCode=NCB&vnp_ResponseCode=00&vnp_TxnRef=CD123456&vnp_SecureHash=YOUR_HASH",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "payments", "vnpay", "ipn"],
+                            "query": [
+                                {
+                                    "key": "vnp_Amount",
+                                    "value": "10000000"
+                                },
+                                {
+                                    "key": "vnp_BankCode",
+                                    "value": "NCB"
+                                },
+                                {
+                                    "key": "vnp_ResponseCode",
+                                    "value": "00"
+                                },
+                                {
+                                    "key": "vnp_TxnRef",
+                                    "value": "CD123456"
+                                },
+                                {
+                                    "key": "vnp_SecureHash",
+                                    "value": "YOUR_HASH"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "VNPay Return Callback",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/payments/vnpay/return?vnp_Amount=10000000&vnp_BankCode=NCB&vnp_ResponseCode=00&vnp_TxnRef=CD123456&vnp_SecureHash=YOUR_HASH",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "payments", "vnpay", "return"],
+                            "query": [
+                                {
+                                    "key": "vnp_Amount",
+                                    "value": "10000000"
+                                },
+                                {
+                                    "key": "vnp_BankCode",
+                                    "value": "NCB"
+                                },
+                                {
+                                    "key": "vnp_ResponseCode",
+                                    "value": "00"
+                                },
+                                {
+                                    "key": "vnp_TxnRef",
+                                    "value": "CD123456"
+                                },
+                                {
+                                    "key": "vnp_SecureHash",
+                                    "value": "YOUR_HASH"
+                                }
+                            ]
                         }
                     }
                 },
@@ -668,7 +748,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n    \"voucher_code\": \"WELCOME50\"\n}",
+                            "raw": "{\n    \"voucher_code\": \"CINEDOT50\"\n}",
                             "options": {
                                 "raw": {
                                     "language": "json"
