@@ -7,6 +7,7 @@ use App\Http\Resources\CreditResource;
 use App\Models\Credit;
 use App\Models\Movie;
 
+
 class CreditController extends Controller
 {
     public function show($id)
