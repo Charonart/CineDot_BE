@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\CreditResource;
 use App\Models\Credit;
 use App\Models\Movie;
-
+use App\Models\Credit;
 
 class CreditController extends Controller
 {

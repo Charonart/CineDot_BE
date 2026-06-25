@@ -70,9 +70,9 @@ class BookingService
             $booking = Booking::create([
                 'user_id'      => $userId,
                 'schedule_id'  => $scheduleId,
-                'total_amount' => $totalAmount,
-                'status'       => 'pending',
-                'booking_code' => 'CD' . time() . rand(100, 999),
+                'total_amount'   => $totalAmount,
+                'booking_status' => 'pending',
+                'booking_code'   => 'CD' . time() . rand(100, 999),
             ]);
 
             foreach ($seats as $seat) {
@@ -101,11 +101,11 @@ class BookingService
         return DB::transaction(function () use ($bookingId) {
             $booking = Booking::where('booking_id', $bookingId)->lockForUpdate()->firstOrFail();
 
-            if ($booking->status === 'success') {
+            if ($booking->booking_status === 'completed') {
                 return $booking;
             }
 
-            $booking->update(['status' => 'success']);
+            $booking->update(['booking_status' => 'completed']);
 
             $scheduleSeatIds = BookingSeat::where('booking_id', $booking->booking_id)->pluck('schedule_seat_id');
             ScheduleSeat::whereIn('schedule_seat_id', $scheduleSeatIds)->update(['status' => 'booked']);

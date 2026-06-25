@@ -31,15 +31,8 @@
                         },
                         "url": {
                             "raw": "{{base_url}}/api/v1/auth/register",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "api",
-                                "v1",
-                                "auth",
-                                "register"
-                            ]
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "auth", "register"]
                         }
                     }
                 },
@@ -65,15 +58,8 @@
                         },
                         "url": {
                             "raw": "{{base_url}}/api/v1/auth/login",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "api",
-                                "v1",
-                                "auth",
-                                "login"
-                            ]
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "auth", "login"]
                         }
                     }
                 },
@@ -95,15 +81,8 @@
                         ],
                         "url": {
                             "raw": "{{base_url}}/api/v1/auth/logout",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "api",
-                                "v1",
-                                "auth",
-                                "logout"
-                            ]
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "auth", "logout"]
                         }
                     }
                 },
@@ -125,15 +104,8 @@
                         ],
                         "url": {
                             "raw": "{{base_url}}/api/v1/users/profile",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "api",
-                                "v1",
-                                "users",
-                                "profile"
-                            ]
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "users", "profile"]
                         }
                     }
                 },
@@ -164,15 +136,8 @@
                         },
                         "url": {
                             "raw": "{{base_url}}/api/v1/users/profile",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "api",
-                                "v1",
-                                "users",
-                                "profile"
-                            ]
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "users", "profile"]
                         }
                     }
                 },
@@ -194,15 +159,8 @@
                         ],
                         "url": {
                             "raw": "{{base_url}}/api/v1/auth/me",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "api",
-                                "v1",
-                                "auth",
-                                "me"
-                            ]
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "auth", "me"]
                         }
                     }
                 },
@@ -228,15 +186,8 @@
                         },
                         "url": {
                             "raw": "{{base_url}}/api/v1/auth/forgot-password",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "api",
-                                "v1",
-                                "auth",
-                                "forgot-password"
-                            ]
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "auth", "forgot-password"]
                         }
                     }
                 },
@@ -262,15 +213,8 @@
                         },
                         "url": {
                             "raw": "{{base_url}}/api/v1/auth/reset-password",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "api",
-                                "v1",
-                                "auth",
-                                "reset-password"
-                            ]
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "auth", "reset-password"]
                         }
                     }
                 },
@@ -292,9 +236,7 @@
                         ],
                         "url": {
                             "raw": "{{base_url}}/api/v1/auth/email/verification-notification",
-                            "host": [
-                                "{{base_url}}"
-                            ],
+                            "host": ["{{base_url}}"],
                             "path": [
                                 "api",
                                 "v1",
@@ -323,14 +265,8 @@
                         ],
                         "url": {
                             "raw": "{{base_url}}/api/v1/provinces",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "api",
-                                "v1",
-                                "provinces"
-                            ]
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "provinces"]
                         }
                     }
                 },
@@ -347,15 +283,8 @@
                         ],
                         "url": {
                             "raw": "{{base_url}}/api/v1/persons/1",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "api",
-                                "v1",
-                                "persons",
-                                "1"
-                            ]
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "persons", "1"]
                         }
                     }
                 },
@@ -372,14 +301,8 @@
                         ],
                         "url": {
                             "raw": "{{base_url}}/api/v1/combos",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "api",
-                                "v1",
-                                "combos"
-                            ]
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "combos"]
                         }
                     }
                 }
@@ -400,19 +323,33 @@
                             }
                         ],
                         "url": {
-                            "raw": "{{base_url}}/api/v1/movies?status=now_showing",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "api",
-                                "v1",
-                                "movies"
-                            ],
+                            "raw": "{{base_url}}/api/v1/movies?status=now_showing&genre_id=28&search=avatar&limit=20&page=1",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "movies"],
                             "query": [
                                 {
                                     "key": "status",
                                     "value": "now_showing"
+                                },
+                                {
+                                    "key": "genre_id",
+                                    "value": "28",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "search",
+                                    "value": "avatar",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "20",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "page",
+                                    "value": "1",
+                                    "disabled": true
                                 }
                             ]
                         }
@@ -430,16 +367,9 @@
                             }
                         ],
                         "url": {
-                            "raw": "{{base_url}}/api/v1/movies/1",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "api",
-                                "v1",
-                                "movies",
-                                "1"
-                            ]
+                            "raw": "{{base_url}}/api/v1/movies/avatar-2",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "movies", "avatar-2"]
                         }
                     }
                 },
@@ -456,16 +386,8 @@
                         ],
                         "url": {
                             "raw": "{{base_url}}/api/v1/movies/1/videos",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "api",
-                                "v1",
-                                "movies",
-                                "1",
-                                "videos"
-                            ]
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "movies", "1", "videos"]
                         }
                     }
                 },
@@ -481,16 +403,20 @@
                             }
                         ],
                         "url": {
-                            "raw": "{{base_url}}/api/v1/movies/1/reviews",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "api",
-                                "v1",
-                                "movies",
-                                "1",
-                                "reviews"
+                            "raw": "{{base_url}}/api/v1/movies/1/reviews?per_page=10&page=1",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "movies", "1", "reviews"],
+                            "query": [
+                                {
+                                    "key": "per_page",
+                                    "value": "10",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "page",
+                                    "value": "1",
+                                    "disabled": true
+                                }
                             ]
                         }
                     }
@@ -522,16 +448,8 @@
                         },
                         "url": {
                             "raw": "{{base_url}}/api/v1/movies/1/reviews",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "api",
-                                "v1",
-                                "movies",
-                                "1",
-                                "reviews"
-                            ]
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "movies", "1", "reviews"]
                         }
                     }
                 }
@@ -552,14 +470,20 @@
                             }
                         ],
                         "url": {
-                            "raw": "{{base_url}}/api/v1/cinemas",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "api",
-                                "v1",
-                                "cinemas"
+                            "raw": "{{base_url}}/api/v1/cinemas?province_id=1&search=CGV",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "cinemas"],
+                            "query": [
+                                {
+                                    "key": "province_id",
+                                    "value": "1",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "search",
+                                    "value": "CGV",
+                                    "disabled": true
+                                }
                             ]
                         }
                     }
@@ -577,16 +501,8 @@
                         ],
                         "url": {
                             "raw": "{{base_url}}/api/v1/rooms/1/seats",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "api",
-                                "v1",
-                                "rooms",
-                                "1",
-                                "seats"
-                            ]
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "rooms", "1", "seats"]
                         }
                     }
                 },
@@ -602,19 +518,23 @@
                             }
                         ],
                         "url": {
-                            "raw": "{{base_url}}/api/v1/showtimes?date=2026-05-28",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "api",
-                                "v1",
-                                "showtimes"
-                            ],
+                            "raw": "{{base_url}}/api/v1/showtimes?date=2026-05-28&movie_id=1&cinema_id=1",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "showtimes"],
                             "query": [
                                 {
                                     "key": "date",
                                     "value": "2026-05-28"
+                                },
+                                {
+                                    "key": "movie_id",
+                                    "value": "1",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "cinema_id",
+                                    "value": "1",
+                                    "disabled": true
                                 }
                             ]
                         }
@@ -633,16 +553,8 @@
                         ],
                         "url": {
                             "raw": "{{base_url}}/api/v1/showtimes/1/seats",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "api",
-                                "v1",
-                                "showtimes",
-                                "1",
-                                "seats"
-                            ]
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "showtimes", "1", "seats"]
                         }
                     }
                 }
@@ -678,15 +590,8 @@
                         },
                         "url": {
                             "raw": "{{base_url}}/api/v1/bookings/hold-seats",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "api",
-                                "v1",
-                                "bookings",
-                                "hold-seats"
-                            ]
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "bookings", "hold-seats"]
                         }
                     }
                 },
@@ -717,14 +622,8 @@
                         },
                         "url": {
                             "raw": "{{base_url}}/api/v1/payments",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "api",
-                                "v1",
-                                "payments"
-                            ]
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "payments"]
                         }
                     }
                 },
@@ -746,15 +645,8 @@
                         ],
                         "url": {
                             "raw": "{{base_url}}/api/v1/users/bookings",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "api",
-                                "v1",
-                                "users",
-                                "bookings"
-                            ]
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "users", "bookings"]
                         }
                     }
                 },
@@ -785,9 +677,7 @@
                         },
                         "url": {
                             "raw": "{{base_url}}/api/v1/bookings/1/apply-voucher",
-                            "host": [
-                                "{{base_url}}"
-                            ],
+                            "host": ["{{base_url}}"],
                             "path": [
                                 "api",
                                 "v1",
@@ -816,9 +706,7 @@
                         ],
                         "url": {
                             "raw": "{{base_url}}/api/v1/bookings/1/remove-voucher",
-                            "host": [
-                                "{{base_url}}"
-                            ],
+                            "host": ["{{base_url}}"],
                             "path": [
                                 "api",
                                 "v1",
@@ -839,8 +727,16 @@
                     "request": {
                         "method": "GET",
                         "header": [
-                            {"key": "Accept", "value": "application/json", "type": "text"},
-                            {"key": "Authorization", "value": "Bearer {{token}}", "type": "text"}
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
                         ],
                         "url": {
                             "raw": "{{base_url}}/api/v1/admin/movies",
@@ -854,13 +750,21 @@
                     "request": {
                         "method": "POST",
                         "header": [
-                            {"key": "Accept", "value": "application/json", "type": "text"},
-                            {"key": "Authorization", "value": "Bearer {{token}}", "type": "text"}
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
                         ],
                         "body": {
                             "mode": "raw",
                             "raw": "{\n    \"title\": \"New Movie\",\n    \"status\": \"now_showing\",\n    \"genre_ids\": [1, 2]\n}",
-                            "options": {"raw": {"language": "json"}}
+                            "options": { "raw": { "language": "json" } }
                         },
                         "url": {
                             "raw": "{{base_url}}/api/v1/admin/movies",
@@ -874,8 +778,16 @@
                     "request": {
                         "method": "GET",
                         "header": [
-                            {"key": "Accept", "value": "application/json", "type": "text"},
-                            {"key": "Authorization", "value": "Bearer {{token}}", "type": "text"}
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
                         ],
                         "url": {
                             "raw": "{{base_url}}/api/v1/admin/movies/1",
@@ -889,13 +801,21 @@
                     "request": {
                         "method": "PUT",
                         "header": [
-                            {"key": "Accept", "value": "application/json", "type": "text"},
-                            {"key": "Authorization", "value": "Bearer {{token}}", "type": "text"}
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
                         ],
                         "body": {
                             "mode": "raw",
                             "raw": "{\n    \"title\": \"Updated Title\",\n    \"status\": \"stopped\"\n}",
-                            "options": {"raw": {"language": "json"}}
+                            "options": { "raw": { "language": "json" } }
                         },
                         "url": {
                             "raw": "{{base_url}}/api/v1/admin/movies/1",
@@ -909,9 +829,17 @@
                     "request": {
                         "method": "DELETE",
                         "header": [
-                            {"key": "Accept", "value": "application/json", "type": "text"},
-                            {"key": "Authorization", "value": "Bearer {{token}}", "type": "text"}
-                        ],
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
+                        ]
                     }
                 }
             ]
@@ -924,8 +852,16 @@
                     "request": {
                         "method": "GET",
                         "header": [
-                            {"key": "Accept", "value": "application/json", "type": "text"},
-                            {"key": "Authorization", "value": "Bearer {{token}}", "type": "text"}
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
                         ],
                         "url": {
                             "raw": "{{base_url}}/api/v1/movies/1/credits",
@@ -939,13 +875,21 @@
                     "request": {
                         "method": "POST",
                         "header": [
-                            {"key": "Accept", "value": "application/json", "type": "text"},
-                            {"key": "Authorization", "value": "Bearer {{token}}", "type": "text"}
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
                         ],
                         "body": {
                             "mode": "raw",
                             "raw": "{\n    \"person_id\": 1,\n    \"credit_type\": \"cast\",\n    \"character_name\": \"John Doe\",\n    \"order\": 1\n}",
-                            "options": {"raw": {"language": "json"}}
+                            "options": { "raw": { "language": "json" } }
                         },
                         "url": {
                             "raw": "{{base_url}}/api/v1/movies/1/credits",
@@ -959,16 +903,29 @@
                     "request": {
                         "method": "DELETE",
                         "header": [
-                            {"key": "Accept", "value": "application/json", "type": "text"},
-                            {"key": "Authorization", "value": "Bearer {{token}}", "type": "text"}
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
                         ],
                         "url": {
                             "raw": "{{base_url}}/api/v1/movies/1/credits/1?type=cast",
                             "host": ["{{base_url}}"],
-                            "path": ["api", "v1", "movies", "1", "credits", "1"],
-                            "query": [
-                                {"key": "type", "value": "cast"}
-                            ]
+                            "path": [
+                                "api",
+                                "v1",
+                                "movies",
+                                "1",
+                                "credits",
+                                "1"
+                            ],
+                            "query": [{ "key": "type", "value": "cast" }]
                         }
                     }
                 }
@@ -982,8 +939,16 @@
                     "request": {
                         "method": "GET",
                         "header": [
-                            {"key": "Accept", "value": "application/json", "type": "text"},
-                            {"key": "Authorization", "value": "Bearer {{token}}", "type": "text"}
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
                         ],
                         "url": {
                             "raw": "{{base_url}}/api/v1/cinemas",
@@ -997,13 +962,21 @@
                     "request": {
                         "method": "POST",
                         "header": [
-                            {"key": "Accept", "value": "application/json", "type": "text"},
-                            {"key": "Authorization", "value": "Bearer {{token}}", "type": "text"}
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
                         ],
                         "body": {
                             "mode": "raw",
                             "raw": "{\n    \"cinema_name\": \"CineDot Center\",\n    \"cinema_address\": \"123 Main St\",\n    \"phone\": \"0123456789\",\n    \"is_active\": true\n}",
-                            "options": {"raw": {"language": "json"}}
+                            "options": { "raw": { "language": "json" } }
                         },
                         "url": {
                             "raw": "{{base_url}}/api/v1/cinemas",
@@ -1017,8 +990,16 @@
                     "request": {
                         "method": "GET",
                         "header": [
-                            {"key": "Accept", "value": "application/json", "type": "text"},
-                            {"key": "Authorization", "value": "Bearer {{token}}", "type": "text"}
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
                         ],
                         "url": {
                             "raw": "{{base_url}}/api/v1/cinemas/1",
@@ -1032,13 +1013,21 @@
                     "request": {
                         "method": "PUT",
                         "header": [
-                            {"key": "Accept", "value": "application/json", "type": "text"},
-                            {"key": "Authorization", "value": "Bearer {{token}}", "type": "text"}
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
                         ],
                         "body": {
                             "mode": "raw",
                             "raw": "{\n    \"cinema_name\": \"CineDot Center VIP\"\n}",
-                            "options": {"raw": {"language": "json"}}
+                            "options": { "raw": { "language": "json" } }
                         },
                         "url": {
                             "raw": "{{base_url}}/api/v1/cinemas/1",
@@ -1052,8 +1041,16 @@
                     "request": {
                         "method": "DELETE",
                         "header": [
-                            {"key": "Accept", "value": "application/json", "type": "text"},
-                            {"key": "Authorization", "value": "Bearer {{token}}", "type": "text"}
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
                         ],
                         "url": {
                             "raw": "{{base_url}}/api/v1/cinemas/1",
@@ -1072,8 +1069,16 @@
                     "request": {
                         "method": "GET",
                         "header": [
-                            {"key": "Accept", "value": "application/json", "type": "text"},
-                            {"key": "Authorization", "value": "Bearer {{token}}", "type": "text"}
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
                         ],
                         "url": {
                             "raw": "{{base_url}}/api/v1/cinemas/1/rooms",
@@ -1087,13 +1092,21 @@
                     "request": {
                         "method": "POST",
                         "header": [
-                            {"key": "Accept", "value": "application/json", "type": "text"},
-                            {"key": "Authorization", "value": "Bearer {{token}}", "type": "text"}
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
                         ],
                         "body": {
                             "mode": "raw",
                             "raw": "{\n    \"room_name\": \"Cinema 1\",\n    \"room_type\": \"2D\",\n    \"total_seats\": 100,\n    \"is_active\": true\n}",
-                            "options": {"raw": {"language": "json"}}
+                            "options": { "raw": { "language": "json" } }
                         },
                         "url": {
                             "raw": "{{base_url}}/api/v1/cinemas/1/rooms",
@@ -1107,8 +1120,16 @@
                     "request": {
                         "method": "GET",
                         "header": [
-                            {"key": "Accept", "value": "application/json", "type": "text"},
-                            {"key": "Authorization", "value": "Bearer {{token}}", "type": "text"}
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
                         ],
                         "url": {
                             "raw": "{{base_url}}/api/v1/rooms/1",
@@ -1122,13 +1143,21 @@
                     "request": {
                         "method": "PUT",
                         "header": [
-                            {"key": "Accept", "value": "application/json", "type": "text"},
-                            {"key": "Authorization", "value": "Bearer {{token}}", "type": "text"}
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
                         ],
                         "body": {
                             "mode": "raw",
                             "raw": "{\n    \"room_name\": \"Cinema 1 VIP\"\n}",
-                            "options": {"raw": {"language": "json"}}
+                            "options": { "raw": { "language": "json" } }
                         },
                         "url": {
                             "raw": "{{base_url}}/api/v1/rooms/1",
@@ -1142,8 +1171,16 @@
                     "request": {
                         "method": "DELETE",
                         "header": [
-                            {"key": "Accept", "value": "application/json", "type": "text"},
-                            {"key": "Authorization", "value": "Bearer {{token}}", "type": "text"}
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
                         ],
                         "url": {
                             "raw": "{{base_url}}/api/v1/rooms/1",
@@ -1162,8 +1199,16 @@
                     "request": {
                         "method": "GET",
                         "header": [
-                            {"key": "Accept", "value": "application/json", "type": "text"},
-                            {"key": "Authorization", "value": "Bearer {{token}}", "type": "text"}
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
                         ],
                         "url": {
                             "raw": "{{base_url}}/api/v1/rooms/1/seats",
@@ -1177,13 +1222,21 @@
                     "request": {
                         "method": "POST",
                         "header": [
-                            {"key": "Accept", "value": "application/json", "type": "text"},
-                            {"key": "Authorization", "value": "Bearer {{token}}", "type": "text"}
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
                         ],
                         "body": {
                             "mode": "raw",
                             "raw": "{\n    \"seat_row\": \"A\",\n    \"seat_number\": 1,\n    \"seat_type\": \"standard\",\n    \"is_active\": true\n}",
-                            "options": {"raw": {"language": "json"}}
+                            "options": { "raw": { "language": "json" } }
                         },
                         "url": {
                             "raw": "{{base_url}}/api/v1/rooms/1/seats",
@@ -1197,13 +1250,21 @@
                     "request": {
                         "method": "PUT",
                         "header": [
-                            {"key": "Accept", "value": "application/json", "type": "text"},
-                            {"key": "Authorization", "value": "Bearer {{token}}", "type": "text"}
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
                         ],
                         "body": {
                             "mode": "raw",
                             "raw": "{\n    \"seat_type\": \"vip\"\n}",
-                            "options": {"raw": {"language": "json"}}
+                            "options": { "raw": { "language": "json" } }
                         },
                         "url": {
                             "raw": "{{base_url}}/api/v1/seats/1",
@@ -1217,8 +1278,16 @@
                     "request": {
                         "method": "DELETE",
                         "header": [
-                            {"key": "Accept", "value": "application/json", "type": "text"},
-                            {"key": "Authorization", "value": "Bearer {{token}}", "type": "text"}
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
                         ],
                         "url": {
                             "raw": "{{base_url}}/api/v1/seats/1",

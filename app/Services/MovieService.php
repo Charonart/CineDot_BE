@@ -119,4 +119,21 @@ class MovieService
             ->orderByDesc('reviews_avg_rating')
             ->paginate($perPage);
     }
+
+    public function getSimilarBySlug(string $slug, int $perPage = 20)
+    {
+        $movie = Movie::with('genres')->where('slug', $slug)->firstOrFail();
+        $genreIds = $movie->genres->pluck('genre_id')->toArray();
+
+        return Movie::with('genres')
+            ->withAvg('reviews', 'rating')
+            ->withCount(['genres as matching_genres_count' => function ($q) use ($genreIds) {
+                $q->whereIn('genres.genre_id', $genreIds);
+            }])
+            ->having('matching_genres_count', '>', 0)
+            ->where('id', '!=', $movie->id)
+            ->orderByDesc('matching_genres_count')
+            ->orderByDesc('reviews_avg_rating')
+            ->paginate($perPage);
+    }
 }
