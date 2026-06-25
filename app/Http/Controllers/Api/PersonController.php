@@ -10,7 +10,7 @@ class PersonController extends Controller
 {
     public function show($id)
     {
-        $person = Person::findOrFail($id);
+        $person = Person::with(['castCredits.movie', 'crewCredits.movie'])->findOrFail($id);
         
         return response()->json([
             'success' => true,

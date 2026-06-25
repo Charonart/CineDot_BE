@@ -794,44 +794,36 @@ class DatabaseSeeder extends Seeder
         }
 
         echo "=> Seeding Schedules & ScheduleSeats...\n";
-        $today = now()->toDateString();
-        $day2  = now()->addDay()->toDateString();
-        $day3  = now()->addDays(2)->toDateString();
-
-        $scheduleTemplates = [
-            // [MovieTitle, RoomIndex, Date, StartTime, EndTime, BasePrice]
-            ['Se7en', 0, $today, '09:00', '11:15', 75000],
-            ['Se7en', 0, $today, '14:30', '16:45', 75000],
-            ['Se7en', 1, $today, '20:00', '22:15', 95000],
-            ['Parasite', 2, $today, '10:00', '12:15', 75000],
-            ['Parasite', 2, $today, '19:30', '21:45', 75000],
-            ['Pulp Fiction', 3, $today, '16:00', '18:40', 80000],
-            ['GoodFellas', 4, $today, '11:00', '13:30', 85000],
-            ['GoodFellas', 4, $today, '17:00', '19:30', 85000],
-            ['Pulp Fiction', 5, $today, '20:30', '23:10', 90000],
-            ['Se7en', 6, $today, '08:30', '10:45', 85000],
-            
-            // Ngày mai
-            ['Se7en', 0, $day2, '10:00', '12:15', 75000],
-            ['Pulp Fiction', 1, $day2, '15:30', '18:10', 85000],
-            ['Parasite', 2, $day2, '20:00', '22:15', 90000],
-            ['GoodFellas', 4, $day2, '14:00', '16:30', 80000],
-
-            // Ngày kia
-            ['Se7en', 0, $day3, '09:30', '11:45', 75000],
-            ['GoodFellas', 3, $day3, '14:00', '16:30', 85000],
-            ['CineDot: The Beginning', 8, $today, '09:00', '11:00', 70000],
-            ['CineDot: The Beginning', 8, $today, '13:30', '15:30', 70000],
-            ['Tanstack & Beyond', 9, $today, '15:00', '16:35', 75000],
-            ['Tanstack & Beyond', 9, $today, '19:00', '20:35', 80000],
-
-            // Lịch chiếu cho các phim mới
-            ['The Lord of the Rings: The Fellowship of the Ring', 0, $today, '12:00', '15:00', 85000],
-            ['The Dark Knight', 1, $today, '16:00', '18:30', 95000],
-            ['Finding Nemo', 2, $today, '08:30', '10:10', 70000],
-            ['The Godfather', 3, $today, '13:00', '16:00', 90000],
-            ['Harry Potter and the Order of the Phoenix', 4, $today, '14:00', '16:20', 80000],
+        $baseScheduleTemplates = [
+            // [MovieTitle, RoomIndex, StartTime, EndTime, BasePrice]
+            ['Se7en', 0, '09:00', '11:15', 75000],
+            ['Se7en', 0, '14:30', '16:45', 75000],
+            ['Se7en', 1, '20:00', '22:15', 95000],
+            ['Parasite', 2, '10:00', '12:15', 75000],
+            ['Parasite', 2, '19:30', '21:45', 75000],
+            ['Pulp Fiction', 3, '16:00', '18:40', 80000],
+            ['GoodFellas', 4, '11:00', '13:30', 85000],
+            ['GoodFellas', 4, '17:00', '19:30', 85000],
+            ['Pulp Fiction', 5, '20:30', '23:10', 90000],
+            ['Se7en', 6, '08:30', '10:45', 85000],
+            ['CineDot: The Beginning', 8, '09:00', '11:00', 70000],
+            ['CineDot: The Beginning', 8, '13:30', '15:30', 70000],
+            ['Tanstack & Beyond', 9, '15:00', '16:35', 75000],
+            ['Tanstack & Beyond', 9, '19:00', '20:35', 80000],
+            ['The Lord of the Rings: The Fellowship of the Ring', 0, '12:00', '15:00', 85000],
+            ['The Dark Knight', 1, '16:00', '18:30', 95000],
+            ['Finding Nemo', 2, '08:30', '10:10', 70000],
+            ['The Godfather', 3, '13:00', '16:00', 90000],
+            ['Harry Potter and the Order of the Phoenix', 4, '14:00', '16:20', 80000],
         ];
+
+        $scheduleTemplates = [];
+        for ($i = -3; $i <= 3; $i++) {
+            $date = now()->addDays($i)->toDateString();
+            foreach ($baseScheduleTemplates as $st) {
+                $scheduleTemplates[] = [$st[0], $st[1], $date, $st[2], $st[3], $st[4]];
+            }
+        }
 
         foreach ($scheduleTemplates as $st) {
             [$title, $roomIdx, $date, $start, $end, $price] = $st;
@@ -864,6 +856,17 @@ class DatabaseSeeder extends Seeder
                 ];
             }
             DB::table('schedule_seats')->insert($scheduleSeatsInsert);
+        }
+
+        echo "=> Seeding Combos...\n";
+        $combosData = [
+            ['name' => 'Combo Single', 'description' => '1 Bắp + 1 Nước', 'price' => 65000, 'image_url' => 'https://via.placeholder.com/150', 'is_active' => true],
+            ['name' => 'Combo Couple', 'description' => '1 Bắp lớn + 2 Nước', 'price' => 95000, 'image_url' => 'https://via.placeholder.com/150', 'is_active' => true],
+            ['name' => 'Combo Family', 'description' => '2 Bắp lớn + 4 Nước', 'price' => 175000, 'image_url' => 'https://via.placeholder.com/150', 'is_active' => true],
+            ['name' => 'Combo Extra', 'description' => '1 Bắp + 1 Nước + 1 Snack', 'price' => 85000, 'image_url' => 'https://via.placeholder.com/150', 'is_active' => true],
+        ];
+        foreach ($combosData as $cd) {
+            \App\Models\Combo::create($cd);
         }
 
         echo "=> Seeding Bookings & Payments (Demo records)...\n";

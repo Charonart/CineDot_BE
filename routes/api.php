@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\CinemaController;
 use App\Http\Controllers\Api\ShowtimeController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\ReviewController;
 
 /*
 |--------------------------------------------------------------------------
@@ -65,12 +66,12 @@ Route::prefix('v1')->group(function () {
     Route::get('/movies/popular',   [MovieController::class, 'popular']);
     Route::get('/movies',           [MovieController::class, 'index']);
 
-    Route::get('/movies/detail/{slug}',     [MovieController::class, 'showBySlug']);
+    // Static/special routes above, dynamic {slug} below
+    Route::get('/movies/{slug}',            [MovieController::class, 'showBySlug']);
     Route::get('/movies/{id}/credits',      [CreditController::class, 'show']);
     Route::get('/movies/{id}/similar',      [MovieController::class, 'similar']);
     Route::get('/movies/{id}/videos',       [MovieController::class, 'videos']);
     Route::get('/movies/{id}/reviews',      [ReviewController::class, 'index']);
-    Route::get('/movies/{id}/reviews',      [App\Http\Controllers\Api\ReviewController::class, 'index']);
 
     // ── Cinemas & Rooms ───────────────────────────────────────────────────────
     Route::get('/cinemas',          [CinemaController::class, 'index']);
@@ -132,6 +133,10 @@ Route::prefix('v1')->group(function () {
         // Bookings
         Route::get('bookings', [\App\Http\Controllers\Api\Admin\BookingController::class, 'index']);
         Route::get('bookings/{id}', [\App\Http\Controllers\Api\Admin\BookingController::class, 'show']);
+
+        // Movie Reviews
+        Route::get('reviews', [\App\Http\Controllers\Api\Admin\MovieReviewController::class, 'index']);
+        Route::delete('reviews/{id}', [\App\Http\Controllers\Api\Admin\MovieReviewController::class, 'destroy']);
     });
 
 }); // End of v1 prefix
