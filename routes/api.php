@@ -48,6 +48,9 @@ Route::prefix('v1')->group(function () {
         
         // ── Reviews ───────────────────────────────────────────────────────────────
         Route::post('/movies/{id}/reviews', [App\Http\Controllers\Api\ReviewController::class, 'store']);
+
+        // ── Loyalty & Rewards ──────────────────────────────────────────────────────
+        Route::get('/users/points-history', [\App\Http\Controllers\Api\PointHistoryController::class, 'index']);
     });
 
     // ── Payment Webhooks & Callbacks ──────────────────────────────────────────
@@ -156,6 +159,10 @@ Route::prefix('v1')->group(function () {
 
         // Persons
         Route::apiResource('persons', \App\Http\Controllers\Api\Admin\PersonController::class);
+
+        // Payments & Refunds
+        Route::get('payments', [\App\Http\Controllers\Api\Admin\PaymentController::class, 'index']);
+        Route::post('payments/{id}/refund', [\App\Http\Controllers\Api\Admin\PaymentController::class, 'refund']);
     });
 
 }); // End of v1 prefix

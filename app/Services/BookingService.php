@@ -110,6 +110,20 @@ class BookingService
 
             $booking->update(['booking_status' => 'completed']);
 
+            // Cộng điểm tích lũy & ghi nhận lịch sử
+            $user = $booking->user;
+            $earnedPoints = (int) round($booking->total_amount / 10000);
+            if ($earnedPoints > 0) {
+                $user->increment('point', $earnedPoints);
+
+                \App\Models\PointHistory::create([
+                    'user_id'    => $user->user_id,
+                    'booking_id' => $booking->booking_id,
+                    'amount'     => $earnedPoints,
+                    'action'     => 'earn_booking',
+                ]);
+            }
+
             $scheduleSeatIds = BookingSeat::where('booking_id', $booking->booking_id)->pluck('schedule_seat_id');
             ScheduleSeat::whereIn('schedule_seat_id', $scheduleSeatIds)->update(['status' => 'booked']);
 

@@ -19,6 +19,55 @@ class BookingSeeder extends Seeder
         $users = User::all();
         if ($users->count() === 0) return;
 
+        // Seed điểm thưởng thành viên và các sự kiện mẫu
+        foreach ($users as $u) {
+            // 1. Thưởng chào mừng thành viên mới
+            \App\Models\PointHistory::create([
+                'user_id'    => $u->user_id,
+                'booking_id' => null,
+                'amount'     => 100,
+                'action'     => 'earn_register',
+                'created_at' => Carbon::now()->subDays(30),
+            ]);
+            $u->increment('point', 100);
+
+            // 2. Thưởng sinh nhật (ngẫu nhiên)
+            if (rand(0, 1)) {
+                \App\Models\PointHistory::create([
+                    'user_id'    => $u->user_id,
+                    'booking_id' => null,
+                    'amount'     => 50,
+                    'action'     => 'earn_birthday',
+                    'created_at' => Carbon::now()->subDays(15),
+                ]);
+                $u->increment('point', 50);
+            }
+
+            // 3. Quy đổi Voucher (ngẫu nhiên)
+            if (rand(0, 1)) {
+                \App\Models\PointHistory::create([
+                    'user_id'    => $u->user_id,
+                    'booking_id' => null,
+                    'amount'     => -30,
+                    'action'     => 'spend_voucher',
+                    'created_at' => Carbon::now()->subDays(10),
+                ]);
+                $u->decrement('point', 30);
+            }
+
+            // 4. Quy đổi Combo (ngẫu nhiên)
+            if (rand(0, 1)) {
+                \App\Models\PointHistory::create([
+                    'user_id'    => $u->user_id,
+                    'booking_id' => null,
+                    'amount'     => -20,
+                    'action'     => 'spend_combo',
+                    'created_at' => Carbon::now()->subDays(5),
+                ]);
+                $u->decrement('point', 20);
+            }
+        }
+
         // Lấy 20 suất chiếu ngẫu nhiên (bao gồm cả quá khứ và tương lai)
         $schedules = Schedule::inRandomOrder()->limit(20)->get();
 
@@ -76,8 +125,19 @@ class BookingSeeder extends Seeder
                     'created_at'     => clone $bookingDate,
                 ]);
 
-                // Cộng điểm thưởng
-                $user->increment('point', round($totalAmt / 10000));
+                // Cộng điểm thưởng & ghi nhận lịch sử
+                $points = (int) round($totalAmt / 10000);
+                if ($points > 0) {
+                    $user->increment('point', $points);
+
+                    \App\Models\PointHistory::create([
+                        'user_id'    => $user->user_id,
+                        'booking_id' => $booking->booking_id,
+                        'amount'     => $points,
+                        'action'     => 'earn_booking',
+                        'created_at' => $bookingDate,
+                    ]);
+                }
             }
         }
     }

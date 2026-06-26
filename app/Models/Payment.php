@@ -23,6 +23,7 @@ class Payment extends Model
         'amount'       => 'integer',
         'payment_data' => 'json',
         'paid_at'      => 'datetime',
+        'created_at'   => 'datetime',
     ];
 
     public function booking()
