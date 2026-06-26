@@ -8,17 +8,7 @@ use Illuminate\Support\Facades\DB;
 class DatabaseSeeder extends Seeder
 {
     /**
-     * Seed toàn bộ dữ liệu CineDot theo kiến trúc mới:
-     * - Provinces
-     * - Users
-     * - Genres
-     * - Movies
-     * - Person & Credits
-     * - Reviews
-     * - Cinemas & Rooms & Seats
-     * - Combos & Vouchers
-     * - Schedules & ScheduleSeats (Random date)
-     * - Bookings & Payments
+     * Seed toàn bộ dữ liệu CineDot theo kiến trúc mới
      */
     public function run(): void
     {
@@ -36,10 +26,17 @@ class DatabaseSeeder extends Seeder
             RoomSeatSeeder::class,
             ComboSeeder::class,
             VoucherSeeder::class,
+            BannerSeeder::class,
             ScheduleSeeder::class,
             BookingSeeder::class,
-            BannerSeeder::class,
         ]);
+
+        // Gán cinema_id = 1 cho staff_user
+        $staffUser = \App\Models\User::where('username', 'staff_user')->first();
+        $cinema = \App\Models\Cinema::first();
+        if ($staffUser && $cinema) {
+            $staffUser->update(['cinema_id' => $cinema->cinema_id]);
+        }
         
         echo "=> Tất cả dữ liệu đã được seed thành công!\n";
     }

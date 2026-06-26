@@ -23,16 +23,16 @@ class UpdateComboRequest extends FormRequest
         $comboId = $this->route('combo');
 
         return [
-            'name'        => [
+            'name' => [
                 'nullable',
                 'string',
                 'max:255',
                 Rule::unique('combos', 'name')->ignore($comboId, 'combo_id'),
             ],
             'description' => 'nullable|string',
-            'price'       => 'nullable|integer|min:0',
-            'image_url'   => 'nullable|string|max:500',
-            'is_active'   => 'nullable|boolean',
+            'price' => 'nullable|integer|min:0',
+            'image_url' => 'nullable|string|max:500',
+            'is_active' => 'nullable|boolean',
         ];
     }
 }

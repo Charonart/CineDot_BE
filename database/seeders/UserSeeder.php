@@ -93,6 +93,19 @@ class UserSeeder extends Seeder
                 'phone'    => '0945678901',
                 'point'    => 350,
             ],
+            [
+                'username' => 'staff_user',
+                'password' => Hash::make('password123'),
+                'email'    => 'staff@cinedot.vn',
+                'fullname' => 'Nguyễn Văn Staff',
+                'role'     => 'staff',
+                'avatar'   => 'https://ui-avatars.com/api/?name=Staff&background=4f46e5&color=fff',
+                'birthday' => '1995-05-15',
+                'gender'   => 'male',
+                'province_name' => 'Hà Nội',
+                'phone'    => '0987654321',
+                'point'    => 0,
+            ],
         ];
 
         foreach ($usersData as $ud) {

@@ -31,6 +31,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'phone',
         'point',
         'last_login',
+        'cinema_id',
     ];
 
     /**
@@ -87,5 +88,10 @@ class User extends Authenticatable implements MustVerifyEmail
     public function sendEmailVerificationNotification()
     {
         $this->notify(new \App\Notifications\CustomVerifyEmail());
+    }
+
+    public function cinema()
+    {
+        return $this->belongsTo(Cinema::class, 'cinema_id', 'cinema_id');
     }
 }

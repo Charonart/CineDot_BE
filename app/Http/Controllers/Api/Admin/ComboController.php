@@ -33,10 +33,10 @@ class ComboController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => [
-                'page'         => $combos->currentPage(),
-                'results'      => AdminComboResource::collection($combos->items()),
-                'totalPages'   => $combos->lastPage(),
+            'data' => [
+                'page' => $combos->currentPage(),
+                'results' => AdminComboResource::collection($combos->items()),
+                'totalPages' => $combos->lastPage(),
                 'totalResults' => $combos->total(),
             ]
         ]);
@@ -52,7 +52,7 @@ class ComboController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Tạo combo thành công.',
-            'data'    => new AdminComboResource($combo)
+            'data' => new AdminComboResource($combo)
         ], 201);
     }
 
@@ -65,7 +65,7 @@ class ComboController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => new AdminComboResource($combo)
+            'data' => new AdminComboResource($combo)
         ]);
     }
 
@@ -80,7 +80,7 @@ class ComboController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Cập nhật combo thành công.',
-            'data'    => new AdminComboResource($combo)
+            'data' => new AdminComboResource($combo)
         ]);
     }
 

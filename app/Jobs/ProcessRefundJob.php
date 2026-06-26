@@ -61,7 +61,7 @@ class ProcessRefundJob implements ShouldQueue
             $payment = $booking->payment;
             if ($payment) {
                 $refundAmount = (int) round($booking->total_amount * ($this->refundPercentage / 100));
-                
+
                 // Merge new refund data into existing json metadata
                 $paymentData = $payment->payment_data ?? [];
                 $paymentData['refund_metadata'] = [
@@ -88,7 +88,7 @@ class ProcessRefundJob implements ShouldQueue
             // D. Revert earned loyalty points
             $user = $booking->user;
             $earnedPoints = (int) round($booking->total_amount / 10000);
-            
+
             if ($user && $earnedPoints > 0) {
                 // Lock the user row to prevent race conditions on points updates
                 $user->fresh(); // Reload user

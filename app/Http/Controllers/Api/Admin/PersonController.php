@@ -21,9 +21,9 @@ class PersonController extends Controller
 
         if ($request->has('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('name', 'ilike', '%' . $search . '%')
-                  ->orWhere('original_name', 'ilike', '%' . $search . '%');
+                    ->orWhere('original_name', 'ilike', '%' . $search . '%');
             });
         }
 
@@ -39,10 +39,10 @@ class PersonController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => [
-                'page'         => $persons->currentPage(),
-                'results'      => AdminPersonResource::collection($persons->items()),
-                'totalPages'   => $persons->lastPage(),
+            'data' => [
+                'page' => $persons->currentPage(),
+                'results' => AdminPersonResource::collection($persons->items()),
+                'totalPages' => $persons->lastPage(),
                 'totalResults' => $persons->total(),
             ]
         ]);
@@ -58,7 +58,7 @@ class PersonController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Tạo diễn viên/đạo diễn thành công.',
-            'data'    => new AdminPersonResource($person)
+            'data' => new AdminPersonResource($person)
         ], 201);
     }
 
@@ -71,7 +71,7 @@ class PersonController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => new AdminPersonResource($person)
+            'data' => new AdminPersonResource($person)
         ]);
     }
 
@@ -86,7 +86,7 @@ class PersonController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Cập nhật diễn viên/đạo diễn thành công.',
-            'data'    => new AdminPersonResource($person)
+            'data' => new AdminPersonResource($person)
         ]);
     }
 

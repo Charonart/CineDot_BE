@@ -53,6 +53,11 @@ Route::prefix('v1')->group(function () {
         Route::get('/users/points-history', [\App\Http\Controllers\Api\PointHistoryController::class, 'index']);
         Route::post('/users/exchange-points', [\App\Http\Controllers\Api\PointExchangeController::class, 'exchange']);
         Route::post('/bookings/{id}/cancel', [\App\Http\Controllers\Api\BookingController::class, 'cancel']);
+
+        // ── Staff Routes ──────────────────────────────────────────────────────────
+        Route::prefix('staff')->middleware(['role:staff,admin'])->group(function () {
+            Route::post('bookings/{code}/checkin', [\App\Http\Controllers\Api\Staff\BookingCheckInController::class, 'checkIn']);
+        });
     });
 
     // ── Payment Webhooks & Callbacks ──────────────────────────────────────────

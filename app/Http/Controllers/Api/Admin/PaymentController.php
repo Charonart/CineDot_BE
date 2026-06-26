@@ -31,15 +31,15 @@ class PaymentController extends Controller
 
         if ($request->has('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('transaction_id', 'ilike', '%' . $search . '%')
-                  ->orWhereHas('booking', function($bq) use ($search) {
-                      $bq->where('booking_code', 'ilike', '%' . $search . '%')
-                        ->orWhereHas('user', function($uq) use ($search) {
-                            $uq->where('fullname', 'ilike', '%' . $search . '%')
-                              ->orWhere('email', 'ilike', '%' . $search . '%');
-                        });
-                  });
+                    ->orWhereHas('booking', function ($bq) use ($search) {
+                        $bq->where('booking_code', 'ilike', '%' . $search . '%')
+                            ->orWhereHas('user', function ($uq) use ($search) {
+                                $uq->where('fullname', 'ilike', '%' . $search . '%')
+                                    ->orWhere('email', 'ilike', '%' . $search . '%');
+                            });
+                    });
             });
         }
 
@@ -47,10 +47,10 @@ class PaymentController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => [
-                'page'         => $payments->currentPage(),
-                'results'      => AdminPaymentResource::collection($payments->items()),
-                'totalPages'   => $payments->lastPage(),
+            'data' => [
+                'page' => $payments->currentPage(),
+                'results' => AdminPaymentResource::collection($payments->items()),
+                'totalPages' => $payments->lastPage(),
                 'totalResults' => $payments->total(),
             ]
         ]);
@@ -99,10 +99,10 @@ class PaymentController extends Controller
                     $user->decrement('point', $earnedPoints);
 
                     PointHistory::create([
-                        'user_id'    => $user->user_id,
+                        'user_id' => $user->user_id,
                         'booking_id' => $booking->booking_id,
-                        'amount'     => -$earnedPoints,
-                        'action'     => 'deduct_refund',
+                        'amount' => -$earnedPoints,
+                        'action' => 'deduct_refund',
                     ]);
                 }
             }
@@ -110,7 +110,7 @@ class PaymentController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Hoàn tiền và hủy đơn hàng thành công.',
-                'data'    => new AdminPaymentResource($payment->load('booking.user'))
+                'data' => new AdminPaymentResource($payment->load('booking.user'))
             ]);
         });
     }

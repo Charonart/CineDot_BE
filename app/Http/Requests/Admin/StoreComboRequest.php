@@ -20,11 +20,11 @@ class StoreComboRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name'        => 'required|string|unique:combos,name|max:255',
+            'name' => 'required|string|unique:combos,name|max:255',
             'description' => 'nullable|string',
-            'price'       => 'required|integer|min:0',
-            'image_url'   => 'nullable|string|max:500',
-            'is_active'   => 'boolean',
+            'price' => 'required|integer|min:0',
+            'image_url' => 'nullable|string|max:500',
+            'is_active' => 'boolean',
         ];
     }
 }

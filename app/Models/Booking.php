@@ -17,6 +17,8 @@ class Booking extends Model
         'booking_status',
         'booking_code',
         'notes',
+        'checked_in_at',
+        'checked_in_by',
     ];
 
     protected $casts = [
@@ -57,5 +59,19 @@ class Booking extends Model
     public function payment()
     {
         return $this->hasOne(Payment::class, 'booking_id', 'booking_id');
+    }
+
+    public function checkedInBy()
+    {
+        return $this->belongsTo(User::class, 'checked_in_by', 'user_id');
+    }
+
+    protected static function booted()
+    {
+        static::updated(function ($booking) {
+            if ($booking->isDirty('booking_status') && in_array($booking->booking_status, ['cancelled', 'cancelling'])) {
+                event(new \App\Events\BookingCancelled($booking));
+            }
+        });
     }
 }

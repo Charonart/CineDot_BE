@@ -20,11 +20,17 @@ class SeatService
             })
             ->values();
 
-        // Merge dữ liệu từ Redis để xác định ghế nào đang bị HELD
+        // Lấy danh sách ghế đang giữ từ DB (bookings.booking_status = pending)
+        $pendingSeatIds = \App\Models\BookingSeat::whereHas('booking', function ($query) use ($scheduleId) {
+            $query->where('schedule_id', $scheduleId)
+                  ->where('booking_status', 'pending');
+        })->pluck('schedule_seat_id')->flip()->toArray();
+
+        // Merge dữ liệu từ Redis và DB để xác định ghế nào đang bị HELD
         foreach ($seats as $ss) {
             if ($ss->status === 'available') {
                 $redisKey = "hold:schedule:{$scheduleId}:seat:{$ss->schedule_seat_id}";
-                if (Redis::exists($redisKey)) {
+                if (Redis::exists($redisKey) || isset($pendingSeatIds[$ss->schedule_seat_id])) {
                     $ss->status = 'held';
                 }
             }
