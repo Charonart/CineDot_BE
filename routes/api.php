@@ -141,6 +141,9 @@ Route::prefix('v1')->group(function () {
         // Movie Reviews
         Route::get('reviews', [\App\Http\Controllers\Api\Admin\MovieReviewController::class, 'index']);
         Route::delete('reviews/{id}', [\App\Http\Controllers\Api\Admin\MovieReviewController::class, 'destroy']);
+
+        // Vouchers
+        Route::apiResource('vouchers', \App\Http\Controllers\Api\Admin\VoucherController::class);
     });
 
 }); // End of v1 prefix
