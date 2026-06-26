@@ -44,6 +44,11 @@ class Booking extends Model
         return $this->hasMany(BookingCombo::class, 'booking_id', 'booking_id');
     }
 
+    public function bookingVouchers()
+    {
+        return $this->hasMany(BookingVoucher::class, 'booking_id', 'booking_id');
+    }
+
     public function voucher()
     {
         return $this->belongsTo(Voucher::class, 'voucher_id', 'voucher_id');

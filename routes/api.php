@@ -48,6 +48,11 @@ Route::prefix('v1')->group(function () {
         
         // ── Reviews ───────────────────────────────────────────────────────────────
         Route::post('/movies/{id}/reviews', [App\Http\Controllers\Api\ReviewController::class, 'store']);
+
+        // ── Loyalty & Rewards ──────────────────────────────────────────────────────
+        Route::get('/users/points-history', [\App\Http\Controllers\Api\PointHistoryController::class, 'index']);
+        Route::post('/users/exchange-points', [\App\Http\Controllers\Api\PointExchangeController::class, 'exchange']);
+        Route::post('/bookings/{id}/cancel', [\App\Http\Controllers\Api\BookingController::class, 'cancel']);
     });
 
     // ── Payment Webhooks & Callbacks ──────────────────────────────────────────
@@ -56,6 +61,7 @@ Route::prefix('v1')->group(function () {
 
     // ── Master Data ───────────────────────────────────────────────────────────
     Route::get('/provinces',        [App\Http\Controllers\Api\ProvinceController::class, 'index']);
+    Route::get('/banners',          [\App\Http\Controllers\Api\BannerController::class, 'index']);
     Route::get('/persons/{id}',     [App\Http\Controllers\Api\PersonController::class, 'show']);
     Route::get('/combos',           [App\Http\Controllers\Api\ComboController::class, 'index']);
 
@@ -156,6 +162,13 @@ Route::prefix('v1')->group(function () {
 
         // Persons
         Route::apiResource('persons', \App\Http\Controllers\Api\Admin\PersonController::class);
+
+        // Payments & Refunds
+        Route::get('payments', [\App\Http\Controllers\Api\Admin\PaymentController::class, 'index']);
+        Route::post('payments/{id}/refund', [\App\Http\Controllers\Api\Admin\PaymentController::class, 'refund']);
+
+        // Banners CRUD
+        Route::apiResource('banners', \App\Http\Controllers\Api\Admin\BannerController::class);
     });
 
 }); // End of v1 prefix
