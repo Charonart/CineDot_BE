@@ -147,6 +147,9 @@ Route::prefix('v1')->group(function () {
 
         // Combos
         Route::apiResource('combos', \App\Http\Controllers\Api\Admin\ComboController::class);
+
+        // Provinces
+        Route::apiResource('provinces', \App\Http\Controllers\Api\Admin\ProvinceController::class);
     });
 
 }); // End of v1 prefix
