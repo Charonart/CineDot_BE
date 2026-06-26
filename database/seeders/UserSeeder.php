@@ -111,7 +111,34 @@ class UserSeeder extends Seeder
             $ud['updated_at'] = $createdAt;
             $ud['last_login'] = $lastLogin;
             
-            User::create($ud);
+            $user = User::create($ud);
+
+            // Seed User Tiers
+            if ($user->username === 'admin') {
+                \App\Models\UserTier::create([
+                    'user_id' => $user->user_id,
+                    'tier' => 'vip',
+                    'discount_percent' => 20
+                ]);
+            } elseif ($user->username === 'lequy_admin') {
+                \App\Models\UserTier::create([
+                    'user_id' => $user->user_id,
+                    'tier' => 'super_vip',
+                    'discount_percent' => 40
+                ]);
+            } else {
+                $tier = 'member';
+                $discount = 0;
+                if ($user->username === 'minh_tran') {
+                    $tier = 'vip';
+                    $discount = 20;
+                }
+                \App\Models\UserTier::create([
+                    'user_id' => $user->user_id,
+                    'tier' => $tier,
+                    'discount_percent' => $discount
+                ]);
+            }
         }
     }
 }

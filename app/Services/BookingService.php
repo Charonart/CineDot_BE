@@ -124,6 +124,18 @@ class BookingService
                 ]);
             }
 
+            // Mark point-exchanged vouchers as used
+            $appliedVoucherIds = \App\Models\BookingVoucher::where('booking_id', $booking->booking_id)->pluck('voucher_id');
+            if ($appliedVoucherIds->isNotEmpty()) {
+                \App\Models\UserVoucher::where('user_id', $booking->user_id)
+                    ->whereIn('voucher_id', $appliedVoucherIds)
+                    ->where('is_used', false)
+                    ->update([
+                        'is_used' => true,
+                        'used_at' => now()
+                    ]);
+            }
+
             $scheduleSeatIds = BookingSeat::where('booking_id', $booking->booking_id)->pluck('schedule_seat_id');
             ScheduleSeat::whereIn('schedule_seat_id', $scheduleSeatIds)->update(['status' => 'booked']);
 

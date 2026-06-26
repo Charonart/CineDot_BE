@@ -18,11 +18,16 @@ class Voucher extends Model
         'valid_until',
         'usage_limit',
         'is_active',
+        'points_cost',
+        'voucher_type',
+        'combinable_rules',
     ];
 
     protected $casts = [
         'valid_from' => 'datetime',
         'valid_until' => 'datetime',
         'is_active' => 'boolean',
+        'points_cost' => 'integer',
+        'combinable_rules' => 'array',
     ];
 }

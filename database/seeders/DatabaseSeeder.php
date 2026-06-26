@@ -38,6 +38,7 @@ class DatabaseSeeder extends Seeder
             VoucherSeeder::class,
             ScheduleSeeder::class,
             BookingSeeder::class,
+            BannerSeeder::class,
         ]);
         
         echo "=> Tất cả dữ liệu đã được seed thành công!\n";

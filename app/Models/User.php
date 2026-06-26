@@ -69,6 +69,16 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(Booking::class, 'user_id', 'user_id');
     }
 
+    public function userTier()
+    {
+        return $this->hasOne(UserTier::class, 'user_id', 'user_id');
+    }
+
+    public function userVouchers()
+    {
+        return $this->hasMany(UserVoucher::class, 'user_id', 'user_id');
+    }
+
     public function sendPasswordResetNotification($token)
     {
         $this->notify(new \App\Notifications\CustomResetPassword($token));
