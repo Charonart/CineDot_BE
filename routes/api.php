@@ -150,6 +150,12 @@ Route::prefix('v1')->group(function () {
 
         // Provinces
         Route::apiResource('provinces', \App\Http\Controllers\Api\Admin\ProvinceController::class);
+
+        // Genres
+        Route::apiResource('genres', \App\Http\Controllers\Api\Admin\GenreController::class);
+
+        // Persons
+        Route::apiResource('persons', \App\Http\Controllers\Api\Admin\PersonController::class);
     });
 
 }); // End of v1 prefix
