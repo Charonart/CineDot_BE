@@ -1377,8 +1377,102 @@
                     }
                 }
             ]
+        },
+        {
+            "name": "Admin - Reviews",
+            "item": [
+                {
+                    "name": "List Reviews",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/admin/reviews?movie_id=1&rating=9&search=John&limit=15&page=1",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "admin",
+                                "reviews"
+                            ],
+                            "query": [
+                                {
+                                    "key": "movie_id",
+                                    "value": "1",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "rating",
+                                    "value": "9",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "search",
+                                    "value": "John",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "15",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "page",
+                                    "value": "1",
+                                    "disabled": true
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Delete Review",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/admin/reviews/1",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "admin",
+                                "reviews",
+                                "1"
+                            ]
+                        }
+                    }
+                }
+            ]
         }
     ],
+
     "variable": [
         {
             "key": "base_url",

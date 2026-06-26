@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Review;
+use App\Http\Resources\AdminReviewResource;
 use Illuminate\Http\Request;
 
 class MovieReviewController extends Controller
@@ -20,10 +21,18 @@ class MovieReviewController extends Controller
             $query->where('movie_id', $request->movie_id);
         }
 
+        if ($request->has('user_id')) {
+            $query->where('user_id', $request->user_id);
+        }
+
+        if ($request->has('rating')) {
+            $query->where('rating', $request->rating);
+        }
+
         if ($request->has('search')) {
             $search = $request->search;
             $query->whereHas('user', function($q) use ($search) {
-                $q->where('full_name', 'ilike', '%' . $search . '%')
+                $q->where('fullname', 'ilike', '%' . $search . '%')
                   ->orWhere('email', 'ilike', '%' . $search . '%');
             });
         }
@@ -32,7 +41,12 @@ class MovieReviewController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $reviews,
+            'data'    => [
+                'page'         => $reviews->currentPage(),
+                'results'      => AdminReviewResource::collection($reviews->items()),
+                'totalPages'   => $reviews->lastPage(),
+                'totalResults' => $reviews->total(),
+            ]
         ]);
     }
 
