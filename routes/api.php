@@ -144,6 +144,9 @@ Route::prefix('v1')->group(function () {
 
         // Vouchers
         Route::apiResource('vouchers', \App\Http\Controllers\Api\Admin\VoucherController::class);
+
+        // Combos
+        Route::apiResource('combos', \App\Http\Controllers\Api\Admin\ComboController::class);
     });
 
 }); // End of v1 prefix
