@@ -16,6 +16,8 @@ return new class extends Migration
             $table->enum('booking_status', ['pending', 'confirmed', 'cancelled', 'completed'])->default('pending');
             $table->string('booking_code')->unique();
             $table->text('notes')->nullable();
+            $table->foreignId('voucher_id')->nullable()->constrained('vouchers', 'voucher_id')->nullOnDelete();
+            $table->integer('discount_amount')->default(0);
             $table->timestamps();
 
             $table->foreign('user_id')->references('user_id')->on('users')->onDelete('cascade');

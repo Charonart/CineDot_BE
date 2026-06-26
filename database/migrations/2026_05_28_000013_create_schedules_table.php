@@ -21,6 +21,11 @@ return new class extends Migration
 
             $table->foreign('movie_id')->references('id')->on('movies')->onDelete('cascade');
             $table->foreign('room_id')->references('room_id')->on('rooms')->onDelete('cascade');
+
+            $table->index('schedule_date', 'idx_schedules_date');
+            $table->index('movie_id', 'idx_schedules_movie_id');
+            $table->index('room_id', 'idx_schedules_room_id');
+            $table->index(['schedule_date', 'movie_id'], 'idx_schedules_date_movie');
         });
     }
 

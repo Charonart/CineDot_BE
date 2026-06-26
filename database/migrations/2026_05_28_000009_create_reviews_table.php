@@ -20,6 +20,9 @@ return new class extends Migration
             $table->foreign('movie_id')->references('id')->on('movies')->onDelete('cascade');
 
             $table->unique(['user_id', 'movie_id']);
+            
+            $table->index('movie_id', 'idx_reviews_movie_id');
+            $table->index(['movie_id', 'rating'], 'idx_reviews_movie_rating');
         });
     }
 

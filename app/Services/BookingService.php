@@ -92,6 +92,9 @@ class BookingService
                 \App\Models\BookingCombo::create($cData);
             }
 
+            // Đẩy Job hủy đơn tự động sau 10 phút nếu không thanh toán
+            \App\Jobs\CancelExpiredBookingJob::dispatch($booking->booking_id)->delay(now()->addMinutes(10));
+
             return $booking->load(['schedule.movie', 'bookingSeats.scheduleSeat.seat', 'bookingCombos.combo']);
         });
     }
@@ -114,6 +117,9 @@ class BookingService
             foreach ($scheduleSeatIds as $seatId) {
                 Redis::del("hold:schedule:{$booking->schedule_id}:seat:{$seatId}");
             }
+
+            // Gửi email xác nhận
+            \App\Jobs\SendBookingEmailJob::dispatch($booking);
 
             return $booking;
         });
