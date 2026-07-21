@@ -5,16 +5,18 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
-class GenreSeeder extends Seeder
+class VideoSeeder extends Seeder
 {
     public function run(): void
     {
         $json = file_get_contents(base_path('cinedot_data.json'));
         $data = json_decode($json, true);
-        $genres = $data['genres'] ?? [];
+        $videos = $data['videos'] ?? [];
 
-        if (!empty($genres)) {
-            DB::table('genres')->insert($genres);
+        if (!empty($videos)) {
+            foreach (array_chunk($videos, 200) as $chunk) {
+                DB::table('videos')->insert($chunk);
+            }
         }
     }
 }
