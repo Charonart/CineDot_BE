@@ -12,9 +12,9 @@ class PricingRuleSeeder extends Seeder
         $rules = [
             [
                 'pricing_rule_id' => 1,
-                'name' => 'Phụ thu Cuối Tuần',
+                'name' => 'Phụ thu cuối tuần',
                 'rule_category' => 'weekend_surcharge',
-                'conditions' => json_encode(['days' => ['Saturday', 'Sunday']]),
+                'conditions' => json_encode(['days' => ['Saturday', 'Sunday'], 'time_from' => '18:00', 'time_to' => '23:00']),
                 'modifier_type' => 'fixed_amount',
                 'modifier_value' => 10000.00,
                 'priority' => 1,

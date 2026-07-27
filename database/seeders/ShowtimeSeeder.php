@@ -14,6 +14,9 @@ class ShowtimeSeeder extends Seeder
             return;
         }
 
+        $room1Matrix = DB::table('rooms')->where('room_id', 1)->value('seat_matrix');
+        $room2Matrix = DB::table('rooms')->where('room_id', 2)->value('seat_matrix');
+
         $movie1 = $movieIds[0];
         $movie2 = isset($movieIds[1]) ? $movieIds[1] : $movie1;
 
@@ -24,7 +27,7 @@ class ShowtimeSeeder extends Seeder
                 'movie_id' => $movie1,
                 'showtime_start' => '2026-07-25 18:00:00',
                 'showtime_end' => '2026-07-25 20:10:00',
-                'layout_snaps' => json_encode(['version' => 1]),
+                'layout_snaps' => $room1Matrix,
                 'base_price' => 90000.00,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -35,7 +38,7 @@ class ShowtimeSeeder extends Seeder
                 'movie_id' => $movie2,
                 'showtime_start' => '2026-07-25 19:30:00',
                 'showtime_end' => '2026-07-25 21:15:00',
-                'layout_snaps' => json_encode(['version' => 1]),
+                'layout_snaps' => $room2Matrix,
                 'base_price' => 80000.00,
                 'created_at' => now(),
                 'updated_at' => now(),
