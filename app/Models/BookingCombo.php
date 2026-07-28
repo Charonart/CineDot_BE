@@ -15,6 +15,16 @@ class BookingCombo extends Model
         'price_at_booking',
     ];
 
+    protected $casts = [
+        'quantity'        => 'integer',
+        'price_at_booking' => 'decimal:2',
+    ];
+
+    public function booking()
+    {
+        return $this->belongsTo(Booking::class, 'booking_id', 'booking_id');
+    }
+
     public function combo()
     {
         return $this->belongsTo(Combo::class, 'combo_id', 'combo_id');

@@ -5,15 +5,17 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Str;
 
 class Movie extends Model
 {
     use HasFactory, SoftDeletes;
 
+    protected $table = 'movies';
+    protected $primaryKey = 'movie_id';
+
     protected $fillable = [
-        'title',
         'slug',
+        'title',
         'original_title',
         'overview',
         'release_date',
@@ -23,60 +25,59 @@ class Movie extends Model
         'popularity',
         'backdrop_path',
         'poster_path',
-        'duration_minutes',
+        'duration',
         'status',
     ];
 
     protected $casts = [
-        'adult'            => 'boolean',
-        'video'            => 'boolean',
-        'popularity'       => 'decimal:3',
-        'duration_minutes' => 'integer',
-        'release_date'     => 'string',
+        'adult'        => 'boolean',
+        'video'        => 'boolean',
+        'popularity'   => 'decimal:3',
+        'duration'     => 'integer',
+        'release_date' => 'string',
     ];
-
 
     public function genres()
     {
         return $this->belongsToMany(Genre::class, 'movie_genres', 'movie_id', 'genre_id');
     }
 
-    /** Credits (all) */
+    /** Tất cả credits (cast + crew) */
     public function credits()
     {
-        return $this->hasMany(Credit::class, 'movie_id', 'id');
+        return $this->hasMany(Credit::class, 'movie_id', 'movie_id');
     }
 
-    /** Danh sách diễn viên (cast) qua credits table */
+    /** Danh sách diễn viên (cast) qua credits */
     public function castCredits()
     {
-        return $this->hasMany(Credit::class, 'movie_id', 'id')
+        return $this->hasMany(Credit::class, 'movie_id', 'movie_id')
                     ->where('credit_type', 'cast')
                     ->orderBy('order');
     }
 
-    /** Danh sách crew qua credits table */
+    /** Danh sách crew qua credits */
     public function crewCredits()
     {
-        return $this->hasMany(Credit::class, 'movie_id', 'id')
+        return $this->hasMany(Credit::class, 'movie_id', 'movie_id')
                     ->where('credit_type', 'crew');
     }
 
-    /** Reviews */
+    /** Đánh giá */
     public function reviews()
     {
-        return $this->hasMany(Review::class, 'movie_id', 'id');
+        return $this->hasMany(Review::class, 'movie_id', 'movie_id');
     }
 
-    /** Videos */
+    /** Video trailer */
     public function videos()
     {
-        return $this->hasMany(Video::class, 'movie_id', 'id');
+        return $this->hasMany(Video::class, 'movie_id', 'movie_id');
     }
 
-    /** Lịch chiếu */
-    public function schedules()
+    /** Suất chiếu */
+    public function showtimes()
     {
-        return $this->hasMany(Schedule::class, 'movie_id', 'id');
+        return $this->hasMany(Showtime::class, 'movie_id', 'movie_id');
     }
 }

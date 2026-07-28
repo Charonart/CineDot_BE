@@ -20,6 +20,8 @@ class User extends Authenticatable implements MustVerifyEmail
      * @var array<int, string>
      */
     protected $fillable = [
+        'tier_id',
+        'role_id',
         'username',
         'password',
         'email',
@@ -29,9 +31,9 @@ class User extends Authenticatable implements MustVerifyEmail
         'gender',
         'province_id',
         'phone',
-        'point',
+        'total_points',
+        'email_verified_at',
         'last_login',
-        'cinema_id',
     ];
 
     /**
@@ -49,15 +51,26 @@ class User extends Authenticatable implements MustVerifyEmail
      * @var array<string, string>
      */
     protected $casts = [
-        'password'   => 'hashed',
-        'birthday'   => 'date',
-        'last_login' => 'datetime',
-        'point'      => 'integer',
+        'password'          => 'hashed',
+        'birthday'          => 'date',
+        'last_login'        => 'datetime',
+        'email_verified_at' => 'datetime',
+        'total_points'      => 'integer',
     ];
 
     public function province()
     {
         return $this->belongsTo(Province::class, 'province_id', 'province_id');
+    }
+
+    public function role()
+    {
+        return $this->belongsTo(Role::class, 'role_id', 'role_id');
+    }
+
+    public function userTier()
+    {
+        return $this->belongsTo(UserTier::class, 'tier_id', 'user_tier_id');
     }
 
     public function reviews()
@@ -70,14 +83,14 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(Booking::class, 'user_id', 'user_id');
     }
 
-    public function userTier()
-    {
-        return $this->hasOne(UserTier::class, 'user_id', 'user_id');
-    }
-
     public function userVouchers()
     {
         return $this->hasMany(UserVoucher::class, 'user_id', 'user_id');
+    }
+
+    public function pointHistories()
+    {
+        return $this->hasMany(PointHistory::class, 'user_id', 'user_id');
     }
 
     public function sendPasswordResetNotification($token)
@@ -88,10 +101,5 @@ class User extends Authenticatable implements MustVerifyEmail
     public function sendEmailVerificationNotification()
     {
         $this->notify(new \App\Notifications\CustomVerifyEmail());
-    }
-
-    public function cinema()
-    {
-        return $this->belongsTo(Cinema::class, 'cinema_id', 'cinema_id');
     }
 }

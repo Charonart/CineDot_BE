@@ -16,7 +16,7 @@ return new class extends Migration
             $table->json('price_breakdown')->nullable();
             $table->decimal('final_amount', 12, 2)->default(0);
             $table->decimal('discount_amount', 12, 2)->default(0);
-            $table->enum('booking_status', ['pending', 'paid', 'confirmed', 'cancelled', 'refunded', 'completed'])->default('pending');
+            $table->enum('booking_status', ['pending', 'paid', 'confirmed', 'cancelled', 'cancelling', 'refunded', 'completed'])->default('pending');
             $table->string('booking_code')->unique();
             $table->text('notes')->nullable();
             $table->timestamps();

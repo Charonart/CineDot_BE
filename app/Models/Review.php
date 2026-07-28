@@ -14,10 +14,14 @@ class Review extends Model
         'movie_id',
         'rating',
         'comment',
+        'status',
+        'is_spoiler',
     ];
 
     protected $casts = [
-        'rating' => 'decimal:1',
+        'rating'     => 'decimal:1',
+        'is_spoiler' => 'boolean',
+        'created_at' => 'datetime',
     ];
 
     public function user()
@@ -27,6 +31,6 @@ class Review extends Model
 
     public function movie()
     {
-        return $this->belongsTo(Movie::class, 'movie_id', 'id');
+        return $this->belongsTo(Movie::class, 'movie_id', 'movie_id');
     }
 }

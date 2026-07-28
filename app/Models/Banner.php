@@ -10,6 +10,7 @@ class Banner extends Model
     protected $primaryKey = 'banner_id';
 
     protected $fillable = [
+        'campaign_id',
         'title',
         'image_url',
         'link_url',
@@ -21,4 +22,9 @@ class Banner extends Model
         'order'     => 'integer',
         'is_active' => 'boolean',
     ];
+
+    public function campaign()
+    {
+        return $this->belongsTo(Campaign::class, 'campaign_id', 'campaign_id');
+    }
 }

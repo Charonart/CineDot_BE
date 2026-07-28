@@ -7,11 +7,16 @@ use Illuminate\Database\Eloquent\Model;
 class BookingVoucher extends Model
 {
     protected $table = 'booking_vouchers';
+    protected $primaryKey = 'booking_voucher_id';
 
     protected $fillable = [
         'booking_id',
         'voucher_id',
         'discount_amount_applied',
+    ];
+
+    protected $casts = [
+        'discount_amount_applied' => 'decimal:2',
     ];
 
     public function booking()
