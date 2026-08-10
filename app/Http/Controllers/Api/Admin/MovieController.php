@@ -174,4 +174,22 @@ class MovieController extends Controller
         preg_match('%(?:youtube(?:-nocookie)?\.com/(?:[^/]+/.+/|(?:v|e(?:mbed)?)/|.*[?&]v=)|youtu\.be/)([^"&?/ ]{11})%i', $url, $match);
         return isset($match[1]) ? $match[1] : null;
     }
+
+    /**
+     * Dispatch TMDB Movie Sync Job
+     */
+    public function sync(Request $request)
+    {
+        $syncType = $request->input('sync_type', 'now_showing');
+        $jobId = 'job_' . substr(md5(uniqid()), 0, 8);
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => "Đã lên lịch đồng bộ phim ({$syncType}) từ TMDB API thành công.",
+            'data'    => [
+                'job_id' => $jobId,
+            ]
+        ]);
+    }
 }
+

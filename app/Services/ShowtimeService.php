@@ -2,7 +2,8 @@
 
 namespace App\Services;
 
-use App\Models\Schedule;
+use App\Models\Movie;
+use App\Models\Showtime;
 
 class ShowtimeService
 {
@@ -10,17 +11,22 @@ class ShowtimeService
     {
         $date = $filters['date'] ?? now()->toDateString();
         
-        $query = Schedule::with(['movie.genres', 'room.cinema.province'])
-            ->withCount(['scheduleSeats as available_seats' => fn($q) => $q->where('status', 'available')])
-            ->whereDate('schedule_date', $date)
-            ->orderBy('schedule_start');
+        $query = Showtime::with(['movie.genres', 'room.cinema.province'])
+            ->withCount(['showtimeSeats as available_seats' => fn($q) => $q->where('status', 'available')])
+            ->whereDate('showtime_start', $date)
+            ->orderBy('showtime_start');
 
         if (!empty($filters['cinema_id'])) {
             $query->whereHas('room', fn($q) => $q->where('cinema_id', $filters['cinema_id']));
         }
 
-        if (!empty($filters['movie_id'])) {
-            $query->where('movie_id', $filters['movie_id']);
+        $movieParam = $filters['movie_slug'] ?? $filters['movie'] ?? $filters['movie_id'] ?? null;
+        if (!empty($movieParam)) {
+            if (is_numeric($movieParam)) {
+                $query->where('movie_id', (int) $movieParam);
+            } else {
+                $query->whereHas('movie', fn($q) => $q->where('slug', $movieParam));
+            }
         }
 
         if (!empty($filters['province'])) {
@@ -28,16 +34,16 @@ class ShowtimeService
             $query->whereHas('room.cinema.province', fn($q) => $q->where('province_name', $province));
         }
 
-        $schedules = $query->get();
+        $showtimes = $query->get();
 
-        return $schedules->groupBy('movie_id')->map(function ($items) {
+        return $showtimes->groupBy('movie_id')->map(function ($items) {
             $movie = $items->first()->movie;
             
             $cinemaGroups = $items->groupBy(fn($s) => $s->room->cinema_id)->map(function ($cinemaItems) {
                 $cinema = $cinemaItems->first()->room->cinema;
                 return [
                     'cinema' => $cinema,
-                    'times'  => $cinemaItems->values()
+                    'times'  => \App\Http\Resources\ShowtimeResource::collection($cinemaItems->values())
                 ];
             })->values();
 
@@ -48,33 +54,36 @@ class ShowtimeService
         })->values();
     }
 
-    public function getShowtimesByMovie(int $movieId, array $filters)
+    public function getShowtimesByMovie($movieIdentifier, array $filters)
     {
-        $query = Schedule::with(['room.cinema.province'])
-            ->withCount(['scheduleSeats as available_seats' => fn($q) => $q->where('status', 'available')])
-            ->where('movie_id', $movieId)
-            ->orderBy('schedule_date')
-            ->orderBy('schedule_start');
+        $movie = is_numeric($movieIdentifier)
+            ? Movie::findOrFail((int) $movieIdentifier)
+            : Movie::where('slug', $movieIdentifier)->firstOrFail();
+
+        $query = Showtime::with(['room.cinema.province'])
+            ->withCount(['showtimeSeats as available_seats' => fn($q) => $q->where('status', 'available')])
+            ->where('movie_id', $movie->movie_id)
+            ->orderBy('showtime_start');
 
         if (!empty($filters['date'])) {
-            $query->whereDate('schedule_date', $filters['date']);
+            $query->whereDate('showtime_start', $filters['date']);
         } else {
-            $query->whereDate('schedule_date', '>=', now()->toDateString());
+            $query->whereDate('showtime_start', '>=', now()->toDateString());
         }
 
         if (!empty($filters['cinema_id'])) {
             $query->whereHas('room', fn($q) => $q->where('cinema_id', $filters['cinema_id']));
         }
 
-        $schedules = $query->get();
+        $showtimes = $query->get();
 
-        return $schedules->groupBy(fn($s) => $s->schedule_date->format('Y-m-d'))
+        return $showtimes->groupBy(fn($s) => $s->showtime_start ? $s->showtime_start->format('Y-m-d') : '')
             ->map(function ($dateItems, $date) {
                 $cinemaGroups = $dateItems->groupBy(fn($s) => $s->room->cinema_id)->map(function ($cinemaItems) {
                     $cinema = $cinemaItems->first()->room->cinema;
                     return [
                         'cinema' => $cinema,
-                        'times'  => $cinemaItems->values()
+                        'times'  => \App\Http\Resources\ShowtimeResource::collection($cinemaItems->values())
                     ];
                 })->values();
 
@@ -87,8 +96,8 @@ class ShowtimeService
     
     public function getShowtimeDetail(int $id)
     {
-        return Schedule::with(['movie.genres', 'room.cinema.province'])
-            ->withCount(['scheduleSeats as available_seats' => fn($q) => $q->where('status', 'available')])
+        return Showtime::with(['movie.genres', 'room.cinema.province'])
+            ->withCount(['showtimeSeats as available_seats' => fn($q) => $q->where('status', 'available')])
             ->findOrFail($id);
     }
 }

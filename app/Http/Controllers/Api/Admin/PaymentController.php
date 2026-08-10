@@ -86,10 +86,11 @@ class PaymentController extends Controller
             $booking->update(['booking_status' => 'cancelled']);
 
             // 3. Giải phóng ghế
-            $scheduleSeatIds = BookingSeat::where('booking_id', $booking->booking_id)->pluck('schedule_seat_id');
-            if ($scheduleSeatIds->count() > 0) {
-                ScheduleSeat::whereIn('schedule_seat_id', $scheduleSeatIds)->update(['status' => 'available']);
+            $showtimeSeatIds = BookingSeat::where('booking_id', $booking->booking_id)->pluck('showtime_seat_id');
+            if ($showtimeSeatIds->count() > 0) {
+                \App\Models\ShowtimeSeat::whereIn('showtime_seat_id', $showtimeSeatIds)->update(['status' => 'available']);
             }
+
 
             // 4. Thu hồi điểm thưởng của user
             $user = $booking->user;

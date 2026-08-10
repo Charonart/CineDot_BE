@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class HoldSeatsRequest extends FormRequest
+class CalculateSummaryRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -13,7 +13,6 @@ class HoldSeatsRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        // Support legacy schedule_id / schedule_seat_ids if passed
         if (!$this->has('showtime_id') && $this->has('schedule_id')) {
             $this->merge(['showtime_id' => $this->input('schedule_id')]);
         }
@@ -33,13 +32,6 @@ class HoldSeatsRequest extends FormRequest
             'combos.*.quantity'   => ['required_with:combos', 'integer', 'min:1'],
             'voucher_code'        => ['nullable', 'string'],
             'points_used'         => ['nullable', 'integer', 'min:0'],
-        ];
-    }
-    
-    public function messages(): array
-    {
-        return [
-            'showtime_seat_ids.max' => 'Bạn chỉ được đặt tối đa 8 ghế cho mỗi giao dịch.',
         ];
     }
 }

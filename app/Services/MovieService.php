@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\Movie;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class MovieService
 {
@@ -13,12 +12,21 @@ class MovieService
             ->withAvg('reviews', 'rating')
             ->withCount('reviews');
 
+        if (!empty($filters['status'])) {
+            $status = strtolower($filters['status']);
+            if ($status === 'coming_soon' || $status === 'upcoming') {
+                $query->whereIn('status', ['upcoming', 'coming_soon']);
+            } else {
+                $query->where('status', $status);
+            }
+        }
+
         if (!empty($filters['category'])) {
-            $category = $filters['category'];
-            if ($category === 'now-showing') {
+            $category = strtolower($filters['category']);
+            if ($category === 'now-showing' || $category === 'now_showing') {
                 $query->where('status', 'now_showing');
-            } elseif ($category === 'coming-soon') {
-                $query->where('status', 'coming_soon');
+            } elseif ($category === 'coming-soon' || $category === 'coming_soon' || $category === 'upcoming') {
+                $query->whereIn('status', ['upcoming', 'coming_soon']);
             }
         }
 
@@ -33,7 +41,7 @@ class MovieService
         }
 
         $perPage = $filters['limit'] ?? ($filters['per_page'] ?? 20);
-        return $query->paginate($perPage);
+        return $query->orderByDesc('created_at')->paginate($perPage);
     }
 
     public function getTrending(int $perPage = 20)
@@ -87,7 +95,7 @@ class MovieService
 
     public function getDetailBySlug(string $slug)
     {
-        return Movie::with('genres')
+        return Movie::with(['genres', 'castCredits.person', 'crewCredits.person', 'videos'])
             ->withAvg('reviews', 'rating')
             ->withCount('reviews')
             ->where('slug', $slug)
@@ -96,25 +104,25 @@ class MovieService
 
     public function getDetail(int $id)
     {
-        return Movie::with('genres')
+        return Movie::with(['genres', 'castCredits.person', 'crewCredits.person', 'videos'])
             ->withAvg('reviews', 'rating')
             ->withCount('reviews')
             ->findOrFail($id);
     }
+
 
     public function getSimilar(int $movieId, int $perPage = 20)
     {
         $movie = Movie::with('genres')->findOrFail($movieId);
         $genreIds = $movie->genres->pluck('genre_id')->toArray();
 
-        // Cải tiến: Đếm số lượng thể loại trùng, sắp xếp theo số lượng trùng giảm dần
         return Movie::with('genres')
             ->withAvg('reviews', 'rating')
             ->withCount(['genres as matching_genres_count' => function ($q) use ($genreIds) {
                 $q->whereIn('genres.genre_id', $genreIds);
             }])
             ->having('matching_genres_count', '>', 0)
-            ->where('id', '!=', $movieId)
+            ->where('movie_id', '!=', $movieId)
             ->orderByDesc('matching_genres_count')
             ->orderByDesc('reviews_avg_rating')
             ->paginate($perPage);
@@ -131,7 +139,7 @@ class MovieService
                 $q->whereIn('genres.genre_id', $genreIds);
             }])
             ->having('matching_genres_count', '>', 0)
-            ->where('id', '!=', $movie->id)
+            ->where('movie_id', '!=', $movie->movie_id)
             ->orderByDesc('matching_genres_count')
             ->orderByDesc('reviews_avg_rating')
             ->paginate($perPage);

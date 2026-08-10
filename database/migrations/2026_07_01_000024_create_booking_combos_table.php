@@ -14,6 +14,7 @@ return new class extends Migration
             $table->foreignId('combo_id')->constrained('combos', 'combo_id')->cascadeOnDelete();
             $table->integer('quantity')->default(1);
             $table->decimal('price_at_booking', 12, 2);
+            $table->boolean('is_claimed')->default(false);
             $table->timestamps();
         });
     }

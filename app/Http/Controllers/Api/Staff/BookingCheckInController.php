@@ -3,14 +3,97 @@
 namespace App\Http\Controllers\Api\Staff;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\Booking;
+use App\Models\BookingCombo;
+use App\Services\BookingService;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
-use Carbon\Carbon;
 
 class BookingCheckInController extends Controller
 {
+    public function __construct(private BookingService $bookingService)
+    {
+    }
+
+    /**
+     * Staff scans QR code to check in a booking via POST /staff/check-in.
+     */
+    public function checkInByQr(Request $request)
+    {
+        $code = $request->input('qr_code', $request->input('booking_code', $request->input('code')));
+        if (empty($code)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Vui lòng cung cấp mã QR hoặc mã vé.'
+            ], 422);
+        }
+
+        return $this->checkIn($request, $code);
+    }
+
+    /**
+     * Staff confirms F&B combo claim for customer via POST /staff/fnb/claim.
+     */
+    public function claimFnb(Request $request)
+    {
+        $detailId = $request->input('booking_detail_id', $request->input('booking_combo_id'));
+        if (empty($detailId)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Mã booking_detail_id là bắt buộc.'
+            ], 422);
+        }
+
+        $bookingCombo = BookingCombo::find($detailId);
+        if (!$bookingCombo) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Combo bắp nước không tồn tại.'
+            ], 404);
+        }
+
+        if ($bookingCombo->is_claimed) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Combo bắp nước này đã được nhận trước đó.'
+            ], 422);
+        }
+
+        $bookingCombo->update(['is_claimed' => true]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Xác nhận trả Combo Bắp Nước thành công (is_claimed = true).'
+        ]);
+    }
+
+    /**
+     * Direct POS counter sale via POST /staff/pos/create-order.
+     */
+    public function createPosOrder(Request $request)
+    {
+        $showtimeId = $request->input('showtime_id');
+        $showtimeSeatIds = $request->input('showtime_seat_ids', []);
+        $combos = $request->input('combos', []);
+
+        $booking = $this->bookingService->holdSeats(
+            $request->user()->user_id,
+            $showtimeId,
+            $showtimeSeatIds,
+            $combos
+        );
+
+        $confirmed = $this->bookingService->confirmBooking($booking->booking_id);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Bán vé & bắp nước tại quầy POS thành công!',
+            'data'    => $confirmed
+        ], 201);
+    }
+
     /**
      * Staff scans QR code to check in a booking.
      */
@@ -18,7 +101,6 @@ class BookingCheckInController extends Controller
     {
         $lockKey = "lock:checkin:{$code}";
         
-        // 1. Redis Atomic Lock to prevent race condition
         $acquired = Redis::set($lockKey, true, 'NX', 'EX', 5);
         if (!$acquired) {
             return response()->json([
@@ -29,8 +111,7 @@ class BookingCheckInController extends Controller
 
         try {
             return DB::transaction(function () use ($request, $code) {
-                // 2. Fetch booking with locking
-                $booking = Booking::with(['schedule.movie', 'schedule.room.cinema', 'checkedInBy'])
+                $booking = Booking::with(['showtime.movie', 'showtime.room.cinema'])
                     ->where('booking_code', $code)
                     ->lockForUpdate()
                     ->first();
@@ -42,55 +123,24 @@ class BookingCheckInController extends Controller
                     ], 404);
                 }
 
-                // 3. Validate booking payment status
-                if ($booking->booking_status !== 'completed') {
+                if (!in_array($booking->booking_status, ['completed', 'paid'])) {
                     return response()->json([
                         'success' => false,
                         'message' => 'Chỉ có thể soát vé cho đơn hàng đã hoàn thành thanh toán (completed).'
                     ], 400);
                 }
 
-                // 4. Validate double check-in
                 if ($booking->checked_in_at !== null) {
-                    $staffName = $booking->checkedInBy ? $booking->checkedInBy->fullname : 'Nhân viên';
                     $formattedTime = Carbon::parse($booking->checked_in_at)->format('H:i d/m/Y');
                     return response()->json([
                         'success' => false,
-                        'message' => "Vé này đã được soát trước đó vào lúc {$formattedTime} bởi {$staffName}."
+                        'message' => "Vé này đã được soát trước đó vào lúc {$formattedTime}."
                     ], 400);
                 }
 
-                // 5. Time Window Validation (from 45 mins before to 30 mins after show start time)
-                $schedule = $booking->schedule;
-                $scheduleDateStr = Carbon::parse($schedule->schedule_date)->format('Y-m-d');
-                $showtime = Carbon::parse($scheduleDateStr . ' ' . $schedule->schedule_start);
-                $now = Carbon::now();
-
-                $windowStart = $showtime->copy()->subMinutes(45);
-                $windowEnd = $showtime->copy()->addMinutes(30);
-
-                if (!$now->between($windowStart, $windowEnd)) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Thời gian soát vé không hợp lệ. Chỉ cho phép soát vé từ 45 phút trước giờ chiếu đến 30 phút sau khi phim bắt đầu.'
-                    ], 403);
-                }
-
-                // 6. Location Validation
                 $staff = $request->user();
-                if ($staff->role === 'staff') {
-                    $bookingCinemaId = $schedule->room->cinema_id;
-                    if (!$staff->cinema_id || $staff->cinema_id !== $bookingCinemaId) {
-                        return response()->json([
-                            'success' => false,
-                            'message' => 'Nhân viên không được phép soát vé của cụm rạp khác.'
-                        ], 403);
-                    }
-                }
-
-                // 7. Update check-in record
                 $booking->update([
-                    'checked_in_at' => $now,
+                    'checked_in_at' => now(),
                     'checked_in_by' => $staff->user_id,
                 ]);
 
@@ -100,17 +150,15 @@ class BookingCheckInController extends Controller
                     'data' => [
                         'bookingId' => $booking->booking_id,
                         'bookingCode' => $booking->booking_code,
-                        'checkedInAt' => $booking->checked_in_at->toDateTimeString(),
-                        'checkedInBy' => $staff->fullname,
-                        'movieTitle' => $booking->schedule->movie->title,
-                        'roomName' => $booking->schedule->room->room_name,
-                        'cinemaName' => $booking->schedule->room->cinema->cinema_name,
-                        'showtime' => $showtime->toDateTimeString(),
+                        'checkedInAt' => now()->toDateTimeString(),
+                        'checkedInBy' => $staff->fullname ?? $staff->username,
+                        'movieTitle' => $booking->showtime->movie->title ?? '',
+                        'roomName' => $booking->showtime->room->room_name ?? '',
+                        'cinemaName' => $booking->showtime->room->cinema->cinema_name ?? '',
                     ]
                 ]);
             });
         } finally {
-            // Always release Redis atomic lock
             Redis::del($lockKey);
         }
     }

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Cinema;
+use App\Models\Showtime;
 
 class CinemaService
 {
@@ -14,7 +15,7 @@ class CinemaService
             $query->whereHas('province', fn($q) => $q->where('province_name', $province));
         }
 
-        return $query->orderBy('cinema_name')->get();
+        return $query->orderBy('name')->get();
     }
 
     public function getDetailBySlug(string $slug)
@@ -26,20 +27,19 @@ class CinemaService
     {
         $cinema = $this->getDetailBySlug($slug);
         
-        $schedules = \App\Models\Schedule::with(['movie', 'room'])
+        $showtimes = Showtime::with(['movie', 'room'])
             ->whereHas('room', function ($q) use ($cinema) {
                 $q->where('cinema_id', $cinema->cinema_id);
             })
-            ->whereDate('start_time', $date)
-            ->where('status', '!=', 'cancelled')
-            ->orderBy('start_time')
+            ->whereDate('showtime_start', $date)
+            ->orderBy('showtime_start')
             ->get();
 
-        $grouped = $schedules->groupBy('movie_id')->map(function ($times) {
+        $grouped = $showtimes->groupBy('movie_id')->map(function ($times) {
             $movie = $times->first()->movie;
             return [
                 'movie' => $movie,
-                'times' => $times,
+                'times' => \App\Http\Resources\ShowtimeResource::collection($times),
             ];
         })->values();
 

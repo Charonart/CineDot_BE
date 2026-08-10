@@ -12,7 +12,6 @@ class UserSeeder extends Seeder
     {
         $users = [
             [
-                'user_id' => 1,
                 'tier_id' => 4,
                 'role_id' => 1,
                 'province_id' => 1,
@@ -31,7 +30,6 @@ class UserSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
-                'user_id' => 2,
                 'tier_id' => 2,
                 'role_id' => 2,
                 'province_id' => 1,
@@ -50,7 +48,6 @@ class UserSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
-                'user_id' => 3,
                 'tier_id' => 1,
                 'role_id' => 3,
                 'province_id' => 2,
@@ -70,6 +67,8 @@ class UserSeeder extends Seeder
             ],
         ];
 
-        DB::table('users')->insert($users);
+        foreach ($users as $user) {
+            DB::table('users')->insert($user);
+        }
     }
 }

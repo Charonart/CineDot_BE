@@ -1,0 +1,3028 @@
+{
+  "info": {
+    "_postman_id": "cd3450f0-9329-497d-b64f-cfa0f6ebe7e2",
+    "name": "CineDot Core API Specification",
+    "description": "Tài liệu RESTful API chuẩn hóa cho Hệ thống Đặt vé xem phim CineDot (v1.1.0).\n- Tách biệt Static/Dynamic Seat Layout.\n- Pricing Engine hỗ trợ Stacking Discount (Tier + Voucher + Points).\n- Combos (F&B) tách biệt trạng thái nhận hàng (is_claimed).\n- Rules Engine lưu dạng JSON, query bằng whereJsonContains.\nVersion: 1.1.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8000/api/v1",
+      "type": "string",
+      "description": "Local Development Server"
+    },
+    {
+      "key": "bearer_token",
+      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6...",
+      "type": "string",
+      "description": "JWT Access Token for Authorization"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{bearer_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Auth & Profile",
+      "description": "Quản lý đăng nhập, JWT, RBAC và tài khoản người dùng",
+      "item": [
+        {
+          "name": "Đăng ký tài khoản khách hàng mới",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Public API. Mật khẩu được mã hóa Bcrypt. Validation Zod/Laravel.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Nguyen Van A\",\n  \"email\": \"user@cinedot.vn\",\n  \"phone\": \"0901234567\",\n  \"password\": \"Secret123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "201 Created - Register Success",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/auth/register",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "register"
+                  ]
+                },
+                "description": "Public API. Mật khẩu được mã hóa Bcrypt. Validation Zod/Laravel.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Nguyen Van A\",\n  \"email\": \"user@cinedot.vn\",\n  \"phone\": \"0901234567\",\n  \"password\": \"Secret123!\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Đăng ký tài khoản thành công\",\n  \"data\": {\n    \"user_id\": 992,\n    \"name\": \"Nguyen Van A\",\n    \"email\": \"user@cinedot.vn\",\n    \"phone\": \"0901234567\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Đăng nhập hệ thống & Nạp Permissions",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Trả về Access Token (JWT) và danh sách quyền hạn chi tiết.\nBackend lưu mảng permissions vào Redis (Key: user:{id}:permissions, TTL: 60m).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@cinedot.vn\",\n  \"password\": \"Secret123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK - Login Success",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/auth/login",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "login"
+                  ]
+                },
+                "description": "Trả về Access Token (JWT) và danh sách quyền hạn chi tiết.\nBackend lưu mảng permissions vào Redis (Key: user:{id}:permissions, TTL: 60m).",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"user@cinedot.vn\",\n  \"password\": \"Secret123!\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Đăng nhập thành công\",\n  \"data\": {\n    \"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6...\",\n    \"user\": {\n      \"user_id\": 992,\n      \"name\": \"Nguyen Van A\",\n      \"email\": \"user@cinedot.vn\",\n      \"tier\": \"GOLD\",\n      \"avatar_url\": \"https://cdn.cinedot.vn/avatars/user1.jpg\"\n    },\n    \"permissions\": [\n      \"create:booking\",\n      \"view:cinema_report\"\n    ]\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Đăng xuất, thu hồi JWT & Xóa Cache quyền",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "Xóa Redis Key user:{id}:permissions để thu hồi phiên làm việc."
+          },
+          "response": [
+            {
+              "name": "200 OK - Logout Success",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/auth/logout",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "logout"
+                  ]
+                },
+                "description": "Xóa Redis Key user:{id}:permissions để thu hồi phiên làm việc."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Đăng xuất thành công\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Lấy thông tin Profile & Hạng thành viên",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
+            },
+            "description": "Auth User. Trả về thông tin cá nhân và hạng thành viên hiện tại."
+          },
+          "response": [
+            {
+              "name": "200 OK - Profile Info",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/auth/me",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "me"
+                  ]
+                },
+                "description": "Auth User. Trả về thông tin cá nhân và hạng thành viên hiện tại."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"user_id\": 992,\n    \"name\": \"Nguyen Van A\",\n    \"email\": \"user@cinedot.vn\",\n    \"phone\": \"0901234567\",\n    \"tier\": \"GOLD\",\n    \"points\": 12500,\n    \"avatar_url\": \"https://cdn.cinedot.vn/avatars/user1.jpg\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Cập nhật thông tin cá nhân (Tên, SĐT, Avatar)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users/profile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "profile"
+              ]
+            },
+            "description": "Sử dụng PATCH để tối ưu băng thông khi chỉ cập nhật trường dữ liệu thay đổi.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Nguyen Van B\",\n  \"phone\": \"0909876543\",\n  \"avatar_url\": \"https://cdn.cinedot.vn/avatars/user1.jpg\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK - Profile Updated",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/users/profile",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "users",
+                    "profile"
+                  ]
+                },
+                "description": "Sử dụng PATCH để tối ưu băng thông khi chỉ cập nhật trường dữ liệu thay đổi.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Nguyen Van B\",\n  \"phone\": \"0909876543\",\n  \"avatar_url\": \"https://cdn.cinedot.vn/avatars/user1.jpg\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Cập nhật thông tin thành công\",\n  \"data\": {\n    \"user_id\": 992,\n    \"name\": \"Nguyen Van B\",\n    \"phone\": \"0909876543\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Gửi OTP khôi phục mật khẩu",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/forgot-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "forgot-password"
+              ]
+            },
+            "description": "Rate limit 1 request/60s. Gửi OTP qua Email/SMS.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@cinedot.vn\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK - OTP Sent",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/auth/forgot-password",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "forgot-password"
+                  ]
+                },
+                "description": "Rate limit 1 request/60s. Gửi OTP qua Email/SMS.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"user@cinedot.vn\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Link khôi phục mật khẩu đã được gửi vào email của bạn.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Xác thực OTP và đặt lại mật khẩu",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/reset-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "reset-password"
+              ]
+            },
+            "description": "Hash mật khẩu mới trước khi lưu DB.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@cinedot.vn\",\n  \"otp\": \"123456\",\n  \"password\": \"NewSecret123!\",\n  \"password_confirmation\": \"NewSecret123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK - Password Reset Success",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/auth/reset-password",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "reset-password"
+                  ]
+                },
+                "description": "Hash mật khẩu mới trước khi lưu DB.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"user@cinedot.vn\",\n  \"otp\": \"123456\",\n  \"password\": \"NewSecret123!\",\n  \"password_confirmation\": \"NewSecret123!\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Mật khẩu đã được đặt lại thành công.\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Movies & Catalog",
+      "description": "Quản lý danh mục phim, thể loại và đồng bộ TMDB",
+      "item": [
+        {
+          "name": "Danh sách phim (Phân trang, Lọc)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/movies",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "movies"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "NOW_SHOWING"
+                },
+                {
+                  "key": "genre_id",
+                  "value": "1"
+                },
+                {
+                  "key": "search",
+                  "value": "Lật mặt"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "CDN Cached."
+          },
+          "response": [
+            {
+              "name": "200 OK - Movie List",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/movies",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "movies"
+                  ],
+                  "query": [
+                    {
+                      "key": "status",
+                      "value": "NOW_SHOWING"
+                    },
+                    {
+                      "key": "genre_id",
+                      "value": "1"
+                    },
+                    {
+                      "key": "search",
+                      "value": "Lật mặt"
+                    },
+                    {
+                      "key": "page",
+                      "value": "1"
+                    }
+                  ]
+                },
+                "description": "CDN Cached."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"data\": [\n    {\n      \"movie_id\": 101,\n      \"title\": \"Lật Mặt 8\",\n      \"slug\": \"lat-mat-8\",\n      \"poster_path\": \"/posters/latmat8.jpg\",\n      \"duration\": 120,\n      \"status\": \"NOW_SHOWING\"\n    }\n  ],\n  \"pagination\": {\n    \"current_page\": 1,\n    \"total_pages\": 5,\n    \"total_items\": 45\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Chi tiết phim, Trailer, Cast, Đánh giá",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/movies/:slug",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "movies",
+                ":slug"
+              ],
+              "variable": [
+                {
+                  "key": "slug",
+                  "value": "lat-mat-8",
+                  "description": "Path parameter slug"
+                }
+              ]
+            },
+            "description": "Eager loading Credits & Genres."
+          },
+          "response": [
+            {
+              "name": "200 OK - Movie Details",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/movies/:slug",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "movies",
+                    ":slug"
+                  ],
+                  "variable": [
+                    {
+                      "key": "slug",
+                      "value": "lat-mat-8",
+                      "description": "Path parameter slug"
+                    }
+                  ]
+                },
+                "description": "Eager loading Credits & Genres."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"movie_id\": 101,\n    \"title\": \"Lật Mặt 8\",\n    \"slug\": \"lat-mat-8\",\n    \"overview\": \"Bộ phim hành động kịch tính...\",\n    \"genres\": [\n      {\n        \"genre_id\": 1,\n        \"name\": \"Hành Động\"\n      }\n    ],\n    \"credits\": [\n      {\n        \"person_id\": 15,\n        \"name\": \"Lý Hải\",\n        \"job\": \"Director\"\n      }\n    ]\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Danh sách thể loại phim",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/genres",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "genres"
+              ]
+            },
+            "description": "Static Cache 24h."
+          },
+          "response": [
+            {
+              "name": "200 OK - Genre List",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/genres",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "genres"
+                  ]
+                },
+                "description": "Static Cache 24h."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"data\": [\n    {\n      \"genre_id\": 1,\n      \"genre_name\": \"Hành Động\"\n    },\n    {\n      \"genre_id\": 2,\n      \"genre_name\": \"Hài Hước\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Đánh giá (1-5 sao) & Bình luận phim",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/movies/:id/reviews",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "movies",
+                ":id",
+                "reviews"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "101",
+                  "description": "Path parameter id"
+                }
+              ]
+            },
+            "description": "Auth User. Bắt buộc kiểm tra User đã xem phim chưa.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 5,\n  \"comment\": \"Phim hay quá!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "201 Created - Review Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/movies/:id/reviews",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "movies",
+                    ":id",
+                    "reviews"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "101",
+                      "description": "Path parameter id"
+                    }
+                  ]
+                },
+                "description": "Auth User. Bắt buộc kiểm tra User đã xem phim chưa.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"rating\": 5,\n  \"comment\": \"Phim hay quá!\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Đánh giá phim thành công\",\n  \"data\": {\n    \"review_id\": 55,\n    \"rating\": 5,\n    \"comment\": \"Phim hay quá!\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Đồng bộ dữ liệu phim từ TMDB API",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/movies/sync",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "movies",
+                "sync"
+              ]
+            },
+            "description": "RBAC: Yêu cầu quyền `edit:movie`.\nJob chạy ngầm (Queue Worker). Bổ sung tham số sync_type, region, language, tmdb_ids.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sync_type\": \"NOW_PLAYING\",\n  \"region\": \"VN\",\n  \"language\": \"vi-VN\",\n  \"tmdb_ids\": [550, 603]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK - Sync Job Dispatched",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/movies/sync",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "movies",
+                    "sync"
+                  ]
+                },
+                "description": "RBAC: Yêu cầu quyền `edit:movie`.\nJob chạy ngầm (Queue Worker). Bổ sung tham số sync_type, region, language, tmdb_ids.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"sync_type\": \"NOW_PLAYING\",\n  \"region\": \"VN\",\n  \"language\": \"vi-VN\",\n  \"tmdb_ids\": [550, 603]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": \"success\",\n  \"message\": \"Đã lên lịch đồng bộ phim đang chiếu tại VN.\",\n  \"data\": {\n    \"job_id\": \"job_5f8e9a2b\"\n  }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Showtimes & Seats",
+      "description": "Tra cứu suất chiếu, sơ đồ ghế tĩnh (CDN) và trạng thái ghế động (Redis)",
+      "item": [
+        {
+          "name": "Tra cứu danh sách cụm rạp theo Tỉnh/Thành",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/cinemas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cinemas"
+              ],
+              "query": [
+                {
+                  "key": "province_id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": [
+            {
+              "name": "200 OK - Cinema List",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/cinemas",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "cinemas"
+                  ],
+                  "query": [
+                    {
+                      "key": "province_id",
+                      "value": "1"
+                    }
+                  ]
+                },
+                "description": ""
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"data\": [\n    {\n      \"cinema_id\": 1,\n      \"cinema_name\": \"CineDot Landmark 81\",\n      \"address\": \"720A Điện Biên Phủ, P.22, Bình Thạnh\",\n      \"phone\": \"02873001234\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Lịch chiếu phim theo Rạp / Ngày",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/showtimes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "showtimes"
+              ],
+              "query": [
+                {
+                  "key": "movie_id",
+                  "value": "101"
+                },
+                {
+                  "key": "cinema_id",
+                  "value": "1"
+                },
+                {
+                  "key": "date",
+                  "value": "2026-07-27"
+                }
+              ]
+            },
+            "description": "Query Index (movie_id, showtime_start)."
+          },
+          "response": [
+            {
+              "name": "200 OK - Showtime List",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/showtimes",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "showtimes"
+                  ],
+                  "query": [
+                    {
+                      "key": "movie_id",
+                      "value": "101"
+                    },
+                    {
+                      "key": "cinema_id",
+                      "value": "1"
+                    },
+                    {
+                      "key": "date",
+                      "value": "2026-07-27"
+                    }
+                  ]
+                },
+                "description": "Query Index (movie_id, showtime_start)."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"data\": [\n    {\n      \"showtime_id\": 105,\n      \"movie_title\": \"Lật Mặt 8\",\n      \"room_name\": \"Room 1 IMAX\",\n      \"showtime_start\": \"2026-07-27T19:00:00+07:00\",\n      \"base_price\": 80000\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Lấy sơ đồ ghế tĩnh của phòng chiếu (Static Layout)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/rooms/:id/layout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "rooms",
+                ":id",
+                "layout"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "5",
+                  "description": "Path parameter id"
+                }
+              ]
+            },
+            "description": "Dữ liệu tĩnh chứa ID ghế, Loại ghế, Tọa độ (X, Y, Góc).\nNên gọi 1 lần duy nhất và cache ở LocalStorage hoặc CDN."
+          },
+          "response": [
+            {
+              "name": "200 OK - Static Room Layout",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/rooms/:id/layout",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "rooms",
+                    ":id",
+                    "layout"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "5",
+                      "description": "Path parameter id"
+                    }
+                  ]
+                },
+                "description": "Dữ liệu tĩnh chứa ID ghế, Loại ghế, Tọa độ (X, Y, Góc).\nNên gọi 1 lần duy nhất và cache ở LocalStorage hoặc CDN."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"room_id\": 5,\n  \"room_name\": \"Room 1 IMAX\",\n  \"total_seats\": 120,\n  \"seats\": [\n    {\n      \"seat_id\": \"H10\",\n      \"type\": \"VIP\",\n      \"cx\": 100,\n      \"cy\": 200\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Lấy trạng thái ghế Real-time của suất chiếu",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/showtimes/:id/seat-status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "showtimes",
+                ":id",
+                "seat-status"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "105",
+                  "description": "Path parameter id"
+                }
+              ]
+            },
+            "description": "Trả về Object Key-Value (ví dụ: {\"101\": \"BOOKED\"}) trong đó Key là showtime_seat_id."
+          },
+          "response": [
+            {
+              "name": "200 OK - Real-time Seat Status Map",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/showtimes/:id/seat-status",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "showtimes",
+                    ":id",
+                    "seat-status"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "105",
+                      "description": "Path parameter id"
+                    }
+                  ]
+                },
+                "description": "Trả về Object Key-Value (ví dụ: {\"101\": \"BOOKED\"}) trong đó Key là showtime_seat_id."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"101\": \"BOOKED\",\n  \"102\": \"HOLD\",\n  \"103\": \"AVAILABLE\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Booking & Pricing Engine",
+      "description": "Khóa ghế tạm thời, tính toán hóa đơn Pricing Engine và quản lý lịch sử đặt vé",
+      "item": [
+        {
+          "name": "Khóa ghế tạm thời (Giữ ghế 5-10 phút)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/bookings/hold-seats",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bookings",
+                "hold-seats"
+              ]
+            },
+            "description": "RBAC: `create:booking`. Gửi lên mảng `showtime_seat_ids` (Integer ID) để map thẳng vào DB O(1). Atomic Lock.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"showtime_id\": 105,\n  \"showtime_seat_ids\": [\n    101,\n    102\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK - Hold Seats Success",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/bookings/hold-seats",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "bookings",
+                    "hold-seats"
+                  ]
+                },
+                "description": "RBAC: `create:booking`. Gửi lên mảng `showtime_seat_ids` (Integer ID) để map thẳng vào DB O(1). Atomic Lock.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"showtime_id\": 105,\n  \"showtime_seat_ids\": [\n    101,\n    102\n  ]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Đã giữ 2 ghế thành công trong 10 phút\",\n  \"data\": {\n    \"showtime_id\": 105,\n    \"showtime_seat_ids\": [\n      101,\n      102\n    ],\n    \"expires_at\": \"2026-07-27T19:10:00+07:00\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Hủy khóa ghế thủ công khi khách đổi ý",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/bookings/release-seats",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bookings",
+                "release-seats"
+              ]
+            },
+            "description": "RBAC: `create:booking`. Xóa Key trong Redis Hash.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"showtime_id\": 105,\n  \"showtime_seat_ids\": [\n    101,\n    102\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK - Release Seats Success",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/bookings/release-seats",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "bookings",
+                    "release-seats"
+                  ]
+                },
+                "description": "RBAC: `create:booking`. Xóa Key trong Redis Hash.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"showtime_id\": 105,\n  \"showtime_seat_ids\": [\n    101,\n    102\n  ]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Đã hủy khóa ghế thành công\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Tính toán tài chính hóa đơn (Pricing Engine)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/bookings/calculate-summary",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bookings",
+                "calculate-summary"
+              ]
+            },
+            "description": "Hỗ trợ Stacking Discount (Tier Discount -> Voucher Discount -> Point Discount).\nĐảm bảo final_amount >= 0 (is_zero_floor_enforced = true).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"showtime_id\": 105,\n  \"showtime_seat_ids\": [\n    101,\n    102\n  ],\n  \"combos\": [\n    {\n      \"combo_id\": 5,\n      \"quantity\": 1\n    }\n  ],\n  \"voucher_code\": \"MEGA-WEEKEND-50K\",\n  \"points_used\": 10000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK - Pricing Engine Calculation Snapshot",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/bookings/calculate-summary",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "bookings",
+                    "calculate-summary"
+                  ]
+                },
+                "description": "Hỗ trợ Stacking Discount (Tier Discount -> Voucher Discount -> Point Discount).\nĐảm bảo final_amount >= 0 (is_zero_floor_enforced = true).",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"showtime_id\": 105,\n  \"showtime_seat_ids\": [\n    101,\n    102\n  ],\n  \"combos\": [\n    {\n      \"combo_id\": 5,\n      \"quantity\": 1\n    }\n  ],\n  \"voucher_code\": \"MEGA-WEEKEND-50K\",\n  \"points_used\": 10000\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"booking_summary\": {\n    \"booking_code\": \"CINEMA-8A9B2C\",\n    \"showtime_id\": 105,\n    \"user_id\": 992\n  },\n  \"items\": {\n    \"tickets\": [\n      {\n        \"seat_number\": \"H10\",\n        \"seat_type\": \"VIP\",\n        \"base_price\": 80000,\n        \"surcharge\": 20000,\n        \"final_seat_price\": 110000\n      },\n      {\n        \"seat_number\": \"H11\",\n        \"seat_type\": \"VIP\",\n        \"base_price\": 80000,\n        \"surcharge\": 20000,\n        \"final_seat_price\": 110000\n      }\n    ],\n    \"combos\": [\n      {\n        \"combo_id\": 5,\n        \"name\": \"Couple Combo 2 Bắp 2 Nước\",\n        \"unit_price\": 150000,\n        \"quantity\": 1,\n        \"total_combo_price\": 150000\n      }\n    ]\n  },\n  \"financial_breakdown\": {\n    \"subtotal_tickets\": 220000,\n    \"subtotal_combos\": 150000,\n    \"total_subtotal\": 370000,\n    \"discounts\": {\n      \"tier_discount\": {\n        \"tier_name\": \"GOLD\",\n        \"discount_percent\": 5,\n        \"deducted_amount\": 18500\n      },\n      \"voucher_discount\": {\n        \"voucher_code\": \"MEGA-WEEKEND-50K\",\n        \"discount_type\": \"FIXED\",\n        \"deducted_amount\": 50000\n      },\n      \"point_discount\": {\n        \"points_used\": 10000,\n        \"conversion_rate\": 1,\n        \"deducted_amount\": 10000\n      }\n    },\n    \"total_discount_amount\": 78500,\n    \"final_amount_to_pay\": 291500\n  },\n  \"metadata\": {\n    \"currency\": \"VND\",\n    \"calculated_at\": \"2026-07-20T19:59:07+07:00\",\n    \"is_zero_floor_enforced\": true\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Xem lịch sử đặt vé của cá nhân (Phân trang)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/bookings/history",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bookings",
+                "history"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Trả về danh sách hóa đơn rút gọn. Auth User."
+          },
+          "response": [
+            {
+              "name": "200 OK - Booking History",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/bookings/history",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "bookings",
+                    "history"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "10"
+                    }
+                  ]
+                },
+                "description": "Trả về danh sách hóa đơn rút gọn. Auth User."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"data\": [\n    {\n      \"booking_id\": 1024,\n      \"booking_code\": \"CINEMA-8A9B2C\",\n      \"movie_title\": \"Lật Mặt 8\",\n      \"final_amount\": 291500,\n      \"booking_status\": \"completed\",\n      \"created_at\": \"2026-07-20T19:59:07+07:00\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Chi tiết hóa đơn vé & Mã QR E-Ticket",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/bookings/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bookings",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1024",
+                  "description": "Path parameter id"
+                }
+              ]
+            },
+            "description": "Trả về thông tin sâu: tickets, combos, qr_code, financial_breakdown."
+          },
+          "response": [
+            {
+              "name": "200 OK - Booking Details & E-Ticket QR",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/bookings/:id",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "bookings",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "1024",
+                      "description": "Path parameter id"
+                    }
+                  ]
+                },
+                "description": "Trả về thông tin sâu: tickets, combos, qr_code, financial_breakdown."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"booking_id\": 1024,\n    \"booking_code\": \"CINEMA-8A9B2C\",\n    \"qr_code\": \"TICKET-20260727-99812\",\n    \"movie_title\": \"Lật Mặt 8\",\n    \"seats\": [\n      \"H10\",\n      \"H11\"\n    ],\n    \"combos\": [\n      {\n        \"name\": \"Couple Combo\",\n        \"quantity\": 1,\n        \"is_claimed\": false\n      }\n    ],\n    \"final_amount\": 291500\n  }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Combos & F&B",
+      "description": "Quản lý bắp nước, combo và chi tiết hóa đơn F&B",
+      "item": [
+        {
+          "name": "Lấy danh sách Combo Bắp Nước đang bán",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/combos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "combos"
+              ]
+            },
+            "description": "Public API. Danh sách combo bắp nước đang kích hoạt."
+          },
+          "response": [
+            {
+              "name": "200 OK - Active Combo List",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/combos",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "combos"
+                  ]
+                },
+                "description": "Public API. Danh sách combo bắp nước đang kích hoạt."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"data\": [\n    {\n      \"combo_id\": 5,\n      \"name\": \"Couple Combo 2 Bắp 2 Nước\",\n      \"price\": 150000,\n      \"image_url\": \"https://cdn.cinedot.vn/combos/couple.png\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Tạo mới Combo Bắp Nước",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/combos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "combos"
+              ]
+            },
+            "description": "RBAC: `manage:combos`.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Solo Combo 1 Bắp 1 Nước\",\n  \"description\": \"1 Bắp Ngọt Large + 1 Coca Cola 500ml\",\n  \"price\": 89000,\n  \"image_url\": \"https://cdn.cinedot.vn/combos/solo.png\",\n  \"is_active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "201 Created - Combo Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/combos",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "combos"
+                  ]
+                },
+                "description": "RBAC: `manage:combos`.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Solo Combo 1 Bắp 1 Nước\",\n  \"description\": \"1 Bắp Ngọt Large + 1 Coca Cola 500ml\",\n  \"price\": 89000,\n  \"image_url\": \"https://cdn.cinedot.vn/combos/solo.png\",\n  \"is_active\": true\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Tạo Combo bắp nước thành công\",\n  \"data\": {\n    \"combo_id\": 6,\n    \"name\": \"Solo Combo 1 Bắp 1 Nước\",\n    \"price\": 89000\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Cập nhật Combo Bắp Nước",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/combos/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "combos",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1",
+                  "description": "Path parameter id"
+                }
+              ]
+            },
+            "description": "RBAC: `manage:combos`.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Solo Combo 1 Bắp 1 Nước (Size L)\",\n  \"price\": 95000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK - Combo Updated",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/combos/:id",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "combos",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "1",
+                      "description": "Path parameter id"
+                    }
+                  ]
+                },
+                "description": "RBAC: `manage:combos`.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Solo Combo 1 Bắp 1 Nước (Size L)\",\n  \"price\": 95000\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Cập nhật Combo thành công\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Xóa Combo Bắp Nước",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/combos/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "combos",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1",
+                  "description": "Path parameter id"
+                }
+              ]
+            },
+            "description": "RBAC: `manage:combos`."
+          },
+          "response": [
+            {
+              "name": "200 OK - Combo Deleted",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/combos/:id",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "combos",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "1",
+                      "description": "Path parameter id"
+                    }
+                  ]
+                },
+                "description": "RBAC: `manage:combos`."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Xóa Combo thành công\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Payment & Webhooks",
+      "description": "Khởi tạo liên kết thanh toán (Idempotency) và tiếp nhận Webhook đối tác",
+      "item": [
+        {
+          "name": "Khởi tạo link thanh toán (MoMo / VNPAY / ZaloPay)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Idempotency-Key",
+                "value": "9b1deb4d-3b7d-4149-9cd6-21b3a32f6430",
+                "description": "UUID duy nhất cho mỗi request thanh toán để chống lặp."
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/payments/create-url",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payments",
+                "create-url"
+              ]
+            },
+            "description": "RBAC: `create:booking`. Bắt buộc Header `Idempotency-Key` (UUID).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"booking_id\": 1024,\n  \"payment_method\": \"MOMO\",\n  \"amount\": 291500\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK - Payment URL Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Idempotency-Key",
+                    "value": "9b1deb4d-3b7d-4149-9cd6-21b3a32f6430",
+                    "description": "UUID duy nhất cho mỗi request thanh toán để chống lặp."
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/payments/create-url",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "payments",
+                    "create-url"
+                  ]
+                },
+                "description": "RBAC: `create:booking`. Bắt buộc Header `Idempotency-Key` (UUID).",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"booking_id\": 1024,\n  \"payment_method\": \"MOMO\",\n  \"amount\": 291500\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"payment_url\": \"https://payment.momo.vn/v2/gateway/pay?token=eyJ...\",\n  \"order_id\": \"CINEMA-8A9B2C\",\n  \"amount\": 291500,\n  \"expires_at\": \"2026-07-27T19:15:00+07:00\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Hứng IPN / Webhook kết quả từ Cổng thanh toán",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Partner-Signature",
+                "value": "sig_sample_123456"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/webhooks/payment",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "webhooks",
+                "payment"
+              ]
+            },
+            "description": "Server-to-Server. Xác thực chữ ký HMAC-SHA256.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"partner_code\": \"MOMO\",\n  \"order_id\": \"CINEMA-8A9B2C\",\n  \"amount\": 291500,\n  \"trans_id\": \"MOMO-20260727123456\",\n  \"result_code\": 0,\n  \"message\": \"Successful\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK - Webhook Received",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "X-Partner-Signature",
+                    "value": "sig_sample_123456"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/webhooks/payment",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "webhooks",
+                    "payment"
+                  ]
+                },
+                "description": "Server-to-Server. Xác thực chữ ký HMAC-SHA256.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"partner_code\": \"MOMO\",\n  \"order_id\": \"CINEMA-8A9B2C\",\n  \"amount\": 291500,\n  \"trans_id\": \"MOMO-20260727123456\",\n  \"result_code\": 0,\n  \"message\": \"Successful\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Xử lý IPN giao dịch thành công\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Staff & POS",
+      "description": "Nghiệp vụ soát vé QR, nhận F&B và bán vé tại quầy",
+      "item": [
+        {
+          "name": "Quét mã QR / Nhập mã vé để Soát vé",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/staff/check-in",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "staff",
+                "check-in"
+              ]
+            },
+            "description": "RBAC: `checkin:ticket`. Trả về trạng thái F&B (đã nhận/chưa nhận).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"qr_code\": \"TICKET-20260727-99812\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK - Ticket Check-In Success",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/staff/check-in",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "staff",
+                    "check-in"
+                  ]
+                },
+                "description": "RBAC: `checkin:ticket`. Trả về trạng thái F&B (đã nhận/chưa nhận).",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"qr_code\": \"TICKET-20260727-99812\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Soát vé thành công\",\n  \"data\": {\n    \"booking_code\": \"CINEMA-8A9B2C\",\n    \"movie_title\": \"Lật Mặt 8\",\n    \"seats\": [\n      \"H10\",\n      \"H11\"\n    ],\n    \"fnb_claimed\": false\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Xác nhận trả Combo Bắp Nước cho khách",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/staff/fnb/claim",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "staff",
+                "fnb",
+                "claim"
+              ]
+            },
+            "description": "RBAC: `checkin:ticket`. Truyền `booking_detail_id` (Integer). Backend UPDATE `is_claimed = true` chống nhận trùng 2 lần.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"booking_detail_id\": 505\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK - F&B Claimed",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/staff/fnb/claim",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "staff",
+                    "fnb",
+                    "claim"
+                  ]
+                },
+                "description": "RBAC: `checkin:ticket`. Truyền `booking_detail_id` (Integer). Backend UPDATE `is_claimed = true` chống nhận trùng 2 lần.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"booking_detail_id\": 505\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Đã nhận Combo Bắp Nước thành công (is_claimed = true).\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Bán vé & Bắp nước trực tiếp tại quầy POS",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/staff/pos/create-order",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "staff",
+                "pos",
+                "create-order"
+              ]
+            },
+            "description": "RBAC: `pos:order`. Đơn thành công lập tức (PAID - Cash).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"showtime_id\": 105,\n  \"showtime_seat_ids\": [\n    101,\n    102\n  ],\n  \"combos\": [\n    {\n      \"combo_id\": 5,\n      \"quantity\": 1\n    }\n  ],\n  \"payment_method\": \"CASH\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "201 Created - POS Order Completed",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/staff/pos/create-order",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "staff",
+                    "pos",
+                    "create-order"
+                  ]
+                },
+                "description": "RBAC: `pos:order`. Đơn thành công lập tức (PAID - Cash).",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"showtime_id\": 105,\n  \"showtime_seat_ids\": [\n    101,\n    102\n  ],\n  \"combos\": [\n    {\n      \"combo_id\": 5,\n      \"quantity\": 1\n    }\n  ],\n  \"payment_method\": \"CASH\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Tạo đơn POS thành công\",\n  \"data\": {\n    \"booking_code\": \"POS-99281\",\n    \"payment_status\": \"PAID\"\n  }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Merchant & Admin",
+      "description": "Báo cáo doanh thu rạp, quản lý phòng chiếu và hoàn tiền",
+      "item": [
+        {
+          "name": "Sắp xếp lịch chiếu mới",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/showtimes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "showtimes"
+              ]
+            },
+            "description": "RBAC: `create:showtime`. Algorithm Validation chéo lịch để bắt lỗi trùng giờ.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"movie_id\": 101,\n  \"room_id\": 5,\n  \"cinema_id\": 1,\n  \"showtime_start\": \"2026-07-27T19:00:00+07:00\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "201 Created - Showtime Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/showtimes",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "showtimes"
+                  ]
+                },
+                "description": "RBAC: `create:showtime`. Algorithm Validation chéo lịch để bắt lỗi trùng giờ.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"movie_id\": 101,\n  \"room_id\": 5,\n  \"cinema_id\": 1,\n  \"showtime_start\": \"2026-07-27T19:00:00+07:00\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Tạo lịch chiếu mới thành công\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Cập nhật toàn bộ cấu trúc & Ma trận phòng chiếu",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/rooms/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "rooms",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "5",
+                  "description": "Path parameter id"
+                }
+              ]
+            },
+            "description": "RBAC: `edit:room`. PUT thay đổi toàn bộ Layout."
+          },
+          "response": [
+            {
+              "name": "200 OK - Room Matrix Updated",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/rooms/:id",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "rooms",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "5",
+                      "description": "Path parameter id"
+                    }
+                  ]
+                },
+                "description": "RBAC: `edit:room`. PUT thay đổi toàn bộ Layout."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Cập nhật ma trận phòng chiếu thành công\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Báo cáo doanh thu theo Rạp/Ngày/Phim",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/reports/revenue",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "reports",
+                "revenue"
+              ],
+              "query": [
+                {
+                  "key": "start_date",
+                  "value": "2026-07-01"
+                },
+                {
+                  "key": "end_date",
+                  "value": "2026-07-31"
+                }
+              ]
+            },
+            "description": "RBAC: `view:cinema_report`. Tự động kẹp WHERE cinema_id = {user.cinema_id} ngầm định."
+          },
+          "response": [
+            {
+              "name": "200 OK - Revenue Report",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/reports/revenue",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "reports",
+                    "revenue"
+                  ],
+                  "query": [
+                    {
+                      "key": "start_date",
+                      "value": "2026-07-01"
+                    },
+                    {
+                      "key": "end_date",
+                      "value": "2026-07-31"
+                    }
+                  ]
+                },
+                "description": "RBAC: `view:cinema_report`. Tự động kẹp WHERE cinema_id = {user.cinema_id} ngầm định."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"total_revenue\": 1500000000,\n    \"total_tickets_sold\": 15000,\n    \"cinema_name\": \"CineDot Landmark 81\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Xử lý hoàn tiền / Hủy vé sự cố",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/bookings/:id/refund",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "bookings",
+                ":id",
+                "refund"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1024",
+                  "description": "Path parameter id"
+                }
+              ]
+            },
+            "description": "RBAC: `refund:ticket`. Gọi API Refund của Cổng thanh toán.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Lỗi kỹ thuật dự án phim\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK - Refund Dispatched",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/bookings/:id/refund",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "bookings",
+                    ":id",
+                    "refund"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "1024",
+                      "description": "Path parameter id"
+                    }
+                  ]
+                },
+                "description": "RBAC: `refund:ticket`. Gọi API Refund của Cổng thanh toán.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"reason\": \"Lỗi kỹ thuật dự án phim\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Đã khởi chạy Job hoàn tiền cho đơn đặt vé.\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Campaigns & Vouchers",
+      "description": "Quản lý chiến dịch khuyến mãi, voucher và banner (Lifecycle Automation)",
+      "item": [
+        {
+          "name": "Khởi tạo Chiến dịch Khuyến mãi",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/campaigns",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "campaigns"
+              ]
+            },
+            "description": "RBAC: `manage:campaign`. Quản lý trần ngân sách budget.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Hè Sôi Động 2026\",\n  \"start_date\": \"2026-06-01\",\n  \"end_date\": \"2026-08-31\",\n  \"budget\": 500000000,\n  \"is_active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "201 Created - Campaign Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/campaigns",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "campaigns"
+                  ]
+                },
+                "description": "RBAC: `manage:campaign`. Quản lý trần ngân sách budget.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Hè Sôi Động 2026\",\n  \"start_date\": \"2026-06-01\",\n  \"end_date\": \"2026-08-31\",\n  \"budget\": 500000000,\n  \"is_active\": true\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Tạo chiến dịch khuyến mãi thành công\",\n  \"data\": {\n    \"campaign_id\": 1,\n    \"name\": \"Hè Sôi Động 2026\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Khởi tạo & Cấu hình Voucher trong Campaign",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/campaigns/:id/vouchers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "campaigns",
+                ":id",
+                "vouchers"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1",
+                  "description": "Path parameter id"
+                }
+              ]
+            },
+            "description": "Lưu dạng JSON. Nếu NULL / {}: Voucher public. Nếu có applicable_tiers: Voucher Loyalty. Laravel query qua whereJsonContains.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"FPT50\",\n  \"discount_type\": \"fixed_amount\",\n  \"discount_value\": 50000,\n  \"system_limit\": 1000,\n  \"limit_per_user\": 1,\n  \"valid_until\": \"2026-08-31T23:59:59+07:00\",\n  \"rules_engine\": {\n    \"min_ticket_price\": 100000,\n    \"applicable_tiers\": [\n      \"GOLD\",\n      \"PLATINUM\"\n    ]\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "201 Created - Voucher Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/campaigns/:id/vouchers",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "campaigns",
+                    ":id",
+                    "vouchers"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "1",
+                      "description": "Path parameter id"
+                    }
+                  ]
+                },
+                "description": "Lưu dạng JSON. Nếu NULL / {}: Voucher public. Nếu có applicable_tiers: Voucher Loyalty. Laravel query qua whereJsonContains.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"code\": \"FPT50\",\n  \"discount_type\": \"fixed_amount\",\n  \"discount_value\": 50000,\n  \"system_limit\": 1000,\n  \"limit_per_user\": 1,\n  \"valid_until\": \"2026-08-31T23:59:59+07:00\",\n  \"rules_engine\": {\n    \"min_ticket_price\": 100000,\n    \"applicable_tiers\": [\n      \"GOLD\",\n      \"PLATINUM\"\n    ]\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Tạo Voucher thành công\",\n  \"data\": {\n    \"voucher_id\": 12,\n    \"code\": \"FPT50\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Tải ảnh Banner & map vào Campaign",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/campaigns/:id/banners",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "campaigns",
+                ":id",
+                "banners"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1",
+                  "description": "Path parameter id"
+                }
+              ]
+            },
+            "description": "RBAC: `manage:campaign`.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"image_url\": \"https://cdn.cinedot.vn/banners/summer.webp\",\n  \"redirect_url\": \"/campaigns/summer-2026\",\n  \"order\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "201 Created - Banner Uploaded",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/campaigns/:id/banners",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "campaigns",
+                    ":id",
+                    "banners"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "1",
+                      "description": "Path parameter id"
+                    }
+                  ]
+                },
+                "description": "RBAC: `manage:campaign`.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"image_url\": \"https://cdn.cinedot.vn/banners/summer.webp\",\n  \"redirect_url\": \"/campaigns/summer-2026\",\n  \"order\": 1\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Tải Banner thành công\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Báo cáo Hiệu quả Chiến dịch (ROI)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/campaigns/:id/roi",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "campaigns",
+                ":id",
+                "roi"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1",
+                  "description": "Path parameter id"
+                }
+              ]
+            },
+            "description": "Thống kê Voucher dùng thành công, tổng chi phí đốt."
+          },
+          "response": [
+            {
+              "name": "200 OK - Campaign ROI",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/campaigns/:id/roi",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "campaigns",
+                    ":id",
+                    "roi"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "1",
+                      "description": "Path parameter id"
+                    }
+                  ]
+                },
+                "description": "Thống kê Voucher dùng thành công, tổng chi phí đốt."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"campaign_id\": 1,\n    \"budget\": 500000000,\n    \"used_budget\": 125000000,\n    \"roi_percentage\": 1480\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Lấy danh sách & Kiểm tra điều kiện áp mã Voucher",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/vouchers/apply",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "vouchers",
+                "apply"
+              ]
+            },
+            "description": "Auth User. Check limit_per_user, valid_until và ngân sách Campaign.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"voucher_code\": \"MEGA-WEEKEND-50K\",\n  \"booking_amount\": 370000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK - Voucher Valid",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/vouchers/apply",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "vouchers",
+                    "apply"
+                  ]
+                },
+                "description": "Auth User. Check limit_per_user, valid_until và ngân sách Campaign.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"voucher_code\": \"MEGA-WEEKEND-50K\",\n  \"booking_amount\": 370000\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Áp dụng Voucher hợp lệ\",\n  \"data\": {\n    \"voucher_code\": \"MEGA-WEEKEND-50K\",\n    \"discount_amount\": 50000\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Lấy danh sách Banner slider trang chủ",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/banners",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "banners"
+              ]
+            },
+            "description": "Cache qua Redis."
+          },
+          "response": [
+            {
+              "name": "200 OK - Banner List",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/banners",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "banners"
+                  ]
+                },
+                "description": "Cache qua Redis."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"data\": [\n    {\n      \"banner_id\": 1,\n      \"title\": \"Khuyến mãi hè\",\n      \"image_url\": \"https://cdn.cinedot.vn/banners/summer.webp\"\n    }\n  ]\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

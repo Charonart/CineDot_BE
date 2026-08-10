@@ -133,4 +133,27 @@ class PaymentCallbackController extends Controller
 
         return redirect()->away($frontendUrl . '/payment/failed?order_id=' . $request->vnp_TxnRef . '&message=Invalid_Signature');
     }
+
+    public function paymentWebhook(Request $request)
+    {
+        $orderId = $request->input('order_id', $request->input('vnp_TxnRef'));
+        $resultCode = $request->input('result_code', 0);
+
+        if ($orderId) {
+            $booking = Booking::where('booking_code', $orderId)->first();
+            if ($booking && $booking->booking_status === 'pending') {
+                if ((int)$resultCode === 0) {
+                    $this->bookingService->confirmBooking($booking->booking_id);
+                } else {
+                    $booking->update(['booking_status' => 'cancelled']);
+                }
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Xử lý IPN / Webhook giao dịch thành công'
+        ]);
+    }
 }
+

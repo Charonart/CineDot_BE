@@ -13,11 +13,13 @@ class BookingCombo extends Model
         'combo_id',
         'quantity',
         'price_at_booking',
+        'is_claimed',
     ];
 
     protected $casts = [
         'quantity'        => 'integer',
         'price_at_booking' => 'decimal:2',
+        'is_claimed'      => 'boolean',
     ];
 
     public function booking()
