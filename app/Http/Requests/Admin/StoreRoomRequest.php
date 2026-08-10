@@ -17,10 +17,18 @@ class StoreRoomRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'room_name'   => 'required|string|max:255',
-            'room_type'   => 'nullable|string|max:50',
-            'total_seats' => 'nullable|integer|min:0',
-            'is_active'   => 'boolean',
+            'room_name' => 'required|string|max:255',
+            'room_type' => 'required|string|in:standard,vip,couple',
+            'is_active' => 'boolean',
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'room_type.required' => 'Vui lòng chọn loại phòng.',
+            'room_type.in'       => 'Loại phòng phải là: standard, vip, hoặc couple.',
         ];
     }
 }
+

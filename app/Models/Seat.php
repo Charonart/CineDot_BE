@@ -20,6 +20,8 @@ class Seat extends Model
         'seat_type',
         'position_x',
         'position_y',
+        'angle',
+        'surcharge',
         'is_active',
     ];
 
@@ -27,6 +29,8 @@ class Seat extends Model
         'seat_number' => 'integer',
         'position_x'  => 'integer',
         'position_y'  => 'integer',
+        'angle'       => 'decimal:2',
+        'surcharge'   => 'integer',
         'is_active'   => 'boolean',
     ];
 

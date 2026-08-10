@@ -94,6 +94,7 @@ Route::prefix('v1')->group(function () {
     Route::get('/cinemas/detail/{slug}', [CinemaController::class, 'showBySlug']);
     Route::get('/cinemas/detail/{slug}/showtimes', [CinemaController::class, 'showtimes']);
     Route::get('/rooms/{id}/seats', [App\Http\Controllers\Api\RoomController::class, 'seats']);
+    Route::get('/rooms/{id}/layout', [App\Http\Controllers\Api\RoomController::class, 'layout']);
 
     // ── Special Theaters ──────────────────────────────────────────────────────
     Route::get('/special-theaters/{type}', [CinemaController::class, 'specialTheaters']);

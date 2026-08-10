@@ -1,0 +1,384 @@
+# Báo Cáo: API Master Data — CRUD Phim, Cụm Rạp, Phòng Chiếu (3 Ma Trận Ghế Tĩnh)
+
+> **Dự án**: CineDot Backend  
+> **Framework**: Laravel (PHP) + PostgreSQL  
+> **Ngày báo cáo**: 10/08/2026  
+> **Phân quyền**: Tất cả API admin được bảo vệ bởi middleware `auth:sanctum` + `role:admin`
+
+---
+
+## 1. Tổng Quan Kiến Trúc
+
+```mermaid
+graph TD
+    A["Client (Admin Panel)"] -->|REST API| B["routes/api.php"]
+    B --> C["Admin Controllers"]
+    C --> D["Form Requests (Validation)"]
+    C --> E["Eloquent Models"]
+    C --> F["SeatLayoutService"]
+    E --> G["PostgreSQL Database"]
+    F --> G
+```
+
+Hệ thống Master Data được thiết kế theo mô hình **RESTful API** chuẩn, gồm 3 module chính:
+
+| Module | Model | Controller (Admin) | API Prefix |
+|--------|-------|-------------------|------------|
+| Phim | `Movie` | `Admin\MovieController` | `/api/v1/admin/movies` |
+| Cụm Rạp | `Cinema` | `Admin\CinemaController` | `/api/v1/admin/cinemas` |
+| Phòng Chiếu | `Room` | `Admin\RoomController` | `/api/v1/admin/cinemas/{cinema}/rooms` |
+| Ghế (phụ trợ) | `Seat` | `Admin\SeatController` | `/api/v1/admin/rooms/{room}/seats` |
+
+---
+
+## 2. Module Phim (Movies)
+
+### 2.1. Cơ sở dữ liệu
+
+**Bảng `movies`** — Lưu trữ thông tin phim:
+
+| Cột | Kiểu | Mô tả |
+|-----|------|-------|
+| `id` | `bigint` PK | Mã phim tự tăng |
+| `title` | `varchar(255)` | Tên phim (tiếng Việt) |
+| `slug` | `varchar` UNIQUE | Đường dẫn thân thiện SEO, tự sinh |
+| `original_title` | `varchar(255)` | Tên gốc (ngoại ngữ) |
+| `overview` | `text` | Nội dung tóm tắt |
+| `release_date` | `date` | Ngày khởi chiếu |
+| `original_language` | `varchar(10)` | Ngôn ngữ gốc |
+| `adult` | `boolean` | Phim dành cho người lớn |
+| `duration_minutes` | `integer` | Thời lượng (phút) |
+| `poster_path` | `varchar` | URL ảnh poster |
+| `backdrop_path` | `varchar` | URL ảnh nền |
+| `popularity` | `decimal(10,3)` | Điểm phổ biến |
+| `status` | `varchar` | Trạng thái: `now_showing` / `coming_soon` / `stopped` |
+| `deleted_at` | `timestamp` | Soft delete |
+
+**Bảng liên kết**: `movie_genres` (pivot N-N với `genres`), `videos` (trailer YouTube)
+
+### 2.2. API Endpoints
+
+| Method | Endpoint | Mô tả | Form Request |
+|--------|----------|-------|-------------|
+| `GET` | `/api/v1/admin/movies` | Danh sách phim (phân trang, lọc `status`, tìm kiếm `search`) | — |
+| `POST` | `/api/v1/admin/movies` | Tạo phim mới | `StoreMovieRequest` |
+| `GET` | `/api/v1/admin/movies/{id}` | Chi tiết phim (kèm genres, videos, credits) | — |
+| `PUT` | `/api/v1/admin/movies/{id}` | Cập nhật phim | `UpdateMovieRequest` |
+| `DELETE` | `/api/v1/admin/movies/{id}` | Xóa phim (soft delete) | — |
+
+### 2.3. Tính năng nổi bật
+
+- **Tự động sinh slug** duy nhất từ `title` + timestamp khi tạo/cập nhật
+- **Đồng bộ thể loại**: Gửi `genre_ids[]` để `attach` (tạo mới) hoặc `sync` (cập nhật)
+- **Bóc tách YouTube key**: Gửi `trailer_url` đầy đủ → hệ thống tự trích xuất video key và lưu vào bảng `videos`
+- **Soft Delete**: Xóa phim không mất dữ liệu, có thể khôi phục
+
+### 2.4. Validation Rules
+
+```php
+// StoreMovieRequest
+'title'            => 'required|string|max:255',
+'status'           => 'required|string|in:now_showing,coming_soon,stopped',
+'release_date'     => 'nullable|date',
+'duration_minutes' => 'nullable|integer|min:1',
+'poster_path'      => 'nullable|string|url',
+'genre_ids'        => 'nullable|array',
+'genre_ids.*'      => 'exists:genres,id',
+'trailer_url'      => 'nullable|url',
+```
+
+### 2.5. Files liên quan
+
+| File | Vai trò |
+|------|---------|
+| [Movie.php](file:///c:/laragon/www/phpbasic/BE/app/Models/Movie.php) | Eloquent Model (relationships: genres, videos, credits, schedules) |
+| [MovieController.php](file:///c:/laragon/www/phpbasic/BE/app/Http/Controllers/Api/Admin/MovieController.php) | Admin CRUD Controller |
+| [StoreMovieRequest.php](file:///c:/laragon/www/phpbasic/BE/app/Http/Requests/Admin/StoreMovieRequest.php) | Validation tạo mới |
+| [UpdateMovieRequest.php](file:///c:/laragon/www/phpbasic/BE/app/Http/Requests/Admin/UpdateMovieRequest.php) | Validation cập nhật |
+| [create_movies_table.php](file:///c:/laragon/www/phpbasic/BE/database/migrations/2026_05_28_000003_create_movies_table.php) | Migration |
+
+---
+
+## 3. Module Cụm Rạp (Cinemas)
+
+### 3.1. Cơ sở dữ liệu
+
+**Bảng `cinemas`** — Lưu trữ thông tin cụm rạp:
+
+| Cột | Kiểu | Mô tả |
+|-----|------|-------|
+| `cinema_id` | `bigint` PK | Mã cụm rạp |
+| `cinema_name` | `varchar(255)` | Tên cụm rạp |
+| `slug` | `varchar` UNIQUE | Đường dẫn thân thiện |
+| `cinema_address` | `varchar(255)` | Địa chỉ |
+| `province_id` | `bigint` FK | Liên kết tỉnh/thành phố |
+| `phone` | `varchar(20)` | Số điện thoại |
+| `email` | `varchar(255)` | Email liên hệ |
+| `description` | `text` | Mô tả chi tiết |
+| `is_active` | `boolean` | Trạng thái hoạt động |
+
+### 3.2. API Endpoints
+
+| Method | Endpoint | Mô tả | Form Request |
+|--------|----------|-------|-------------|
+| `GET` | `/api/v1/admin/cinemas` | Danh sách rạp (phân trang, tìm kiếm `search`) | — |
+| `POST` | `/api/v1/admin/cinemas` | Tạo cụm rạp mới | `StoreCinemaRequest` |
+| `GET` | `/api/v1/admin/cinemas/{id}` | Chi tiết rạp (kèm danh sách rooms) | — |
+| `PUT` | `/api/v1/admin/cinemas/{id}` | Cập nhật thông tin rạp | `UpdateCinemaRequest` |
+| `DELETE` | `/api/v1/admin/cinemas/{id}` | Xóa cụm rạp | — |
+
+### 3.3. Tính năng nổi bật
+
+- **Tự động sinh slug** duy nhất từ `cinema_name` + timestamp
+- **Tự động cập nhật slug** khi đổi tên rạp
+- **Quan hệ Tỉnh/Thành phố**: FK `province_id` → `provinces` (ON DELETE SET NULL)
+- **Cascade Delete**: Xóa rạp → tự động xóa toàn bộ rooms và seats bên trong
+
+### 3.4. Files liên quan
+
+| File | Vai trò |
+|------|---------|
+| [Cinema.php](file:///c:/laragon/www/phpbasic/BE/app/Models/Cinema.php) | Eloquent Model (relationships: province, rooms, schedules) |
+| [CinemaController.php](file:///c:/laragon/www/phpbasic/BE/app/Http/Controllers/Api/Admin/CinemaController.php) | Admin CRUD Controller |
+| [StoreCinemaRequest.php](file:///c:/laragon/www/phpbasic/BE/app/Http/Requests/Admin/StoreCinemaRequest.php) | Validation tạo mới |
+| [UpdateCinemaRequest.php](file:///c:/laragon/www/phpbasic/BE/app/Http/Requests/Admin/UpdateCinemaRequest.php) | Validation cập nhật |
+| [create_cinemas_table.php](file:///c:/laragon/www/phpbasic/BE/database/migrations/2026_05_28_000010_create_cinemas_table.php) | Migration |
+
+---
+
+## 4. Module Phòng Chiếu (Rooms) & 3 Ma Trận Ghế Tĩnh
+
+### 4.1. Cơ sở dữ liệu
+
+**Bảng `rooms`** — Lưu trữ thông tin phòng chiếu:
+
+| Cột | Kiểu | Mô tả |
+|-----|------|-------|
+| `room_id` | `bigint` PK | Mã phòng |
+| `cinema_id` | `bigint` FK | Thuộc cụm rạp nào |
+| `room_name` | `varchar(255)` | Tên phòng |
+| `room_type` | `varchar` | Loại phòng: `standard` / `vip` / `couple` |
+| `total_seats` | `integer` | Tổng số ghế (tự động cập nhật) |
+| `is_active` | `boolean` | Trạng thái hoạt động |
+| `deleted_at` | `timestamp` | Soft delete |
+
+**Bảng `seats`** — Lưu trữ thông tin từng ghế:
+
+| Cột | Kiểu | Mô tả |
+|-----|------|-------|
+| `seat_id` | `bigint` PK | Mã ghế |
+| `room_id` | `bigint` FK | Thuộc phòng nào |
+| `seat_row` | `varchar(5)` | Hàng ghế (A, B, C...) |
+| `seat_number` | `integer` | Số ghế trong hàng |
+| `seat_type` | `varchar` | Loại ghế: `standard` / `vip` / `couple` |
+| `position_x` | `integer` | Tọa độ X (pixel, cho front-end render) |
+| `position_y` | `integer` | Tọa độ Y (pixel, cho front-end render) |
+| `angle` | `decimal(5,2)` | Góc xoay ghế (độ) |
+| `surcharge` | `integer` | Phụ thu theo loại ghế (VNĐ) |
+| `is_active` | `boolean` | Trạng thái hoạt động |
+
+> [!IMPORTANT]
+> Ràng buộc UNIQUE trên `(room_id, seat_row, seat_number)` đảm bảo không có ghế trùng lặp trong cùng phòng.
+
+### 4.2. API Endpoints
+
+**Phòng Chiếu (Rooms)**:
+
+| Method | Endpoint | Mô tả |
+|--------|----------|-------|
+| `GET` | `/api/v1/admin/cinemas/{cinema}/rooms` | Danh sách phòng của rạp (kèm `seats_count`) |
+| `POST` | `/api/v1/admin/cinemas/{cinema}/rooms` | Tạo phòng mới → **tự động sinh ma trận ghế** |
+| `GET` | `/api/v1/admin/rooms/{id}` | Chi tiết phòng (kèm cinema, seats) |
+| `PUT` | `/api/v1/admin/rooms/{id}` | Cập nhật thông tin phòng |
+| `DELETE` | `/api/v1/admin/rooms/{id}` | Xóa phòng chiếu |
+
+**Ghế (Seats)** — API phụ trợ để điều chỉnh từng ghế lẻ:
+
+| Method | Endpoint | Mô tả |
+|--------|----------|-------|
+| `GET` | `/api/v1/admin/rooms/{room}/seats` | Danh sách ghế trong phòng |
+| `POST` | `/api/v1/admin/rooms/{room}/seats` | Thêm ghế lẻ vào phòng |
+| `PUT` | `/api/v1/admin/seats/{id}` | Cập nhật thông tin ghế |
+| `DELETE` | `/api/v1/admin/seats/{id}` | Xóa ghế |
+
+### 4.3. Ba Ma Trận Ghế Tĩnh ⭐
+
+Khi Admin tạo phòng chiếu mới (`POST /cinemas/{cinema}/rooms`), hệ thống **tự động sinh toàn bộ sơ đồ ghế** theo `room_type` thông qua service [SeatLayoutService.php](file:///c:/laragon/www/phpbasic/BE/app/Services/SeatLayoutService.php).
+
+#### Ma trận 1: Phòng Standard (`room_type = 'standard'`)
+
+```
+Kích thước: 8 hàng × 10 ghế = 80 ghế
+Tất cả ghế: standard (phụ thu: 0đ)
+
+     1    2    3    4    5    6    7    8    9   10
+A  [STD][STD][STD][STD][STD][STD][STD][STD][STD][STD]
+B  [STD][STD][STD][STD][STD][STD][STD][STD][STD][STD]
+C  [STD][STD][STD][STD][STD][STD][STD][STD][STD][STD]
+D  [STD][STD][STD][STD][STD][STD][STD][STD][STD][STD]
+E  [STD][STD][STD][STD][STD][STD][STD][STD][STD][STD]
+F  [STD][STD][STD][STD][STD][STD][STD][STD][STD][STD]
+G  [STD][STD][STD][STD][STD][STD][STD][STD][STD][STD]
+H  [STD][STD][STD][STD][STD][STD][STD][STD][STD][STD]
+
+                    ╔══════════╗
+                    ║  MÀN HÌNH ║
+                    ╚══════════╝
+```
+
+#### Ma trận 2: Phòng VIP (`room_type = 'vip'`)
+
+```
+Kích thước: 10 hàng × 12 ghế = 120 ghế
+Hàng D, E, F: vip (phụ thu: +30.000đ)
+Còn lại: standard (phụ thu: 0đ)
+
+     1    2    3    4    5    6    7    8    9   10   11   12
+A  [STD][STD][STD][STD][STD][STD][STD][STD][STD][STD][STD][STD]
+B  [STD][STD][STD][STD][STD][STD][STD][STD][STD][STD][STD][STD]
+C  [STD][STD][STD][STD][STD][STD][STD][STD][STD][STD][STD][STD]
+D  [VIP][VIP][VIP][VIP][VIP][VIP][VIP][VIP][VIP][VIP][VIP][VIP]  ← +30.000đ
+E  [VIP][VIP][VIP][VIP][VIP][VIP][VIP][VIP][VIP][VIP][VIP][VIP]  ← +30.000đ
+F  [VIP][VIP][VIP][VIP][VIP][VIP][VIP][VIP][VIP][VIP][VIP][VIP]  ← +30.000đ
+G  [STD][STD][STD][STD][STD][STD][STD][STD][STD][STD][STD][STD]
+H  [STD][STD][STD][STD][STD][STD][STD][STD][STD][STD][STD][STD]
+I  [STD][STD][STD][STD][STD][STD][STD][STD][STD][STD][STD][STD]
+J  [STD][STD][STD][STD][STD][STD][STD][STD][STD][STD][STD][STD]
+
+                       ╔══════════╗
+                       ║  MÀN HÌNH ║
+                       ╚══════════╝
+```
+
+#### Ma trận 3: Phòng Couple (`room_type = 'couple'`)
+
+```
+Kích thước: 6 hàng × 8 ghế = 48 ghế
+Hàng cuối F: couple (phụ thu: +50.000đ)
+Còn lại: standard (phụ thu: 0đ)
+
+     1    2    3    4    5    6    7    8
+A  [STD][STD][STD][STD][STD][STD][STD][STD]
+B  [STD][STD][STD][STD][STD][STD][STD][STD]
+C  [STD][STD][STD][STD][STD][STD][STD][STD]
+D  [STD][STD][STD][STD][STD][STD][STD][STD]
+E  [STD][STD][STD][STD][STD][STD][STD][STD]
+F  [CPL][CPL][CPL][CPL][CPL][CPL][CPL][CPL]  ← +50.000đ (ghế đôi)
+
+                  ╔══════════╗
+                  ║  MÀN HÌNH ║
+                  ╚══════════╝
+```
+
+### 4.4. Cơ chế tự động sinh ghế
+
+Luồng xử lý khi tạo phòng mới:
+
+```mermaid
+sequenceDiagram
+    participant Admin
+    participant RoomController
+    participant StoreRoomRequest
+    participant SeatLayoutService
+    participant Database
+
+    Admin->>RoomController: POST /cinemas/{id}/rooms<br>{room_name, room_type}
+    RoomController->>StoreRoomRequest: Validate (room_type ∈ standard|vip|couple)
+    StoreRoomRequest-->>RoomController: ✅ Validated
+    RoomController->>Database: BEGIN TRANSACTION
+    RoomController->>Database: INSERT room
+    RoomController->>SeatLayoutService: generateLayout(room, room_type)
+    SeatLayoutService->>SeatLayoutService: Tra cứu LAYOUTS[room_type]<br>→ rows[], cols
+    SeatLayoutService->>SeatLayoutService: Loop rows × cols<br>→ determineSeatType()
+    SeatLayoutService->>Database: Bulk INSERT seats
+    SeatLayoutService->>Database: UPDATE room SET total_seats
+    RoomController->>Database: COMMIT
+    RoomController-->>Admin: 201 Created<br>{room + seats}
+```
+
+### 4.5. Thông số kỹ thuật tọa độ
+
+Mỗi ghế được gán tọa độ `(position_x, position_y)` tự động theo công thức:
+
+```
+position_x = (col - 1) × SEAT_SPACING_X + OFFSET_X    // SPACING=20, OFFSET=10
+position_y = rowIndex  × SEAT_SPACING_Y + OFFSET_Y     // SPACING=20, OFFSET=20
+angle      = 0                                           // Mặc định không xoay
+```
+
+Front-end sử dụng endpoint `GET /rooms/{id}/layout` để nhận mảng JSON phẳng, tối ưu cho cache (Cache-Control: 1 năm):
+
+```json
+[
+  { "id": "A1",  "type": "STD", "cx": 10,  "cy": 20, "angle": 0 },
+  { "id": "A2",  "type": "STD", "cx": 30,  "cy": 20, "angle": 0 },
+  { "id": "D1",  "type": "VIP", "cx": 10,  "cy": 80, "angle": 0 },
+  { "id": "F8",  "type": "CPL", "cx": 150, "cy": 120, "angle": 0 }
+]
+```
+
+### 4.6. Files liên quan
+
+| File | Vai trò |
+|------|---------|
+| [Room.php](file:///c:/laragon/www/phpbasic/BE/app/Models/Room.php) | Eloquent Model (relationships: cinema, seats, schedules) |
+| [Seat.php](file:///c:/laragon/www/phpbasic/BE/app/Models/Seat.php) | Eloquent Model (relationships: room, scheduleSeats) |
+| [SeatLayoutService.php](file:///c:/laragon/www/phpbasic/BE/app/Services/SeatLayoutService.php) | Service sinh 3 ma trận ghế tĩnh |
+| [RoomController.php](file:///c:/laragon/www/phpbasic/BE/app/Http/Controllers/Api/Admin/RoomController.php) | Admin CRUD Controller (Room) |
+| [SeatController.php](file:///c:/laragon/www/phpbasic/BE/app/Http/Controllers/Api/Admin/SeatController.php) | Admin CRUD Controller (Seat) |
+| [StoreRoomRequest.php](file:///c:/laragon/www/phpbasic/BE/app/Http/Requests/Admin/StoreRoomRequest.php) | Validation tạo phòng |
+| [RoomController.php](file:///c:/laragon/www/phpbasic/BE/app/Http/Controllers/Api/RoomController.php) | Public API: layout JSON cho front-end |
+| [create_rooms_table.php](file:///c:/laragon/www/phpbasic/BE/database/migrations/2026_05_28_000011_create_rooms_table.php) | Migration rooms |
+| [create_seats_table.php](file:///c:/laragon/www/phpbasic/BE/database/migrations/2026_05_28_000012_create_seats_table.php) | Migration seats |
+
+---
+
+## 5. Phân Quyền & Bảo Mật
+
+Tất cả API Master Data Admin được bảo vệ bằng 2 lớp middleware:
+
+```php
+Route::prefix('admin')
+     ->middleware(['auth:sanctum', 'role:admin'])
+     ->group(function () {
+         Route::apiResource('movies', Admin\MovieController::class);
+         Route::apiResource('cinemas', Admin\CinemaController::class);
+         Route::apiResource('cinemas.rooms', Admin\RoomController::class)->shallow();
+         Route::apiResource('rooms.seats', Admin\SeatController::class)->shallow()->except(['show']);
+     });
+```
+
+| Middleware | Chức năng |
+|-----------|-----------|
+| `auth:sanctum` | Xác thực token (chỉ user đã đăng nhập) |
+| `role:admin` | Chỉ cho phép user có role = `admin` truy cập |
+
+---
+
+## 6. Kiểm Thử
+
+Toàn bộ test suite hiện tại đã chạy thành công:
+
+```
+Tests:    13 passed (84 assertions)
+Duration: 9.37s
+```
+
+---
+
+## 7. Tổng Kết
+
+| Hạng mục | Trạng thái |
+|----------|-----------|
+| CRUD Phim (Movie) — 5 endpoints | ✅ Hoàn thành |
+| CRUD Cụm Rạp (Cinema) — 5 endpoints | ✅ Hoàn thành |
+| CRUD Phòng Chiếu (Room) — 5 endpoints | ✅ Hoàn thành |
+| CRUD Ghế (Seat) — 4 endpoints phụ trợ | ✅ Hoàn thành |
+| Ma trận Standard (8×10 = 80 ghế) | ✅ Hoàn thành |
+| Ma trận VIP (10×12 = 120 ghế, hàng D-F VIP +30k) | ✅ Hoàn thành |
+| Ma trận Couple (6×8 = 48 ghế, hàng F couple +50k) | ✅ Hoàn thành |
+| Tự động sinh ghế khi tạo phòng (SeatLayoutService) | ✅ Hoàn thành |
+| Validation (Form Requests) | ✅ Hoàn thành |
+| Phân quyền Admin (sanctum + role) | ✅ Hoàn thành |
+| Public Layout API (cache 1 năm) | ✅ Hoàn thành |
+| Test suite pass | ✅ 13/13 pass |
