@@ -11,7 +11,13 @@ class BookingSeat extends Model
 
     protected $fillable = [
         'booking_id',
-        'schedule_seat_id',
+        'showtime_seat_id',
+        'ticket_type',
+        'price',
+    ];
+
+    protected $casts = [
+        'price' => 'decimal:2',
     ];
 
     public function booking()
@@ -19,8 +25,8 @@ class BookingSeat extends Model
         return $this->belongsTo(Booking::class, 'booking_id', 'booking_id');
     }
 
-    public function scheduleSeat()
+    public function showtimeSeat()
     {
-        return $this->belongsTo(ScheduleSeat::class, 'schedule_seat_id', 'schedule_seat_id');
+        return $this->belongsTo(ShowtimeSeat::class, 'showtime_seat_id', 'showtime_seat_id');
     }
 }

@@ -77,13 +77,14 @@ class ProcessRefundJob implements ShouldQueue
             }
 
             // C. Release seats
-            $scheduleSeatIds = BookingSeat::where('booking_id', $booking->booking_id)
-                ->pluck('schedule_seat_id');
+            $showtimeSeatIds = BookingSeat::where('booking_id', $booking->booking_id)
+                ->pluck('showtime_seat_id');
 
-            if ($scheduleSeatIds->isNotEmpty()) {
-                ScheduleSeat::whereIn('schedule_seat_id', $scheduleSeatIds)
+            if ($showtimeSeatIds->isNotEmpty()) {
+                \App\Models\ShowtimeSeat::whereIn('showtime_seat_id', $showtimeSeatIds)
                     ->update(['status' => 'available']);
             }
+
 
             // D. Revert earned loyalty points
             $user = $booking->user;

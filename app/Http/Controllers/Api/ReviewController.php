@@ -11,13 +11,27 @@ use App\Http\Requests\ReviewRequest;
 
 class ReviewController extends Controller
 {
+    private function findMovie($identifier)
+    {
+        return is_numeric($identifier)
+            ? Movie::find((int) $identifier)
+            : Movie::where('slug', $identifier)->first();
+    }
+
     public function index($movieId, Request $request)
     {
-        Movie::findOrFail($movieId);
+        $movie = $this->findMovie($movieId);
+        if (!$movie) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không tìm thấy bộ phim.'
+            ], 404);
+        }
+
         $perPage = (int) $request->get('per_page', 20);
         
         $paginated = Review::with('user')
-            ->where('movie_id', $movieId)
+            ->where('movie_id', $movie->movie_id)
             ->orderByDesc('review_id')
             ->paginate($perPage);
 
@@ -34,10 +48,17 @@ class ReviewController extends Controller
 
     public function store($movieId, ReviewRequest $request)
     {
-        Movie::findOrFail($movieId);
+        $movie = $this->findMovie($movieId);
+        if (!$movie) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không tìm thấy bộ phim.'
+            ], 404);
+        }
+
         $userId = $request->user()->user_id;
 
-        $existing = Review::where('movie_id', $movieId)->where('user_id', $userId)->first();
+        $existing = Review::where('movie_id', $movie->movie_id)->where('user_id', $userId)->first();
         if ($existing) {
             return response()->json([
                 'success' => false,
@@ -46,7 +67,7 @@ class ReviewController extends Controller
         }
 
         $review = Review::create([
-            'movie_id' => $movieId,
+            'movie_id' => $movie->movie_id,
             'user_id'  => $userId,
             'rating'   => $request->rating,
             'comment'  => $request->comment,

@@ -26,10 +26,11 @@ class Video extends Model
         'size'         => 'integer',
         'official'     => 'boolean',
         'published_at' => 'datetime',
+        'created_at'   => 'datetime',
     ];
 
     public function movie()
     {
-        return $this->belongsTo(Movie::class, 'movie_id', 'id');
+        return $this->belongsTo(Movie::class, 'movie_id', 'movie_id');
     }
 }

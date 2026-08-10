@@ -210,4 +210,42 @@ class VoucherController extends Controller
             ]);
         });
     }
+
+    /**
+     * Standalone voucher validation via POST /vouchers/apply.
+     */
+    public function applyStandalone(Request $request)
+    {
+        $code = $request->input('voucher_code', $request->input('code'));
+        $orderAmount = (float) $request->input('order_amount', $request->input('booking_amount', 0));
+
+        $voucher = Voucher::where('code', $code)->where('is_active', true)->first();
+
+        if (!$voucher) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Mã Voucher không tồn tại hoặc đã hết hạn.'
+            ], 404);
+        }
+
+        $discount = 0;
+        if ($voucher->discount_type === 'fixed_amount') {
+            $discount = (float) $voucher->discount_value;
+        } else {
+            $discount = $orderAmount * ((float) $voucher->discount_value / 100);
+            if ($voucher->max_discount_value) {
+                $discount = min($discount, (float) $voucher->max_discount_value);
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Áp dụng Voucher hợp lệ',
+            'data' => [
+                'voucher_code'    => $voucher->code,
+                'discount_amount' => (int) round($discount)
+            ]
+        ]);
+    }
 }
+

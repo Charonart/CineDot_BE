@@ -10,9 +10,6 @@ class Cinema extends Model
     use HasFactory;
 
     protected $primaryKey = 'cinema_id';
-    public $timestamps = false;
-
-    const CREATED_AT = 'create_at';
 
     protected $fillable = [
         'cinema_name',
@@ -40,17 +37,17 @@ class Cinema extends Model
     }
 
     /**
-     * Các lịch chiếu tại rạp này (qua rooms)
+     * Các suất chiếu tại rạp này (qua rooms)
      */
-    public function schedules()
+    public function showtimes()
     {
         return $this->hasManyThrough(
-            Schedule::class,
+            Showtime::class,
             Room::class,
-            'cinema_id',   // FK on rooms
-            'room_id',     // FK on schedules
-            'cinema_id',   // local key on cinemas
-            'room_id'      // local key on rooms
+            'cinema_id', // FK trên rooms
+            'room_id',   // FK trên showtimes
+            'cinema_id', // local key trên cinemas
+            'room_id'    // local key trên rooms
         );
     }
 }

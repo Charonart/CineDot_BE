@@ -16,7 +16,9 @@ class GetMoviesRequest extends FormRequest
         return [
             'page'     => ['nullable', 'integer', 'min:1'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:50'],
-            'status'   => ['nullable', 'string', 'in:now_showing,coming_soon,ended'],
+            'limit'    => ['nullable', 'integer', 'min:1', 'max:50'],
+            'status'   => ['nullable', 'string'],
+            'category' => ['nullable', 'string'],
             'search'   => ['nullable', 'string', 'max:100'],
             'genre_id' => ['nullable', 'integer', 'exists:genres,genre_id'],
         ];

@@ -17,9 +17,12 @@ class UserResource extends JsonResource
             'avatar'   => $this->avatar,
             'birthday' => $this->birthday?->format('Y-m-d'),
             'gender'   => $this->gender,
+            'role_id'  => $this->role_id,
+            'role'     => $this->whenLoaded('role', fn() => $this->role->name, $this->role?->name),
             'province' => $this->whenLoaded('province', fn() => $this->province->province_name),
             'phone'    => $this->phone,
-            'point'    => $this->point,
+            'point'    => $this->total_points ?? $this->point ?? 0,
         ];
     }
 }
+

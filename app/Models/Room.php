@@ -4,11 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Room extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
 
     protected $primaryKey = 'room_id';
     public $timestamps = false;
@@ -17,13 +16,15 @@ class Room extends Model
         'cinema_id',
         'room_name',
         'room_type',
+        'seat_matrix',
         'total_seats',
         'is_active',
     ];
 
     protected $casts = [
         'is_active'   => 'boolean',
-        'total_seats'  => 'integer',
+        'total_seats' => 'integer',
+        'seat_matrix' => 'array',
     ];
 
     public function cinema()
@@ -31,13 +32,8 @@ class Room extends Model
         return $this->belongsTo(Cinema::class, 'cinema_id', 'cinema_id');
     }
 
-    public function seats()
+    public function showtimes()
     {
-        return $this->hasMany(Seat::class, 'room_id', 'room_id');
-    }
-
-    public function schedules()
-    {
-        return $this->hasMany(Schedule::class, 'room_id', 'room_id');
+        return $this->hasMany(Showtime::class, 'room_id', 'room_id');
     }
 }

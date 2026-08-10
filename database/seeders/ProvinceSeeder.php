@@ -3,29 +3,20 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use App\Models\Province;
+use Illuminate\Support\Facades\DB;
 
 class ProvinceSeeder extends Seeder
 {
     public function run(): void
     {
-        $provinceData = [
-            ['name' => 'Hà Nội', 'code' => 'HN'],
-            ['name' => 'TP. Hồ Chí Minh', 'code' => 'HCM'],
-            ['name' => 'Đà Nẵng', 'code' => 'DN'],
-            ['name' => 'Cần Thơ', 'code' => 'CT'],
-            ['name' => 'Hải Phòng', 'code' => 'HP'],
-            ['name' => 'Huế', 'code' => 'HUE'],
-            ['name' => 'Biên Hoà', 'code' => 'BH'],
-            ['name' => 'Vũng Tàu', 'code' => 'VT'],
-            ['name' => 'Nha Trang', 'code' => 'NT'],
+        $provinces = [
+            ['province_id' => 1, 'province_name' => 'Hà Nội', 'province_code' => 'HN', 'created_at' => now()],
+            ['province_id' => 2, 'province_name' => 'TP. Hồ Chí Minh', 'province_code' => 'HCM', 'created_at' => now()],
+            ['province_id' => 3, 'province_name' => 'Đà Nẵng', 'province_code' => 'DN', 'created_at' => now()],
+            ['province_id' => 4, 'province_name' => 'Hải Phòng', 'province_code' => 'HP', 'created_at' => now()],
+            ['province_id' => 5, 'province_name' => 'Cần Thơ', 'province_code' => 'CT', 'created_at' => now()],
         ];
-        
-        foreach ($provinceData as $p) {
-            Province::create([
-                'province_name' => $p['name'],
-                'province_code' => $p['code'],
-            ]);
-        }
+
+        DB::table('provinces')->insert($provinces);
     }
 }

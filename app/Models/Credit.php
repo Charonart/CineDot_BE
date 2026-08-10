@@ -21,12 +21,13 @@ class Credit extends Model
     ];
 
     protected $casts = [
-        'order' => 'integer',
+        'order'      => 'integer',
+        'created_at' => 'datetime',
     ];
 
     public function movie()
     {
-        return $this->belongsTo(Movie::class, 'movie_id', 'id');
+        return $this->belongsTo(Movie::class, 'movie_id', 'movie_id');
     }
 
     public function person()

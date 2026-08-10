@@ -13,7 +13,7 @@ use App\Http\Controllers\Api\ReviewController;
 
 /*
 |--------------------------------------------------------------------------
-| API Routes
+| API Routes (CineDot Core API Specification v1.1.0)
 |--------------------------------------------------------------------------
 */
 
@@ -34,17 +34,22 @@ Route::prefix('v1')->group(function () {
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('/users/profile', [UserController::class, 'profile']);
-        Route::put('/users/profile', [UserController::class, 'updateProfile']);
+        Route::match(['put', 'patch'], '/users/profile', [UserController::class, 'updateProfile']);
 
         // ── Bookings ──────────────────────────────────────────────────────────────
         Route::post('/bookings/hold-seats', [App\Http\Controllers\Api\BookingController::class, 'holdSeats']);
+        Route::post('/bookings/release-seats', [App\Http\Controllers\Api\BookingController::class, 'releaseSeats']);
+        Route::post('/bookings/calculate-summary', [App\Http\Controllers\Api\BookingController::class, 'calculateSummary']);
         Route::get('/users/bookings',       [App\Http\Controllers\Api\BookingController::class, 'myBookings']);
+        Route::get('/bookings/history',     [App\Http\Controllers\Api\BookingController::class, 'myBookings']);
         Route::get('/bookings/{id}',        [App\Http\Controllers\Api\BookingController::class, 'show']);
         Route::post('/bookings/{id}/apply-voucher', [App\Http\Controllers\Api\VoucherController::class, 'apply']);
         Route::post('/bookings/{id}/remove-voucher', [App\Http\Controllers\Api\VoucherController::class, 'remove']);
+        Route::post('/vouchers/apply',      [App\Http\Controllers\Api\VoucherController::class, 'applyStandalone']);
         
         // ── Payments ──────────────────────────────────────────────────────────────
         Route::post('/payments',            [App\Http\Controllers\Api\PaymentController::class, 'process']);
+        Route::post('/payments/create-url', [App\Http\Controllers\Api\PaymentController::class, 'createUrl']);
         
         // ── Reviews ───────────────────────────────────────────────────────────────
         Route::post('/movies/{id}/reviews', [App\Http\Controllers\Api\ReviewController::class, 'store']);
@@ -56,11 +61,15 @@ Route::prefix('v1')->group(function () {
 
         // ── Staff Routes ──────────────────────────────────────────────────────────
         Route::prefix('staff')->middleware(['role:staff,admin'])->group(function () {
+            Route::post('check-in', [\App\Http\Controllers\Api\Staff\BookingCheckInController::class, 'checkInByQr']);
             Route::post('bookings/{code}/checkin', [\App\Http\Controllers\Api\Staff\BookingCheckInController::class, 'checkIn']);
+            Route::post('fnb/claim', [\App\Http\Controllers\Api\Staff\BookingCheckInController::class, 'claimFnb']);
+            Route::post('pos/create-order', [\App\Http\Controllers\Api\Staff\BookingCheckInController::class, 'createPosOrder']);
         });
     });
 
     // ── Payment Webhooks & Callbacks ──────────────────────────────────────────
+    Route::post('/webhooks/payment', [App\Http\Controllers\Api\PaymentCallbackController::class, 'paymentWebhook']);
     Route::get('/payments/vnpay/ipn', [App\Http\Controllers\Api\PaymentCallbackController::class, 'vnpayIpn']);
     Route::get('/payments/vnpay/return', [App\Http\Controllers\Api\PaymentCallbackController::class, 'vnpayReturn']);
 
@@ -83,10 +92,12 @@ Route::prefix('v1')->group(function () {
 
     // Static/special routes above, dynamic {slug} below
     Route::get('/movies/{slug}',            [MovieController::class, 'showBySlug']);
+    Route::get('/movies/{identifier}/showtimes', [ShowtimeController::class, 'byMovie']);
     Route::get('/movies/{id}/credits',      [CreditController::class, 'show']);
     Route::get('/movies/{id}/similar',      [MovieController::class, 'similar']);
     Route::get('/movies/{id}/videos',       [MovieController::class, 'videos']);
     Route::get('/movies/{id}/reviews',      [ReviewController::class, 'index']);
+
 
     // ── Cinemas & Rooms ───────────────────────────────────────────────────────
     Route::get('/cinemas',          [CinemaController::class, 'index']);
@@ -102,6 +113,7 @@ Route::prefix('v1')->group(function () {
     Route::get('/showtimes',              [ShowtimeController::class, 'index']);
     Route::get('/showtimes/{id}',         [ShowtimeController::class, 'show']);
     Route::get('/showtimes/{id}/seats',   [ShowtimeController::class, 'seats']);
+    Route::get('/showtimes/{id}/seat-status', [ShowtimeController::class, 'seatStatus']);
 
     // ── Test Resend ───────────────────────────────────────────────────────────
     Route::get('/test-email', function () {
@@ -122,7 +134,8 @@ Route::prefix('v1')->group(function () {
 
     // ── Admin Routes ──────────────────────────────────────────────────────────
     Route::prefix('admin')->middleware(['auth:sanctum', 'role:admin'])->group(function () {
-        // Movies
+        // Movies & TMDB Sync
+        Route::post('movies/sync', [\App\Http\Controllers\Api\Admin\MovieController::class, 'sync']);
         Route::apiResource('movies', \App\Http\Controllers\Api\Admin\MovieController::class);
         
         // Movie Credits
@@ -130,55 +143,48 @@ Route::prefix('v1')->group(function () {
         Route::post('movies/{movie}/credits', [\App\Http\Controllers\Api\Admin\MovieCreditController::class, 'store']);
         Route::delete('movies/{movie}/credits/{credit}', [\App\Http\Controllers\Api\Admin\MovieCreditController::class, 'destroy']);
         
-        // Cinemas
+        // Cinemas & Rooms
         Route::apiResource('cinemas', \App\Http\Controllers\Api\Admin\CinemaController::class);
-        // Rooms
         Route::apiResource('cinemas.rooms', \App\Http\Controllers\Api\Admin\RoomController::class)->shallow();
-        
-        // Seats
         Route::apiResource('rooms.seats', \App\Http\Controllers\Api\Admin\SeatController::class)->shallow()->except(['show']);
         
-        // Schedules
+        // Showtimes & Schedules
+        Route::post('showtimes', [\App\Http\Controllers\Api\Admin\ScheduleController::class, 'store']);
         Route::apiResource('schedules', \App\Http\Controllers\Api\Admin\ScheduleController::class);
         
+        // Campaigns, Vouchers & Banners
+        Route::get('campaigns', [\App\Http\Controllers\Api\Admin\CampaignController::class, 'index']);
+        Route::post('campaigns', [\App\Http\Controllers\Api\Admin\CampaignController::class, 'store']);
+        Route::post('campaigns/{id}/vouchers', [\App\Http\Controllers\Api\Admin\CampaignController::class, 'storeVoucher']);
+        Route::post('campaigns/{id}/banners', [\App\Http\Controllers\Api\Admin\CampaignController::class, 'storeBanner']);
+        Route::get('campaigns/{id}/roi', [\App\Http\Controllers\Api\Admin\CampaignController::class, 'roi']);
+
         // Users
         Route::get('users', [\App\Http\Controllers\Api\Admin\UserController::class, 'index']);
         Route::put('users/{id}/role', [\App\Http\Controllers\Api\Admin\UserController::class, 'updateRole']);
         
-        // Bookings
+        // Bookings & Reviews
         Route::get('bookings', [\App\Http\Controllers\Api\Admin\BookingController::class, 'index']);
         Route::get('bookings/{id}', [\App\Http\Controllers\Api\Admin\BookingController::class, 'show']);
-
-        // Movie Reviews
         Route::get('reviews', [\App\Http\Controllers\Api\Admin\MovieReviewController::class, 'index']);
         Route::delete('reviews/{id}', [\App\Http\Controllers\Api\Admin\MovieReviewController::class, 'destroy']);
 
-        // Vouchers
+        // Vouchers, Combos, Banners, Provinces, Genres, Persons
         Route::apiResource('vouchers', \App\Http\Controllers\Api\Admin\VoucherController::class);
-
-        // Combos
         Route::apiResource('combos', \App\Http\Controllers\Api\Admin\ComboController::class);
-
-        // Provinces
         Route::apiResource('provinces', \App\Http\Controllers\Api\Admin\ProvinceController::class);
-
-        // Genres
         Route::apiResource('genres', \App\Http\Controllers\Api\Admin\GenreController::class);
-
-        // Persons
         Route::apiResource('persons', \App\Http\Controllers\Api\Admin\PersonController::class);
 
         // Payments & Refunds
         Route::get('payments', [\App\Http\Controllers\Api\Admin\PaymentController::class, 'index']);
         Route::post('payments/{id}/refund', [\App\Http\Controllers\Api\Admin\PaymentController::class, 'refund']);
-
-        // Banners CRUD
         Route::apiResource('banners', \App\Http\Controllers\Api\Admin\BannerController::class);
     });
 
 }); // End of v1 prefix
 
-// Xác thực email link
+// Email verification
 Route::get('/email/verify/{id}/{hash}', [AuthController::class, 'verifyEmail'])
     ->middleware(['signed'])
     ->name('verification.verify');

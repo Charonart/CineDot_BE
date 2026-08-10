@@ -14,10 +14,12 @@ class GetShowtimesRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'date'      => ['nullable', 'date_format:Y-m-d'],
-            'cinema_id' => ['nullable', 'integer', 'exists:cinemas,cinema_id'],
-            'movie_id'  => ['nullable', 'integer', 'exists:movies,id'],
-            'province'  => ['nullable', 'string', 'max:100'],
+            'date'       => ['nullable', 'date_format:Y-m-d'],
+            'cinema_id'  => ['nullable', 'integer', 'exists:cinemas,cinema_id'],
+            'movie_id'   => ['nullable'],
+            'movie_slug' => ['nullable', 'string'],
+            'movie'      => ['nullable', 'string'],
+            'province'   => ['nullable', 'string', 'max:100'],
         ];
     }
 }

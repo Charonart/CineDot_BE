@@ -7,7 +7,9 @@ use App\Http\Requests\GetShowtimesRequest;
 use App\Http\Resources\CinemaResource;
 use App\Http\Resources\MovieResource;
 use App\Http\Resources\SeatResource;
+use App\Http\Resources\ShowtimeResource;
 use App\Services\SeatService;
+
 use App\Services\ShowtimeService;
 use App\Models\Movie;
 
@@ -63,10 +65,13 @@ class ShowtimeController extends Controller
         ]);
     }
 
-    public function byMovie(GetShowtimesRequest $request, $movieId)
+    public function byMovie(GetShowtimesRequest $request, $identifier)
     {
-        $movie = Movie::findOrFail($movieId);
-        $grouped = $this->showtimeService->getShowtimesByMovie($movieId, $request->validated());
+        $movie = is_numeric($identifier)
+            ? Movie::findOrFail((int) $identifier)
+            : Movie::where('slug', $identifier)->firstOrFail();
+
+        $grouped = $this->showtimeService->getShowtimesByMovie($movie->movie_id, $request->validated());
 
         $results = $grouped->map(function ($item) {
             return [
@@ -84,14 +89,16 @@ class ShowtimeController extends Controller
             'success' => true,
             'data'    => [
                 'movie'   => [
-                    'id' => $movie->id, 
-                    'title' => $movie->title, 
+                    'id'        => $movie->movie_id, 
+                    'slug'      => $movie->slug,
+                    'title'     => $movie->title, 
                     'posterUrl' => $movie->poster_path
                 ],
                 'results' => $results,
             ],
         ]);
     }
+
 
     public function seats($id)
     {
@@ -102,4 +109,30 @@ class ShowtimeController extends Controller
             'data'    => SeatResource::collection($seats),
         ]);
     }
+
+    /**
+     * Get real-time seat status map (Key-Value) for showtime.
+     */
+    public function seatStatus($id)
+    {
+        $showtimeSeats = \App\Models\ShowtimeSeat::where('showtime_id', $id)->get();
+
+        $statusMap = [];
+        foreach ($showtimeSeats as $seat) {
+            $status = strtoupper($seat->status);
+            
+            // Check Redis hold key if available in DB
+            if ($status === 'AVAILABLE') {
+                $redisKey = "hold:showtime:{$id}:seat:{$seat->showtime_seat_id}";
+                if (\Illuminate\Support\Facades\Redis::exists($redisKey)) {
+                    $status = 'HOLD';
+                }
+            }
+
+            $statusMap[$seat->showtime_seat_id] = $status;
+        }
+
+        return response()->json($statusMap);
+    }
 }
+

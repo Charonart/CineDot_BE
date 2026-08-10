@@ -3,42 +3,26 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use App\Models\Banner;
+use Illuminate\Support\Facades\DB;
 
 class BannerSeeder extends Seeder
 {
-    public function run()
+    public function run(): void
     {
-        Banner::create([
-            'title'     => 'Xem phim cực đã - Nhận quà thả ga',
-            'image_url' => 'https://example.com/banners/banner1.jpg',
-            'link_url'  => 'https://example.com/promo/p1',
-            'order'     => 1,
-            'is_active' => true,
-        ]);
+        $banners = [
+            [
+                'banner_id' => 1,
+                'campaign_id' => 1,
+                'title' => 'Khuyến Mãi Vé Hè 2026',
+                'image_url' => 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba',
+                'link_url' => '/promotions/summer-2026',
+                'order' => 1,
+                'is_active' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        ];
 
-        Banner::create([
-            'title'     => 'Combo bắp nước siêu hời',
-            'image_url' => 'https://example.com/banners/banner2.jpg',
-            'link_url'  => 'https://example.com/promo/p2',
-            'order'     => 2,
-            'is_active' => true,
-        ]);
-
-        Banner::create([
-            'title'     => 'Cuối tuần rộn ràng - Nhận ngàn voucher',
-            'image_url' => 'https://example.com/banners/banner3.jpg',
-            'link_url'  => 'https://example.com/promo/p3',
-            'order'     => 3,
-            'is_active' => true,
-        ]);
-
-        Banner::create([
-            'title'     => 'Banner ẩn (Không active)',
-            'image_url' => 'https://example.com/banners/banner4.jpg',
-            'link_url'  => 'https://example.com/promo/p4',
-            'order'     => 4,
-            'is_active' => false,
-        ]);
+        DB::table('banners')->insert($banners);
     }
 }

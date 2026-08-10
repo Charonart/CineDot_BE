@@ -10,20 +10,20 @@ class Booking extends Model
 
     protected $fillable = [
         'user_id',
-        'schedule_id',
+        'showtime_id',
         'voucher_id',
-        'total_amount',
+        'price_breakdown',
+        'final_amount',
         'discount_amount',
         'booking_status',
         'booking_code',
         'notes',
-        'checked_in_at',
-        'checked_in_by',
     ];
 
     protected $casts = [
-        'total_amount' => 'integer',
-        'discount_amount' => 'integer',
+        'price_breakdown' => 'array',
+        'final_amount'    => 'decimal:2',
+        'discount_amount' => 'decimal:2',
     ];
 
     public function user()
@@ -31,9 +31,9 @@ class Booking extends Model
         return $this->belongsTo(User::class, 'user_id', 'user_id');
     }
 
-    public function schedule()
+    public function showtime()
     {
-        return $this->belongsTo(Schedule::class, 'schedule_id', 'schedule_id');
+        return $this->belongsTo(Showtime::class, 'showtime_id', 'showtime_id');
     }
 
     public function bookingSeats()
@@ -59,11 +59,6 @@ class Booking extends Model
     public function payment()
     {
         return $this->hasOne(Payment::class, 'booking_id', 'booking_id');
-    }
-
-    public function checkedInBy()
-    {
-        return $this->belongsTo(User::class, 'checked_in_by', 'user_id');
     }
 
     protected static function booted()

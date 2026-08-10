@@ -17,7 +17,8 @@ class StoreMovieCreditRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'person_id'      => 'required|exists:persons,id',
+            'person_id'      => 'required|exists:persons,person_id',
+
             'credit_type'    => 'required|in:cast,crew',
             'character_name' => 'nullable|string|max:255',
             'order'          => 'nullable|integer|min:0',

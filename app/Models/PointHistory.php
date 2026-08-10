@@ -7,19 +7,22 @@ use Illuminate\Database\Eloquent\Model;
 class PointHistory extends Model
 {
     protected $table = 'point_histories';
-    
+    protected $primaryKey = 'point_histories_id';
+
     public $timestamps = false;
 
     const CREATED_AT = 'created_at';
 
     protected $fillable = [
         'user_id',
-        'booking_id',
+        'reference_id',
+        'reference_type',
         'amount',
         'action',
     ];
 
     protected $casts = [
+        'amount'     => 'integer',
         'created_at' => 'datetime',
     ];
 
@@ -27,7 +30,7 @@ class PointHistory extends Model
     {
         parent::boot();
 
-        // Automatically set created_at timestamp
+        // Tự động đặt created_at khi tạo mới
         static::creating(function ($model) {
             $model->created_at = $model->freshTimestamp();
         });
@@ -38,8 +41,11 @@ class PointHistory extends Model
         return $this->belongsTo(User::class, 'user_id', 'user_id');
     }
 
-    public function booking()
+    /**
+     * Polymorphic: tham chiếu đến Booking, UserVoucher, v.v.
+     */
+    public function reference()
     {
-        return $this->belongsTo(Booking::class, 'booking_id', 'booking_id');
+        return $this->morphTo('reference');
     }
 }

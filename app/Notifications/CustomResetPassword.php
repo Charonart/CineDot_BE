@@ -4,9 +4,10 @@ namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use App\Channels\ResendChannel;
 
-class CustomResetPassword extends Notification
+class CustomResetPassword extends Notification implements ShouldQueue
 {
     use Queueable;
 
@@ -26,13 +27,17 @@ class CustomResetPassword extends Notification
     {
         $url = env('FRONTEND_URL', 'http://localhost:3000') . '/reset-password?token=' . $this->token . '&email=' . urlencode($notifiable->email);
 
+        $otp = \Illuminate\Support\Facades\Redis::get("password_reset:otp:{$notifiable->email}");
+
         $html = "
-            <h2>Yêu cầu đặt lại mật khẩu</h2>
-            <p>Bạn nhận được email này vì chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản CineDot của bạn.</p>
+            <h2>Yêu cầu đặt lại mật khẩu CineDot</h2>
+            <p>Mã OTP khôi phục mật khẩu của bạn là: <strong style='font-size:24px;color:#E50914;'>{$otp}</strong></p>
+            <p>Mã OTP này có hiệu lực trong 15 phút.</p>
+            <p>Hoặc bạn có thể click vào nút bên dưới để đặt lại mật khẩu:</p>
             <p><a href='{$url}' style='display:inline-block;padding:10px 20px;background:#E50914;color:#fff;text-decoration:none;border-radius:5px;'>Đặt lại mật khẩu</a></p>
-            <p>Link này sẽ hết hạn sau 60 phút.</p>
             <p>Nếu bạn không yêu cầu, vui lòng bỏ qua email này.</p>
         ";
+
 
         return [
             'from' => env('RESEND_MAIL_FROM', 'onboarding@resend.dev'),

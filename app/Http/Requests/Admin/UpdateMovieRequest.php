@@ -30,7 +30,8 @@ class UpdateMovieRequest extends FormRequest
             'duration_minutes'  => 'nullable|integer|min:1',
             'status'            => 'sometimes|required|string|in:now_showing,coming_soon,stopped',
             'genre_ids'         => 'nullable|array',
-            'genre_ids.*'       => 'exists:genres,id',
+            'genre_ids.*'       => 'exists:genres,genre_id',
+
             'trailer_url'       => 'nullable|url',
         ];
     }
