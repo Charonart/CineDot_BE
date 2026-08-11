@@ -13,6 +13,11 @@ class DatabaseSeeder extends Seeder
             UserTierSeeder::class,
             RoleSeeder::class,
             PermissionSeeder::class,
+        ]);
+
+        $this->fixPgsqlSequences();
+
+        $this->call([
             RolePermissionSeeder::class,
             UserSeeder::class,
             CinemaSeeder::class,
@@ -35,8 +40,8 @@ class DatabaseSeeder extends Seeder
             BookingComboSeeder::class,
             ReviewSeeder::class,
             PointHistorySeeder::class,
-            PointHistorySeeder::class,
             PricingRuleSeeder::class,
+            LargeDataSeeder::class,
         ]);
 
         $this->fixPgsqlSequences();

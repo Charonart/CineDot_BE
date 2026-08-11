@@ -36,6 +36,6 @@ class CinemaSeeder extends Seeder
             ],
         ];
 
-        DB::table('cinemas')->insert($cinemas);
+        DB::table('cinemas')->insertOrIgnore($cinemas);
     }
 }

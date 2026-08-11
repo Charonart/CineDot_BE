@@ -16,6 +16,6 @@ class UserTierSeeder extends Seeder
             ['user_tier_id' => 4, 'tier' => 'Platinum', 'discount_percent' => 15.00, 'created_at' => now(), 'updated_at' => now()],
         ];
 
-        DB::table('user_tiers')->insert($tiers);
+        DB::table('user_tiers')->insertOrIgnore($tiers);
     }
 }

@@ -15,6 +15,6 @@ class RoleSeeder extends Seeder
             ['role_id' => 3, 'name' => 'customer', 'description' => 'Khách hàng'],
         ];
 
-        DB::table('roles')->insert($roles);
+        DB::table('roles')->insertOrIgnore($roles);
     }
 }

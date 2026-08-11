@@ -34,7 +34,7 @@ class ShowtimeSeatSeeder extends Seeder
         }
 
         foreach (array_chunk($seats, 100) as $chunk) {
-            DB::table('showtime_seats')->insert($chunk);
+            DB::table('showtime_seats')->insertOrIgnore($chunk);
         }
     }
 }

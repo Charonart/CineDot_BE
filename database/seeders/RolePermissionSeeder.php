@@ -10,11 +10,9 @@ class RolePermissionSeeder extends Seeder
 {
     public function run(): void
     {
-        // 1. Create Roles
-        $superAdmin = Role::firstOrCreate(['name' => 'super_admin'], ['description' => 'Quản trị toàn hệ thống (Wildcard *)']);
-        $contentManager = Role::firstOrCreate(['name' => 'content_manager'], ['description' => 'Quản lý thông tin phim & suất chiếu']);
-        $cskhStaff = Role::firstOrCreate(['name' => 'cskh_staff'], ['description' => 'Chăm sóc khách hàng & xử lý hoàn vé']);
-        $merchant = Role::firstOrCreate(['name' => 'merchant'], ['description' => 'Trưởng rạp chiếu phim']);
+        // 1. Create/Find Roles
+        $superAdmin = Role::firstOrCreate(['name' => 'admin'], ['description' => 'Quản trị viên hệ thống']);
+        $staff = Role::firstOrCreate(['name' => 'staff'], ['description' => 'Nhân viên rạp phim']);
         $customer = Role::firstOrCreate(['name' => 'customer'], ['description' => 'Khách hàng']);
 
         // 2. Create Permissions
@@ -42,29 +40,24 @@ class RolePermissionSeeder extends Seeder
         // Super Admin gets wildcard *
         $superAdmin->permissions()->sync([$permissionModels['*']->permission_id]);
 
-        // Content Manager
-        $contentManager->permissions()->sync([
+        // Staff permissions
+        $staff->permissions()->sync([
             $permissionModels['view:movie']->permission_id,
             $permissionModels['create:movie']->permission_id,
             $permissionModels['edit:movie']->permission_id,
-            $permissionModels['delete:movie']->permission_id,
             $permissionModels['create:showtime']->permission_id,
             $permissionModels['view:showtime']->permission_id,
-        ]);
-
-        // CSKH Staff
-        $cskhStaff->permissions()->sync([
             $permissionModels['view:booking']->permission_id,
             $permissionModels['search:booking']->permission_id,
             $permissionModels['refund:ticket']->permission_id,
             $permissionModels['resend:ticket']->permission_id,
+            $permissionModels['view:cinema_report']->permission_id,
         ]);
 
-        // Merchant
-        $merchant->permissions()->sync([
+        // Customer permissions
+        $customer->permissions()->sync([
+            $permissionModels['view:movie']->permission_id,
             $permissionModels['view:showtime']->permission_id,
-            $permissionModels['create:showtime']->permission_id,
-            $permissionModels['view:cinema_report']->permission_id,
         ]);
     }
 }

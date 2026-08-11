@@ -32,6 +32,6 @@ class ComboSeeder extends Seeder
             ],
         ];
 
-        DB::table('combos')->insert($combos);
+        DB::table('combos')->insertOrIgnore($combos);
     }
 }

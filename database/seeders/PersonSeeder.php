@@ -15,7 +15,7 @@ class PersonSeeder extends Seeder
 
         if (!empty($persons)) {
             foreach (array_chunk($persons, 100) as $chunk) {
-                DB::table('persons')->insert($chunk);
+                DB::table('persons')->insertOrIgnore($chunk);
             }
         }
     }

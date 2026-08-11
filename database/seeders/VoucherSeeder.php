@@ -29,6 +29,6 @@ class VoucherSeeder extends Seeder
             ],
         ];
 
-        DB::table('vouchers')->insert($vouchers);
+        DB::table('vouchers')->insertOrIgnore($vouchers);
     }
 }

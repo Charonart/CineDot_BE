@@ -22,6 +22,6 @@ class PricingRuleSeeder extends Seeder
             ],
         ];
 
-        DB::table('pricing_rules')->insert($rules);
+        DB::table('pricing_rules')->insertOrIgnore($rules);
     }
 }

@@ -15,6 +15,6 @@ class SeatTypeSeeder extends Seeder
             ['seat_type' => 'couple', 'surcharge_amount' => 40000.00],
         ];
 
-        DB::table('seat_types')->insert($seatTypes);
+        DB::table('seat_types')->insertOrIgnore($seatTypes);
     }
 }

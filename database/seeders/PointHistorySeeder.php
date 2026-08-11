@@ -21,6 +21,6 @@ class PointHistorySeeder extends Seeder
             ],
         ];
 
-        DB::table('point_histories')->insert($pointHistories);
+        DB::table('point_histories')->insertOrIgnore($pointHistories);
     }
 }

@@ -62,6 +62,6 @@ class RoomSeeder extends Seeder
             ],
         ];
 
-        DB::table('rooms')->insert($rooms);
+        DB::table('rooms')->insertOrIgnore($rooms);
     }
 }

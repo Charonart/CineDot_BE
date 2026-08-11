@@ -23,6 +23,6 @@ class BannerSeeder extends Seeder
             ],
         ];
 
-        DB::table('banners')->insert($banners);
+        DB::table('banners')->insertOrIgnore($banners);
     }
 }

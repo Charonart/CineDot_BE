@@ -17,9 +17,44 @@ class PaymentController extends Controller
     public function createUrl(PaymentRequest $request)
     {
         $idempotencyKey = $request->header('Idempotency-Key', (string) \Illuminate\Support\Str::uuid());
+        $userId = $request->user()->user_id;
+
+        $bookingQuery = Booking::where('user_id', $userId);
+        if ($request->has('booking_id')) {
+            $bookingQuery->where('booking_id', $request->input('booking_id'));
+        } elseif ($request->has('booking_code')) {
+            $bookingQuery->where('booking_code', $request->input('booking_code'));
+        }
         
-        $booking = Booking::where('user_id', $request->user()->user_id)
-            ->findOrFail($request->booking_id);
+        $booking = $bookingQuery->first();
+        if (!$booking) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không tìm thấy đơn đặt vé hợp lệ.'
+            ], 404);
+        }
+
+        if (in_array($booking->booking_status, ['completed', 'paid'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Đơn hàng này đã được thanh toán thành công.'
+            ], 400);
+        }
+
+        // Check hold TTL expiration
+        $ttlSeconds = (int) env('HOLD_SEAT_EXPIRE_SECONDS', 600);
+        $expiresAt = \Carbon\Carbon::parse($booking->created_at)->addSeconds($ttlSeconds);
+
+        if (\Carbon\Carbon::now()->greaterThan($expiresAt)) {
+            $booking->update(['booking_status' => 'cancelled']);
+            $seatIds = \App\Models\BookingSeat::where('booking_id', $booking->booking_id)->pluck('showtime_seat_id')->toArray();
+            $this->bookingService->releaseSeats($userId, $booking->showtime_id, $seatIds);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Đơn đặt vé đã quá thời gian giữ ghế (' . (int) ceil($ttlSeconds / 60) . ' phút). Vui lòng chọn ghế và đặt lại.'
+            ], 400);
+        }
 
         $paymentMethod = strtoupper($request->input('payment_method', 'VNPAY'));
         $amount = (float) ($booking->final_amount ?? $booking->total_amount);
@@ -73,7 +108,7 @@ class PaymentController extends Controller
             'payment_url' => $vnp_Url,
             'order_id' => $booking->booking_code,
             'amount' => (int) round($amount),
-            'expires_at' => now()->addMinutes(10)->toIso8601String(),
+            'expires_at' => $expiresAt->toIso8601String(),
             'idempotency_key' => $idempotencyKey,
             'data' => [
                 'payment_url' => $vnp_Url

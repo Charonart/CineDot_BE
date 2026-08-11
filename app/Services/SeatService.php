@@ -8,31 +8,101 @@ use Illuminate\Support\Facades\Redis;
 
 class SeatService
 {
-    public function getScheduleSeats(int $showtimeId)
+    public function getScheduleSeats(int $showtimeId): array
     {
-        Showtime::findOrFail($showtimeId);
+        $showtime = Showtime::with(['movie', 'room.cinema'])->findOrFail($showtimeId);
+        $room = $showtime->room;
 
-        $seats = ShowtimeSeat::where('showtime_id', $showtimeId)
+        // Parse room seat_matrix layout map
+        $matrixMap = [];
+        if ($room && is_array($room->seat_matrix)) {
+            foreach ($room->seat_matrix as $mSeat) {
+                if (is_array($mSeat)) {
+                    $row = $mSeat['row_name'] ?? '';
+                    $num = (string)($mSeat['seat_number'] ?? '');
+                    $code = $row . $num;
+                    $sid = $mSeat['seat_id'] ?? $code;
+                    
+                    $canvasData = [
+                        'cx'    => isset($mSeat['cx']) ? (int) $mSeat['cx'] : (isset($mSeat['position_x']) ? (int) $mSeat['position_x'] : 0),
+                        'cy'    => isset($mSeat['cy']) ? (int) $mSeat['cy'] : (isset($mSeat['position_y']) ? (int) $mSeat['position_y'] : 0),
+                        'angle' => isset($mSeat['angle']) ? (int) $mSeat['angle'] : 0,
+                    ];
+
+                    if ($sid) {
+                        $matrixMap[(string)$sid] = $canvasData;
+                    }
+                    if ($code) {
+                        $matrixMap[(string)$code] = $canvasData;
+                    }
+                }
+            }
+        }
+
+        $seats = ShowtimeSeat::with('seatType')
+            ->where('showtime_id', $showtimeId)
             ->get()
             ->sortBy(function ($ss) {
                 return $ss->row_name . str_pad($ss->seat_number, 3, '0', STR_PAD_LEFT);
             })
             ->values();
 
-        $pendingSeatIds = \App\Models\BookingSeat::whereHas('booking', function ($query) use ($showtimeId) {
+        $ttlSeconds = (int) env('HOLD_SEAT_EXPIRE_SECONDS', 600);
+        $pendingSeatIds = \App\Models\BookingSeat::whereHas('booking', function ($query) use ($showtimeId, $ttlSeconds) {
             $query->where('showtime_id', $showtimeId)
-                  ->where('booking_status', 'pending');
+                  ->where('booking_status', 'pending')
+                  ->where('created_at', '>=', \Carbon\Carbon::now()->subSeconds($ttlSeconds));
         })->pluck('showtime_seat_id')->flip()->toArray();
 
+        $basePrice = (float) $showtime->base_price;
+
+        $seatList = [];
         foreach ($seats as $ss) {
-            if ($ss->status === 'available') {
-                $redisKey = "hold:showtime:{$showtimeId}:seat:{$ss->showtime_seat_id}";
-                if (Redis::exists($redisKey) || isset($pendingSeatIds[$ss->showtime_seat_id])) {
-                    $ss->status = 'holding';
+            $status = strtoupper($ss->status);
+            if ($status === 'AVAILABLE') {
+                $isHeldInDb = isset($pendingSeatIds[$ss->showtime_seat_id]);
+                $isHeldInRedis = false;
+                try {
+                    $redisKey = "hold:showtime:{$showtimeId}:seat:{$ss->showtime_seat_id}";
+                    $isHeldInRedis = (bool) Redis::exists($redisKey);
+                } catch (\Exception $e) {
+                    // Redis fallback
+                }
+
+                if ($isHeldInDb || $isHeldInRedis) {
+                    $status = 'HOLDING';
                 }
             }
+
+            $seatCode = $ss->row_name . $ss->seat_number;
+            $surcharge = $ss->seatType ? (float) $ss->seatType->surcharge_amount : 0.0;
+            $finalPrice = (int) round($basePrice + $surcharge);
+
+            $canvas = $matrixMap[$seatCode] ?? $matrixMap[(string)$ss->showtime_seat_id] ?? ['cx' => 0, 'cy' => 0, 'angle' => 0];
+
+            $seatList[] = [
+                'showtime_seat_id' => $ss->showtime_seat_id,
+                'seat_code'        => $seatCode,
+                'row_name'         => $ss->row_name,
+                'seat_number'      => (string) $ss->seat_number,
+                'seat_type'        => $ss->seat_type,
+                'surcharge'        => (int) round($surcharge),
+                'final_price'      => $finalPrice,
+                'status'           => $status,
+                'canvas'           => $canvas,
+            ];
         }
 
-        return $seats;
+        return [
+            'showtime' => [
+                'showtime_id'    => $showtime->showtime_id,
+                'movie_title'    => $showtime->movie ? $showtime->movie->title : '',
+                'room_name'      => $showtime->room ? $showtime->room->room_name : '',
+                'cinema_name'    => ($showtime->room && $showtime->room->cinema) ? $showtime->room->cinema->cinema_name : '',
+                'base_price'     => (int) round($basePrice),
+                'showtime_start' => \Carbon\Carbon::parse($showtime->showtime_start)->toIso8601String(),
+            ],
+            'seats' => $seatList,
+        ];
     }
 }

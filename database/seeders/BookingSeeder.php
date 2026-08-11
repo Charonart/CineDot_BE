@@ -102,6 +102,6 @@ class BookingSeeder extends Seeder
             ],
         ];
 
-        DB::table('bookings')->insert($bookings);
+        DB::table('bookings')->insertOrIgnore($bookings);
     }
 }

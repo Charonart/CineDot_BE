@@ -15,7 +15,7 @@ class CreditSeeder extends Seeder
 
         if (!empty($credits)) {
             foreach (array_chunk($credits, 100) as $chunk) {
-                DB::table('credits')->insert($chunk);
+                DB::table('credits')->insertOrIgnore($chunk);
             }
         }
     }

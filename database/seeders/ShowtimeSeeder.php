@@ -45,6 +45,6 @@ class ShowtimeSeeder extends Seeder
             ],
         ];
 
-        DB::table('showtimes')->insert($showtimes);
+        DB::table('showtimes')->insertOrIgnore($showtimes);
     }
 }

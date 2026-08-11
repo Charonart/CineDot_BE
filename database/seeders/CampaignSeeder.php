@@ -22,6 +22,6 @@ class CampaignSeeder extends Seeder
             ],
         ];
 
-        DB::table('campaigns')->insert($campaigns);
+        DB::table('campaigns')->insertOrIgnore($campaigns);
     }
 }

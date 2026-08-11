@@ -27,6 +27,6 @@ class ReviewSeeder extends Seeder
             ],
         ];
 
-        DB::table('reviews')->insert($reviews);
+        DB::table('reviews')->insertOrIgnore($reviews);
     }
 }

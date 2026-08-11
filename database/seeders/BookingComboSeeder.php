@@ -21,6 +21,6 @@ class BookingComboSeeder extends Seeder
             ],
         ];
 
-        DB::table('booking_combos')->insert($bookingCombos);
+        DB::table('booking_combos')->insertOrIgnore($bookingCombos);
     }
 }

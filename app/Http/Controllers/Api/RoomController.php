@@ -14,7 +14,19 @@ class RoomController extends Controller
         
         return response()->json([
             'success' => true,
-            'data'    => BaseSeatResource::collection($room->seats)
+            'data'    => BaseSeatResource::collection($room->seats ?? [])
         ]);
     }
+
+    /**
+     * Get static seat layout for a room.
+     * Response matches Postman collection spec: room_id, room_name, total_seats, seats array with cx, cy.
+     */
+    public function layout($id)
+    {
+        $room = Room::findOrFail($id);
+
+        return response()->json($room->formatted_layout);
+    }
 }
+

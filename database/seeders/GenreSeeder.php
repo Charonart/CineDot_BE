@@ -14,7 +14,7 @@ class GenreSeeder extends Seeder
         $genres = $data['genres'] ?? [];
 
         if (!empty($genres)) {
-            DB::table('genres')->insert($genres);
+            DB::table('genres')->insertOrIgnore($genres);
         }
     }
 }

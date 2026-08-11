@@ -15,7 +15,7 @@ class MovieSeeder extends Seeder
 
         if (!empty($movies)) {
             foreach (array_chunk($movies, 100) as $chunk) {
-                DB::table('movies')->insert($chunk);
+                DB::table('movies')->insertOrIgnore($chunk);
             }
         }
     }

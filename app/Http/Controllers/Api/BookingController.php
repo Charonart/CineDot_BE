@@ -36,12 +36,20 @@ class BookingController extends Controller
             $pointsUsed
         );
 
-        $ttlMinutes = (int) ceil(env('HOLD_SEAT_EXPIRE_SECONDS', 600) / 60);
+        $ttlSeconds = (int) env('HOLD_SEAT_EXPIRE_SECONDS', 600);
+        $ttlMinutes = (int) ceil($ttlSeconds / 60);
+        $expiresAt = \Carbon\Carbon::now()->addSeconds($ttlSeconds)->toIso8601String();
 
         return response()->json([
             'success' => true,
-            'message' => "Giữ ghế thành công, vui lòng thanh toán trong {$ttlMinutes} phút.",
-            'data'    => $booking
+            'message' => "Đã giữ " . count($showtimeSeatIds) . " ghế thành công trong {$ttlMinutes} phút.",
+            'data'    => [
+                'booking_id'        => $booking->booking_id,
+                'booking_code'      => $booking->booking_code,
+                'showtime_id'       => (int) $showtimeId,
+                'showtime_seat_ids' => array_map('intval', (array) $showtimeSeatIds),
+                'expires_at'        => $expiresAt,
+            ]
         ]);
     }
 

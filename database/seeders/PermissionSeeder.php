@@ -17,6 +17,6 @@ class PermissionSeeder extends Seeder
             ['permission_id' => 5, 'name' => 'book-tickets', 'description' => 'Quyền đặt vé xem phim'],
         ];
 
-        DB::table('permissions')->insert($permissions);
+        DB::table('permissions')->insertOrIgnore($permissions);
     }
 }

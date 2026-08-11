@@ -102,11 +102,11 @@ class ShowtimeController extends Controller
 
     public function seats($id)
     {
-        $seats = $this->seatService->getScheduleSeats($id);
+        $data = $this->seatService->getScheduleSeats((int) $id);
 
         return response()->json([
             'success' => true,
-            'data'    => SeatResource::collection($seats),
+            'data'    => $data,
         ]);
     }
 
@@ -116,20 +116,36 @@ class ShowtimeController extends Controller
     public function seatStatus($id)
     {
         $showtimeSeats = \App\Models\ShowtimeSeat::where('showtime_id', $id)->get();
+        $ttlSeconds = (int) env('HOLD_SEAT_EXPIRE_SECONDS', 600);
+
+        $pendingSeatIds = \App\Models\BookingSeat::whereHas('booking', function ($query) use ($id, $ttlSeconds) {
+            $query->where('showtime_id', $id)
+                  ->where('booking_status', 'pending')
+                  ->where('created_at', '>=', \Carbon\Carbon::now()->subSeconds($ttlSeconds));
+        })->pluck('showtime_seat_id')->flip()->toArray();
 
         $statusMap = [];
         foreach ($showtimeSeats as $seat) {
             $status = strtoupper($seat->status);
             
-            // Check Redis hold key if available in DB
             if ($status === 'AVAILABLE') {
-                $redisKey = "hold:showtime:{$id}:seat:{$seat->showtime_seat_id}";
-                if (\Illuminate\Support\Facades\Redis::exists($redisKey)) {
+                $isHeldInDb = isset($pendingSeatIds[$seat->showtime_seat_id]);
+                $isHeldInRedis = false;
+                
+                try {
+                    $redisKey = "hold:showtime:{$id}:seat:{$seat->showtime_seat_id}";
+                    $isHeldInRedis = (bool) \Illuminate\Support\Facades\Redis::exists($redisKey);
+                } catch (\Exception $e) {
+                    // Redis fallback
+                }
+
+                if ($isHeldInDb || $isHeldInRedis) {
                     $status = 'HOLD';
                 }
             }
 
-            $statusMap[$seat->showtime_seat_id] = $status;
+            $key = request()->query('by_code') ? ($seat->row_name . $seat->seat_number) : (string) $seat->showtime_seat_id;
+            $statusMap[$key] = $status;
         }
 
         return response()->json($statusMap);

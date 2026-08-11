@@ -15,7 +15,7 @@ class VideoSeeder extends Seeder
 
         if (!empty($videos)) {
             foreach (array_chunk($videos, 200) as $chunk) {
-                DB::table('videos')->insert($chunk);
+                DB::table('videos')->insertOrIgnore($chunk);
             }
         }
     }

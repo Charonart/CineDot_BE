@@ -65,10 +65,29 @@ class UserSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
+            [
+                'user_id' => 4,
+                'tier_id' => null,
+                'role_id' => 3,
+                'province_id' => null,
+                'username' => 'lequy27102006',
+                'password' => '$2y$12$1XTHwGnMvaAlO16I29m1e.RoOxov1WoD4t/8CWGsXE3s9/qVLIvPe',
+                'email' => 'lequy27102006@gmail.com',
+                'fullname' => 'Nguyen Van B',
+                'avatar' => 'https://cdn.cinedot.vn/avatars/user1.jpg',
+                'birthday' => null,
+                'gender' => null,
+                'phone' => '0909876543',
+                'total_points' => 0,
+                'email_verified_at' => null,
+                'last_login' => '2026-08-10 16:50:51',
+                'created_at' => '2026-08-04 19:38:19',
+                'updated_at' => '2026-08-10 16:50:51',
+            ],
         ];
 
         foreach ($users as $user) {
-            DB::table('users')->insert($user);
+            DB::table('users')->insertOrIgnore($user);
         }
     }
 }

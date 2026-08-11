@@ -105,6 +105,7 @@ Route::prefix('v1')->group(function () {
     Route::get('/cinemas/detail/{slug}', [CinemaController::class, 'showBySlug']);
     Route::get('/cinemas/detail/{slug}/showtimes', [CinemaController::class, 'showtimes']);
     Route::get('/rooms/{id}/seats', [App\Http\Controllers\Api\RoomController::class, 'seats']);
+    Route::get('/rooms/{id}/layout', [App\Http\Controllers\Api\RoomController::class, 'layout']);
 
     // ── Special Theaters ──────────────────────────────────────────────────────
     Route::get('/special-theaters/{type}', [CinemaController::class, 'specialTheaters']);
@@ -166,8 +167,12 @@ Route::prefix('v1')->group(function () {
         // Bookings & Reviews
         Route::get('bookings', [\App\Http\Controllers\Api\Admin\BookingController::class, 'index']);
         Route::get('bookings/{id}', [\App\Http\Controllers\Api\Admin\BookingController::class, 'show']);
+        Route::post('bookings/{id}/refund', [\App\Http\Controllers\Api\Admin\BookingController::class, 'refund']);
         Route::get('reviews', [\App\Http\Controllers\Api\Admin\MovieReviewController::class, 'index']);
         Route::delete('reviews/{id}', [\App\Http\Controllers\Api\Admin\MovieReviewController::class, 'destroy']);
+
+        // Reports
+        Route::get('reports/revenue', [\App\Http\Controllers\Api\Admin\ReportController::class, 'revenue']);
 
         // Vouchers, Combos, Banners, Provinces, Genres, Persons
         Route::apiResource('vouchers', \App\Http\Controllers\Api\Admin\VoucherController::class);

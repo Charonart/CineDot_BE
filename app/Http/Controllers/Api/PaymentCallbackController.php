@@ -49,11 +49,15 @@ class PaymentCallbackController extends Controller
             if ($secureHash == $vnp_SecureHash) {
                 $booking = Booking::where('booking_code', $vnp_TxnRef)->first();
                 if ($booking != NULL) {
-                    if ($booking->total_amount * 100 == $vnp_Amount) {
+                    $expectedAmount = (float) ($booking->final_amount ?? $booking->total_amount);
+                    if (intval(round($expectedAmount * 100)) == intval($vnp_Amount)) {
                         if ($booking->booking_status == 'pending') {
                             if ($vnp_ResponseCode == '00') {
                                 // Thanh toán thành công
-                                $this->bookingService->confirmBooking($booking->booking_id);
+                                $this->bookingService->confirmBooking($booking->booking_id, [
+                                    'transaction_id' => $inputData['vnp_TransactionNo'] ?? null,
+                                    'payment_method' => 'VNPAY',
+                                ]);
                             } else {
                                 // Thanh toán lỗi
                                 $booking->update(['booking_status' => 'cancelled']);
