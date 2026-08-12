@@ -11,22 +11,25 @@ class ReportController extends Controller
 {
     /**
      * Báo cáo doanh thu theo Rạp/Ngày/Phim
-     * RBAC: view:cinema_report. Tự động kẹp WHERE cinema_id = {user.cinema_id} nếu có.
+     * Hỗ trợ Context-Aware Data Scoping theo rạp/khu vực.
      */
     public function revenue(Request $request)
     {
         $user = $request->user();
         
-        $query = Booking::where('booking_status', 'paid');
+        $query = Booking::whereIn('booking_status', ['completed', 'paid']);
 
-        // Phân quyền theo rạp của admin/staff
-        if ($user && isset($user->cinema_id) && $user->cinema_id) {
-            $cinemaId = $user->cinema_id;
-            $cinema = Cinema::find($cinemaId);
-            $query->whereHas('showtime.room', function ($q) use ($cinemaId) {
-                $q->where('cinema_id', $cinemaId);
-            });
-        } elseif ($request->has('cinema_id')) {
+        // Data Scoping theo rạp được phân quyền
+        if ($user && method_exists($user, 'getAuthorizedScopeIds')) {
+            $allowedCinemaIds = $user->getAuthorizedScopeIds('view:report', 'cinema');
+            if (!in_array('*', $allowedCinemaIds)) {
+                $query->whereHas('showtime.room', function ($q) use ($allowedCinemaIds) {
+                    $q->whereIn('cinema_id', $allowedCinemaIds);
+                });
+            }
+        }
+
+        if ($request->has('cinema_id')) {
             $cinemaId = $request->cinema_id;
             $cinema = Cinema::find($cinemaId);
             $query->whereHas('showtime.room', function ($q) use ($cinemaId) {
@@ -36,11 +39,14 @@ class ReportController extends Controller
             $cinema = null;
         }
 
-        if ($request->has('from_date')) {
-            $query->whereDate('created_at', '>=', $request->from_date);
+        $startDate = $request->input('start_date', $request->input('from_date'));
+        $endDate = $request->input('end_date', $request->input('to_date'));
+
+        if ($startDate) {
+            $query->whereDate('created_at', '>=', $startDate);
         }
-        if ($request->has('to_date')) {
-            $query->whereDate('created_at', '<=', $request->to_date);
+        if ($endDate) {
+            $query->whereDate('created_at', '<=', $endDate);
         }
         if ($request->has('movie_id')) {
             $movieId = $request->movie_id;
@@ -49,18 +55,19 @@ class ReportController extends Controller
             });
         }
 
-        $totalRevenue = (int) $query->sum('total_amount');
+        $totalRevenue = (float) (clone $query)->sum('final_amount');
+        $bookingIds = (clone $query)->pluck('booking_id');
         
-        $totalTicketsSold = (int) \App\Models\BookingSeat::whereHas('booking', function ($q) use ($query) {
-            $q->whereIn('booking_id', $query->pluck('booking_id'));
-        })->count();
+        $totalTicketsSold = (int) \App\Models\BookingSeat::whereIn('booking_id', $bookingIds)->count();
 
         return response()->json([
             'success' => true,
             'data'    => [
                 'total_revenue'      => $totalRevenue,
                 'total_tickets_sold' => $totalTicketsSold,
-                'cinema_name'        => $cinema ? $cinema->name : 'Tất cả cụm rạp',
+                'cinema_name'        => $cinema ? ($cinema->cinema_name ?? 'Rạp') : 'Tất cả cụm rạp',
+                'start_date'         => $startDate,
+                'end_date'           => $endDate,
             ]
         ]);
     }

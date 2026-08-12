@@ -10,7 +10,7 @@ use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable, \App\Traits\HasContextRoles;
 
     protected $primaryKey = 'user_id';
 
@@ -20,7 +20,6 @@ class User extends Authenticatable implements MustVerifyEmail
      * @var array<int, string>
      */
     protected $fillable = [
-        'tier_id',
         'role_id',
         'username',
         'password',
@@ -68,9 +67,16 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->belongsTo(Role::class, 'role_id', 'role_id');
     }
 
+    public function userRoles()
+    {
+        return $this->hasMany(UserRole::class, 'user_id', 'user_id');
+    }
+
     public function userTier()
     {
-        return $this->belongsTo(UserTier::class, 'tier_id', 'user_tier_id');
+        return UserTier::where('min_points', '<=', $this->total_points ?? 0)
+            ->orderByDesc('min_points')
+            ->first();
     }
 
     public function reviews()
@@ -83,15 +89,7 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(Booking::class, 'user_id', 'user_id');
     }
 
-    public function userVouchers()
-    {
-        return $this->hasMany(UserVoucher::class, 'user_id', 'user_id');
-    }
 
-    public function pointHistories()
-    {
-        return $this->hasMany(PointHistory::class, 'user_id', 'user_id');
-    }
 
     public function sendPasswordResetNotification($token)
     {

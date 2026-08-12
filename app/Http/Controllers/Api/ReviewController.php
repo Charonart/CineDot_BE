@@ -58,6 +58,20 @@ class ReviewController extends Controller
 
         $userId = $request->user()->user_id;
 
+        $hasWatched = \App\Models\Booking::where('user_id', $userId)
+            ->whereHas('showtime', function ($query) use ($movie) {
+                $query->where('movie_id', $movie->movie_id);
+            })
+            ->whereIn('booking_status', ['completed', 'paid'])
+            ->exists();
+
+        if (!$hasWatched) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Bạn cần phải mua vé và xem phim trước khi gửi đánh giá.'
+            ], 403);
+        }
+
         $existing = Review::where('movie_id', $movie->movie_id)->where('user_id', $userId)->first();
         if ($existing) {
             return response()->json([

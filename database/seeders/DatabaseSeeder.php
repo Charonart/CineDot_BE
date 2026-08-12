@@ -39,7 +39,6 @@ class DatabaseSeeder extends Seeder
             BookingSeatSeeder::class,
             BookingComboSeeder::class,
             ReviewSeeder::class,
-            PointHistorySeeder::class,
             PricingRuleSeeder::class,
             LargeDataSeeder::class,
         ]);
@@ -73,7 +72,6 @@ class DatabaseSeeder extends Seeder
                 'booking_seats' => 'booking_seat_id',
                 'booking_combos' => 'booking_combo_id',
                 'reviews' => 'review_id',
-                'point_histories' => 'point_history_id',
                 'pricing_rules' => 'pricing_rule_id',
             ];
 

@@ -59,23 +59,31 @@ class PaymentController extends Controller
         $paymentMethod = strtoupper($request->input('payment_method', 'VNPAY'));
         $amount = (float) ($booking->final_amount ?? $booking->total_amount);
 
-        $vnp_Url = config('services.vnpay.url', 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html');
-        $vnp_Returnurl = config('services.vnpay.return_url', 'http://localhost:8000/api/v1/payments/vnpay/return');
-        $vnp_TmnCode = config('services.vnpay.tmn_code', '50XQ0B1Y');
-        $vnp_HashSecret = config('services.vnpay.hash_secret', 'KNHEY5MFOU7GSAV0YYMSETPC2DTCKO4I');
+        $vnp_Url = config('services.vnpay.url') ?: 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html';
+        $vnp_Returnurl = config('services.vnpay.return_url') ?: 'http://localhost:8000/api/v1/payments/vnpay/return';
+        $vnp_TmnCode = config('services.vnpay.tmn_code') ?: 'X30Z4K1B';
+        $vnp_HashSecret = config('services.vnpay.hash_secret') ?: 'GCCOFZVEFCGWUBXFNOVSPYEDLZHFMWWG';
 
         $vnp_TxnRef = $booking->booking_code;
-        $vnp_OrderInfo = 'Thanh_toan_ve_phim_' . $vnp_TxnRef;
+        $vnp_OrderInfo = 'Thanh toan don hang ' . $vnp_TxnRef;
         $vnp_Amount = intval(round($amount * 100));
+
+        $vnTime = \Carbon\Carbon::now('Asia/Ho_Chi_Minh');
+        $vnp_CreateDate = $vnTime->format('YmdHis');
+
+        $ipAddr = $request->ip();
+        if ($ipAddr === '::1' || empty($ipAddr)) {
+            $ipAddr = '127.0.0.1';
+        }
 
         $inputData = [
             "vnp_Version" => "2.1.0",
             "vnp_TmnCode" => $vnp_TmnCode,
             "vnp_Amount" => $vnp_Amount,
             "vnp_Command" => "pay",
-            "vnp_CreateDate" => date('YmdHis'),
+            "vnp_CreateDate" => $vnp_CreateDate,
             "vnp_CurrCode" => "VND",
-            "vnp_IpAddr" => $request->ip(),
+            "vnp_IpAddr" => $ipAddr,
             "vnp_Locale" => 'vn',
             "vnp_OrderInfo" => $vnp_OrderInfo,
             "vnp_OrderType" => 'billpayment',

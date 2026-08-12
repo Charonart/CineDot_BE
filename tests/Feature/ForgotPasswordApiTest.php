@@ -18,12 +18,14 @@ class ForgotPasswordApiTest extends TestCase
     {
         parent::setUp();
 
+        $role = \App\Models\Role::firstOrCreate(['name' => 'customer'], ['description' => 'Customer']);
+
         $this->user = User::create([
             'username' => 'resetuser',
             'email' => 'resetuser@cinedot.vn',
             'password' => bcrypt('oldpassword123'),
             'fullname' => 'Reset User',
-            'status' => 'active',
+            'role_id' => $role->role_id,
         ]);
     }
 

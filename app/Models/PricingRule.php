@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class PricingRule extends Model
 {
     protected $primaryKey = 'pricing_rule_id';
+    public $timestamps = false;
 
     protected $fillable = [
         'name',

@@ -27,7 +27,7 @@ Route::prefix('v1')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
         
         Route::get('/me', [AuthController::class, 'me']);
-        Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
+        Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])->middleware('throttle:1,1');
         Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('password.reset');
         Route::post('/email/verification-notification', [AuthController::class, 'verifyEmailResend'])->middleware(['auth:sanctum', 'throttle:6,1']);
     });
@@ -54,9 +54,6 @@ Route::prefix('v1')->group(function () {
         // ── Reviews ───────────────────────────────────────────────────────────────
         Route::post('/movies/{id}/reviews', [App\Http\Controllers\Api\ReviewController::class, 'store']);
 
-        // ── Loyalty & Rewards ──────────────────────────────────────────────────────
-        Route::get('/users/points-history', [\App\Http\Controllers\Api\PointHistoryController::class, 'index']);
-        Route::post('/users/exchange-points', [\App\Http\Controllers\Api\PointExchangeController::class, 'exchange']);
         Route::post('/bookings/{id}/cancel', [\App\Http\Controllers\Api\BookingController::class, 'cancel']);
 
         // ── Staff Routes ──────────────────────────────────────────────────────────
@@ -72,6 +69,7 @@ Route::prefix('v1')->group(function () {
     Route::post('/webhooks/payment', [App\Http\Controllers\Api\PaymentCallbackController::class, 'paymentWebhook']);
     Route::get('/payments/vnpay/ipn', [App\Http\Controllers\Api\PaymentCallbackController::class, 'vnpayIpn']);
     Route::get('/payments/vnpay/return', [App\Http\Controllers\Api\PaymentCallbackController::class, 'vnpayReturn']);
+    Route::get('/payments/vnpay/return/payment-result', [App\Http\Controllers\Api\PaymentCallbackController::class, 'vnpayReturn']);
 
     // ── Master Data ───────────────────────────────────────────────────────────
     Route::get('/provinces',        [App\Http\Controllers\Api\ProvinceController::class, 'index']);
@@ -147,7 +145,6 @@ Route::prefix('v1')->group(function () {
         // Cinemas & Rooms
         Route::apiResource('cinemas', \App\Http\Controllers\Api\Admin\CinemaController::class);
         Route::apiResource('cinemas.rooms', \App\Http\Controllers\Api\Admin\RoomController::class)->shallow();
-        Route::apiResource('rooms.seats', \App\Http\Controllers\Api\Admin\SeatController::class)->shallow()->except(['show']);
         
         // Showtimes & Schedules
         Route::post('showtimes', [\App\Http\Controllers\Api\Admin\ScheduleController::class, 'store']);
@@ -160,9 +157,12 @@ Route::prefix('v1')->group(function () {
         Route::post('campaigns/{id}/banners', [\App\Http\Controllers\Api\Admin\CampaignController::class, 'storeBanner']);
         Route::get('campaigns/{id}/roi', [\App\Http\Controllers\Api\Admin\CampaignController::class, 'roi']);
 
-        // Users
+        // Users & Roles
         Route::get('users', [\App\Http\Controllers\Api\Admin\UserController::class, 'index']);
         Route::put('users/{id}/role', [\App\Http\Controllers\Api\Admin\UserController::class, 'updateRole']);
+        Route::get('users/{userId}/roles', [\App\Http\Controllers\Api\Admin\UserRoleController::class, 'index']);
+        Route::post('users/{userId}/roles', [\App\Http\Controllers\Api\Admin\UserRoleController::class, 'store']);
+        Route::delete('users/{userId}/roles/{id}', [\App\Http\Controllers\Api\Admin\UserRoleController::class, 'destroy']);
         
         // Bookings & Reviews
         Route::get('bookings', [\App\Http\Controllers\Api\Admin\BookingController::class, 'index']);
@@ -180,11 +180,11 @@ Route::prefix('v1')->group(function () {
         Route::apiResource('provinces', \App\Http\Controllers\Api\Admin\ProvinceController::class);
         Route::apiResource('genres', \App\Http\Controllers\Api\Admin\GenreController::class);
         Route::apiResource('persons', \App\Http\Controllers\Api\Admin\PersonController::class);
-
-        // Payments & Refunds
-        Route::get('payments', [\App\Http\Controllers\Api\Admin\PaymentController::class, 'index']);
-        Route::post('payments/{id}/refund', [\App\Http\Controllers\Api\Admin\PaymentController::class, 'refund']);
         Route::apiResource('banners', \App\Http\Controllers\Api\Admin\BannerController::class);
+
+        // Pricing Rules
+        Route::patch('pricing-rules/{id}/toggle-active', [\App\Http\Controllers\Api\Admin\PricingRuleController::class, 'toggleActive']);
+        Route::apiResource('pricing-rules', \App\Http\Controllers\Api\Admin\PricingRuleController::class);
     });
 
 }); // End of v1 prefix

@@ -10,7 +10,6 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id('user_id');
-            $table->foreignId('tier_id')->nullable()->constrained('user_tiers', 'user_tier_id')->nullOnDelete();
             $table->foreignId('role_id')->constrained('roles', 'role_id')->cascadeOnDelete();
             $table->foreignId('province_id')->nullable()->constrained('provinces', 'province_id')->nullOnDelete();
             $table->string('username')->unique();

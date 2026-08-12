@@ -22,13 +22,13 @@ class FixShowtimeApiTest extends TestCase
     {
         parent::setUp();
 
-        $province = Province::create(['province_name' => 'Hà Nội']);
+        $province = Province::create(['province_name' => 'Hà Nội', 'province_code' => 'HN']);
 
         $this->cinema = Cinema::create([
-            'province_id' => $province->province_id,
-            'name'        => 'CineDot Cầu Giấy',
-            'slug'        => 'cinedot-cau-giay',
-            'address'     => '123 Cầu Giấy',
+            'province_id'    => $province->province_id,
+            'cinema_name'    => 'CineDot Cầu Giấy',
+            'slug'           => 'cinedot-cau-giay',
+            'cinema_address' => '123 Cầu Giấy',
         ]);
 
         $room = Room::create([

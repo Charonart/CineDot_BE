@@ -11,10 +11,12 @@ class UserTier extends Model
 
     protected $fillable = [
         'tier',
+        'min_points',
         'discount_percent',
     ];
 
     protected $casts = [
+        'min_points'       => 'integer',
         'discount_percent' => 'decimal:2',
     ];
 

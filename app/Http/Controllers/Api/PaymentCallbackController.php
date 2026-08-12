@@ -27,6 +27,7 @@ class PaymentCallbackController extends Controller
 
         $vnp_SecureHash = $inputData['vnp_SecureHash'] ?? '';
         unset($inputData['vnp_SecureHash']);
+        unset($inputData['vnp_SecureHashType']);
         ksort($inputData);
         $i = 0;
         $hashData = "";
@@ -51,7 +52,7 @@ class PaymentCallbackController extends Controller
                 if ($booking != NULL) {
                     $expectedAmount = (float) ($booking->final_amount ?? $booking->total_amount);
                     if (intval(round($expectedAmount * 100)) == intval($vnp_Amount)) {
-                        if ($booking->booking_status == 'pending') {
+                        if (in_array($booking->booking_status, ['pending', 'holding', 'unpaid'])) {
                             if ($vnp_ResponseCode == '00') {
                                 // Thanh toán thành công
                                 $this->bookingService->confirmBooking($booking->booking_id, [
@@ -92,7 +93,7 @@ class PaymentCallbackController extends Controller
     public function vnpayReturn(Request $request)
     {
         $inputData = array();
-        foreach ($_GET as $key => $value) {
+        foreach ($request->query() as $key => $value) {
             if (substr($key, 0, 4) == "vnp_") {
                 $inputData[$key] = $value;
             }
@@ -100,6 +101,7 @@ class PaymentCallbackController extends Controller
 
         $vnp_SecureHash = $inputData['vnp_SecureHash'] ?? '';
         unset($inputData['vnp_SecureHash']);
+        unset($inputData['vnp_SecureHashType']);
         ksort($inputData);
         $i = 0;
         $hashData = "";
@@ -115,27 +117,69 @@ class PaymentCallbackController extends Controller
         $vnp_HashSecret = config('services.vnpay.hash_secret');
         $secureHash = hash_hmac('sha512', $hashData, $vnp_HashSecret);
         
+        Log::info("vnpayReturn debug", [
+            'secureHash' => $secureHash,
+            'vnp_SecureHash' => $vnp_SecureHash,
+            'hashData' => $hashData,
+            'match' => ($secureHash === $vnp_SecureHash)
+        ]);
+
         $frontendUrl = env('FRONTEND_URL', 'http://localhost:3000');
 
         if ($secureHash == $vnp_SecureHash) {
             $vnp_TxnRef = $request->vnp_TxnRef;
             $booking = Booking::where('booking_code', $vnp_TxnRef)->first();
 
+            Log::info("booking status before confirmBooking", [
+                'booking_id' => $booking?->booking_id,
+                'status' => $booking?->booking_status,
+                'vnp_ResponseCode' => $request->vnp_ResponseCode
+            ]);
+
             if ($request->vnp_ResponseCode == '00') {
-                // Fallback update status in Return URL for local development (when IPN cannot be reached)
-                if ($booking && $booking->booking_status == 'pending') {
-                    $this->bookingService->confirmBooking($booking->booking_id);
+                if ($booking && in_array($booking->booking_status, ['pending', 'holding', 'unpaid'])) {
+                    try {
+                        Log::info("Calling confirmBooking for booking_id: " . $booking->booking_id);
+                        $booking = $this->bookingService->confirmBooking($booking->booking_id, [
+                            'transaction_id' => $request->input('vnp_TransactionNo'),
+                            'payment_method' => 'VNPAY',
+                        ]);
+                        Log::info("confirmBooking finished. New status: " . $booking->booking_status);
+                    } catch (\Throwable $e) {
+                        Log::error('confirmBooking Error: ' . $e->getMessage() . "\nTrace: " . $e->getTraceAsString());
+                    }
                 }
-                return redirect()->away($frontendUrl . '/payment/success?order_id=' . $request->vnp_TxnRef);
+                
+                $confirmedBooking = $booking ? Booking::find($booking->booking_id) : null;
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Thanh toán VNPay thành công.',
+                    'order_id' => $vnp_TxnRef,
+                    'vnp_response_code' => $request->vnp_ResponseCode,
+                    'vnp_transaction_no' => $request->input('vnp_TransactionNo'),
+                    'booking' => $confirmedBooking
+                ]);
             }
 
-            if ($booking && $booking->booking_status == 'pending') {
+            if ($booking && in_array($booking->booking_status, ['pending', 'holding', 'unpaid'])) {
                 $booking->update(['booking_status' => 'cancelled']);
             }
-            return redirect()->away($frontendUrl . '/payment/failed?order_id=' . $request->vnp_TxnRef . '&message=Payment_Failed');
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Thanh toán thất bại hoặc người dùng hủy giao dịch.',
+                'order_id' => $vnp_TxnRef,
+                'vnp_response_code' => $request->vnp_ResponseCode,
+                'booking' => $booking ? $booking->fresh() : null
+            ], 400);
         }
 
-        return redirect()->away($frontendUrl . '/payment/failed?order_id=' . $request->vnp_TxnRef . '&message=Invalid_Signature');
+        return response()->json([
+            'success' => false,
+            'message' => 'Chữ ký VNPay không hợp lệ.',
+            'order_id' => $request->vnp_TxnRef
+        ], 400);
     }
 
     public function paymentWebhook(Request $request)

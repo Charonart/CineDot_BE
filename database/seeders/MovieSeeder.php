@@ -9,7 +9,7 @@ class MovieSeeder extends Seeder
 {
     public function run(): void
     {
-        $json = file_get_contents(base_path('cinedot_data.json'));
+        $json = file_get_contents(database_path('data/cinedot_data.json'));
         $data = json_decode($json, true);
         $movies = $data['movies'] ?? [];
 

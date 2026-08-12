@@ -22,11 +22,11 @@ class BookingCheckInController extends Controller
      */
     public function checkInByQr(Request $request)
     {
-        $code = $request->input('qr_code', $request->input('booking_code', $request->input('code')));
+        $code = $request->input('qr_data', $request->input('qr_code', $request->input('booking_code', $request->input('code'))));
         if (empty($code)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Vui lòng cung cấp mã QR hoặc mã vé.'
+                'message' => 'Vui lòng cung cấp mã QR (qr_data) hoặc mã vé.'
             ], 422);
         }
 
@@ -141,7 +141,6 @@ class BookingCheckInController extends Controller
                 $staff = $request->user();
                 $booking->update([
                     'checked_in_at' => now(),
-                    'checked_in_by' => $staff->user_id,
                 ]);
 
                 return response()->json([
@@ -151,7 +150,6 @@ class BookingCheckInController extends Controller
                         'bookingId' => $booking->booking_id,
                         'bookingCode' => $booking->booking_code,
                         'checkedInAt' => now()->toDateTimeString(),
-                        'checkedInBy' => $staff->fullname ?? $staff->username,
                         'movieTitle' => $booking->showtime->movie->title ?? '',
                         'roomName' => $booking->showtime->room->room_name ?? '',
                         'cinemaName' => $booking->showtime->room->cinema->cinema_name ?? '',

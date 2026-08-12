@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Banner;
 use App\Models\Campaign;
 use App\Models\Voucher;
+use App\Models\Booking;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -114,10 +115,25 @@ class CampaignController extends Controller
     {
         $campaign = Campaign::with('vouchers')->findOrFail($id);
 
-        $budget = (float) $campaign->budget ?: 500000000.0;
-        $usedBudget = 125000000.0;
-        $revenueGenerated = 1975000000.0;
-        $roiPercentage = round((($revenueGenerated - $usedBudget) / $usedBudget) * 100, 2);
+        $budget = (float) ($campaign->budget ?? 0);
+        $voucherIds = $campaign->vouchers->pluck('voucher_id')->filter();
+
+        if ($voucherIds->isNotEmpty()) {
+            $usedBudget = (float) Booking::whereIn('voucher_id', $voucherIds)
+                ->whereIn('booking_status', ['completed', 'paid'])
+                ->sum('discount_amount');
+
+            $revenueGenerated = (float) Booking::whereIn('voucher_id', $voucherIds)
+                ->whereIn('booking_status', ['completed', 'paid'])
+                ->sum('final_amount');
+        } else {
+            $usedBudget = 0.0;
+            $revenueGenerated = 0.0;
+        }
+
+        $roiPercentage = $usedBudget > 0 
+            ? round((($revenueGenerated - $usedBudget) / $usedBudget) * 100, 2)
+            : 0.0;
 
         return response()->json([
             'success' => true,

@@ -15,8 +15,7 @@ class CinemaController extends Controller
 
     public function index(GetCinemasRequest $request)
     {
-        $province = $request->get('province', 'all');
-        $cinemas = $this->cinemaService->getList($province);
+        $cinemas = $this->cinemaService->getList($request->all());
 
         return response()->json([
             'success' => true,

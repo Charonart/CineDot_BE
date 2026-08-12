@@ -27,8 +27,34 @@ class CancelExpiredBookingJob implements ShouldQueue
             $booking = Booking::find($this->bookingId);
 
             if ($booking && $booking->booking_status === 'pending') {
+                $ttlSeconds = (int) env('HOLD_SEAT_EXPIRE_SECONDS', 600);
+                $createdAt = \Carbon\Carbon::parse($booking->created_at);
+                $expiresAt = (clone $createdAt)->addSeconds($ttlSeconds);
+
+                // Safety guard: If job runs before expiration (e.g., sync queue driver or early worker execution), skip cancellation
+                if (now()->lt($expiresAt->subSeconds(5))) {
+                    Log::info("CancelExpiredBookingJob: Booking {$this->bookingId} is not expired yet (expires at {$expiresAt->toDateTimeString()}). Skipping.");
+                    return;
+                }
+
                 $booking->update(['booking_status' => 'cancelled']);
-                Log::info("CancelExpiredBookingJob: Booking {$this->bookingId} has been cancelled due to timeout.");
+
+                $seatIds = \App\Models\BookingSeat::where('booking_id', $booking->booking_id)->pluck('showtime_seat_id')->toArray();
+                if (!empty($seatIds)) {
+                    \App\Models\ShowtimeSeat::whereIn('showtime_seat_id', $seatIds)
+                        ->where('status', 'holding')
+                        ->update(['status' => 'available']);
+
+                    foreach ($seatIds as $sId) {
+                        try {
+                            \Illuminate\Support\Facades\Redis::del("hold:showtime:{$booking->showtime_id}:seat:{$sId}");
+                        } catch (\Exception $e) {
+                            // Redis fallback
+                        }
+                    }
+                }
+
+                Log::info("CancelExpiredBookingJob: Booking {$this->bookingId} and " . count($seatIds) . " seats released due to timeout.");
             }
         } catch (\Exception $e) {
             Log::error('CancelExpiredBookingJob Error: ' . $e->getMessage());

@@ -13,6 +13,7 @@ class Voucher extends Model
         'code',
         'voucher_type',
         'discount_type',
+        'discount_value',
         'min_order_value',
         'max_discount_value',
         'valid_from',
@@ -27,6 +28,7 @@ class Voucher extends Model
         'valid_from'         => 'datetime',
         'valid_until'        => 'datetime',
         'is_active'          => 'boolean',
+        'discount_value'     => 'decimal:2',
         'min_order_value'    => 'decimal:2',
         'max_discount_value' => 'decimal:2',
         'system_limit'       => 'integer',
@@ -37,15 +39,5 @@ class Voucher extends Model
     public function campaign()
     {
         return $this->belongsTo(Campaign::class, 'campaign_id', 'campaign_id');
-    }
-
-    public function userVouchers()
-    {
-        return $this->hasMany(UserVoucher::class, 'voucher_id', 'voucher_id');
-    }
-
-    public function bookingVouchers()
-    {
-        return $this->hasMany(BookingVoucher::class, 'voucher_id', 'voucher_id');
     }
 }

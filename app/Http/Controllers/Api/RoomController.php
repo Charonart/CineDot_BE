@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Room;
-use App\Http\Resources\BaseSeatResource;
 
 class RoomController extends Controller
 {
@@ -14,7 +13,7 @@ class RoomController extends Controller
         
         return response()->json([
             'success' => true,
-            'data'    => BaseSeatResource::collection($room->seats ?? [])
+            'data'    => $room->seat_matrix ?? []
         ]);
     }
 
@@ -29,4 +28,3 @@ class RoomController extends Controller
         return response()->json($room->formatted_layout);
     }
 }
-

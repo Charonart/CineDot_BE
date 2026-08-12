@@ -14,6 +14,7 @@ return new class extends Migration
             $table->string('code')->unique();
             $table->enum('voucher_type', ['ticket', 'combo', 'order', 'all'])->default('order');
             $table->enum('discount_type', ['percentage', 'fixed_amount'])->default('percentage');
+            $table->decimal('discount_value', 12, 2)->default(0);
             $table->decimal('min_order_value', 12, 2)->default(0);
             $table->decimal('max_discount_value', 12, 2)->nullable();
             $table->dateTime('valid_from')->nullable();

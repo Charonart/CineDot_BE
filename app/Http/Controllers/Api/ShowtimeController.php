@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\GetShowtimesRequest;
 use App\Http\Resources\CinemaResource;
 use App\Http\Resources\MovieResource;
-use App\Http\Resources\SeatResource;
 use App\Http\Resources\ShowtimeResource;
 use App\Services\SeatService;
 
@@ -111,7 +110,7 @@ class ShowtimeController extends Controller
     }
 
     /**
-     * Get real-time seat status map (Key-Value) for showtime.
+     * Get real-time seat status map for showtime.
      */
     public function seatStatus($id)
     {
@@ -124,11 +123,11 @@ class ShowtimeController extends Controller
                   ->where('created_at', '>=', \Carbon\Carbon::now()->subSeconds($ttlSeconds));
         })->pluck('showtime_seat_id')->flip()->toArray();
 
-        $statusMap = [];
+        $seatsData = [];
         foreach ($showtimeSeats as $seat) {
-            $status = strtoupper($seat->status);
+            $status = strtolower($seat->status);
             
-            if ($status === 'AVAILABLE') {
+            if ($status === 'available') {
                 $isHeldInDb = isset($pendingSeatIds[$seat->showtime_seat_id]);
                 $isHeldInRedis = false;
                 
@@ -140,15 +139,29 @@ class ShowtimeController extends Controller
                 }
 
                 if ($isHeldInDb || $isHeldInRedis) {
-                    $status = 'HOLD';
+                    $status = 'holding';
                 }
             }
 
-            $key = request()->query('by_code') ? ($seat->row_name . $seat->seat_number) : (string) $seat->showtime_seat_id;
-            $statusMap[$key] = $status;
+            $seatsData[] = [
+                'showtime_seat_id' => $seat->showtime_seat_id,
+                'showtime_id'      => (int) $seat->showtime_id,
+                'row_name'         => $seat->row_name,
+                'seat_number'      => $seat->seat_number,
+                'seat_code'        => $seat->row_name . $seat->seat_number,
+                'seat_type'        => $seat->seat_type,
+                'status'           => $status,
+            ];
         }
 
-        return response()->json($statusMap);
+        return response()->json([
+            'success' => true,
+            'data'    => [
+                'showtime_id' => (int) $id,
+                'total_seats' => count($seatsData),
+                'seats'       => $seatsData,
+            ]
+        ]);
     }
 }
 

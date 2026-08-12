@@ -7,15 +7,27 @@ use App\Models\Showtime;
 
 class CinemaService
 {
-    public function getList(?string $province = null)
+    public function getList($filter = null)
     {
-        $query = Cinema::with('province');
+        $query = Cinema::with('province')->where('is_active', true);
 
-        if ($province && $province !== 'all') {
-            $query->whereHas('province', fn($q) => $q->where('province_name', $province));
+        if (is_array($filter)) {
+            $code = $filter['code'] ?? $filter['province_code'] ?? null;
+            $provinceId = $filter['province_id'] ?? null;
+            $provinceName = $filter['province'] ?? null;
+
+            if ($code && $code !== 'all') {
+                $query->whereHas('province', fn($q) => $q->where('province_code', $code)->orWhere('province_name', $code));
+            } elseif ($provinceId && $provinceId !== 'all') {
+                $query->where('province_id', (int) $provinceId);
+            } elseif ($provinceName && $provinceName !== 'all') {
+                $query->whereHas('province', fn($q) => $q->where('province_name', $provinceName)->orWhere('province_code', $provinceName));
+            }
+        } elseif (is_string($filter) && $filter !== 'all') {
+            $query->whereHas('province', fn($q) => $q->where('province_code', $filter)->orWhere('province_name', $filter));
         }
 
-        return $query->orderBy('name')->get();
+        return $query->orderBy('cinema_name')->get();
     }
 
     public function getDetailBySlug(string $slug)

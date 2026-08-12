@@ -13,9 +13,10 @@ class AdminGenreResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id'   => $this->genre_id,
-            'name' => $this->genre_name,
-            'slug' => $this->slug,
+            'id'         => $this->genre_id,
+            'genre_name' => $this->genre_name,
+            'name'       => $this->genre_name,
+            'slug'       => $this->slug,
         ];
     }
 }

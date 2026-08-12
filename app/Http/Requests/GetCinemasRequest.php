@@ -14,7 +14,10 @@ class GetCinemasRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'province' => ['nullable', 'string', 'max:100'],
+            'code'          => ['nullable', 'string', 'max:50'],
+            'province_code' => ['nullable', 'string', 'max:50'],
+            'province_id'   => ['nullable', 'integer', 'exists:provinces,province_id'],
+            'province'      => ['nullable', 'string', 'max:100'],
         ];
     }
 }

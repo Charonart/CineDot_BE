@@ -13,9 +13,10 @@ class AdminProvinceResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id'   => $this->province_id,
-            'name' => $this->province_name,
-            'code' => $this->province_code,
+            'id'            => $this->province_id,
+            'province_name' => $this->province_name,
+            'name'          => $this->province_name,
+            'code'          => $this->province_code,
         ];
     }
 }

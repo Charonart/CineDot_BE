@@ -19,6 +19,7 @@ return new class extends Migration
             $table->enum('booking_status', ['pending', 'paid', 'confirmed', 'cancelled', 'cancelling', 'refunded', 'completed'])->default('pending');
             $table->string('booking_code')->unique();
             $table->text('notes')->nullable();
+            $table->timestamp('checked_in_at')->nullable();
             $table->timestamps();
         });
     }

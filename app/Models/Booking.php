@@ -18,12 +18,14 @@ class Booking extends Model
         'booking_status',
         'booking_code',
         'notes',
+        'checked_in_at',
     ];
 
     protected $casts = [
         'price_breakdown' => 'array',
         'final_amount'    => 'decimal:2',
         'discount_amount' => 'decimal:2',
+        'checked_in_at'   => 'datetime',
     ];
 
     public function user()
@@ -46,20 +48,12 @@ class Booking extends Model
         return $this->hasMany(BookingCombo::class, 'booking_id', 'booking_id');
     }
 
-    public function bookingVouchers()
-    {
-        return $this->hasMany(BookingVoucher::class, 'booking_id', 'booking_id');
-    }
-
     public function voucher()
     {
         return $this->belongsTo(Voucher::class, 'voucher_id', 'voucher_id');
     }
 
-    public function payment()
-    {
-        return $this->hasOne(Payment::class, 'booking_id', 'booking_id');
-    }
+
 
     protected static function booted()
     {

@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CalculateSummaryRequest;
 use App\Http\Requests\HoldSeatsRequest;
+use App\Http\Resources\BookingListResource;
+use App\Http\Resources\BookingResource;
 use App\Models\Booking;
 use App\Services\BookingService;
 use App\Services\PricingEngineService;
@@ -21,36 +23,47 @@ class BookingController extends Controller
 
     public function holdSeats(HoldSeatsRequest $request)
     {
-        $showtimeId = $request->input('showtime_id', $request->input('schedule_id'));
-        $showtimeSeatIds = $request->input('showtime_seat_ids', $request->input('schedule_seat_ids'));
-        $combos = $request->input('combos', []);
-        $voucherCode = $request->input('voucher_code');
-        $pointsUsed = (int) $request->input('points_used', 0);
+        try {
+            $showtimeId = $request->input('showtime_id', $request->input('schedule_id'));
+            $showtimeSeatIds = $request->input('showtime_seat_ids', $request->input('schedule_seat_ids'));
+            $combos = $request->input('combos', []);
+            $voucherCode = $request->input('voucher_code');
 
-        $booking = $this->bookingService->holdSeats(
-            $request->user()->user_id,
-            $showtimeId,
-            $showtimeSeatIds,
-            $combos,
-            $voucherCode,
-            $pointsUsed
-        );
+            $booking = $this->bookingService->holdSeats(
+                $request->user()->user_id,
+                $showtimeId,
+                $showtimeSeatIds,
+                $combos,
+                $voucherCode
+            );
 
-        $ttlSeconds = (int) env('HOLD_SEAT_EXPIRE_SECONDS', 600);
-        $ttlMinutes = (int) ceil($ttlSeconds / 60);
-        $expiresAt = \Carbon\Carbon::now()->addSeconds($ttlSeconds)->toIso8601String();
+            $ttlSeconds = (int) env('HOLD_SEAT_EXPIRE_SECONDS', 600);
+            $ttlMinutes = (int) ceil($ttlSeconds / 60);
+            $expiresAt = \Carbon\Carbon::now()->addSeconds($ttlSeconds)->toIso8601String();
 
-        return response()->json([
-            'success' => true,
-            'message' => "Đã giữ " . count($showtimeSeatIds) . " ghế thành công trong {$ttlMinutes} phút.",
-            'data'    => [
-                'booking_id'        => $booking->booking_id,
-                'booking_code'      => $booking->booking_code,
-                'showtime_id'       => (int) $showtimeId,
-                'showtime_seat_ids' => array_map('intval', (array) $showtimeSeatIds),
-                'expires_at'        => $expiresAt,
-            ]
-        ]);
+            return response()->json([
+                'success' => true,
+                'message' => "Đã giữ " . count($showtimeSeatIds) . " ghế thành công trong {$ttlMinutes} phút.",
+                'data'    => [
+                    'booking_id'         => $booking->booking_id,
+                    'booking_code'       => $booking->booking_code,
+                    'showtime_id'        => (int) $showtimeId,
+                    'showtime_seat_ids'  => array_map('intval', (array) $showtimeSeatIds),
+                    'expires_in_seconds' => $ttlSeconds,
+                    'expires_at'         => $expiresAt,
+                ]
+            ]);
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], $e->getStatusCode());
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 400);
+        }
     }
 
     public function releaseSeats(HoldSeatsRequest $request)
@@ -76,14 +89,12 @@ class BookingController extends Controller
         $showtimeSeatIds = $request->input('showtime_seat_ids', $request->input('schedule_seat_ids'));
         $combos = $request->input('combos', []);
         $voucherCode = $request->input('voucher_code');
-        $pointsUsed = (int) $request->input('points_used', 0);
 
         $summary = $this->pricingEngineService->calculateSummary(
             $showtimeId,
             $showtimeSeatIds,
             $combos,
             $voucherCode,
-            $pointsUsed,
             $request->user()
         );
 
@@ -95,7 +106,7 @@ class BookingController extends Controller
         $booking = Booking::with([
             'showtime.movie',
             'showtime.room.cinema',
-            'bookingSeats.showtimeSeat.seatType',
+            'bookingSeats.showtimeSeat',
             'bookingCombos.combo',
             'voucher'
         ])
@@ -104,7 +115,7 @@ class BookingController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $booking
+            'data'    => new BookingResource($booking)
         ]);
     }
 
@@ -113,8 +124,8 @@ class BookingController extends Controller
         $bookings = Booking::with([
             'showtime.movie',
             'showtime.room.cinema',
+            'bookingSeats.showtimeSeat',
             'bookingCombos.combo',
-            'voucher'
         ])
         ->where('user_id', $request->user()->user_id)
         ->orderByDesc('created_at')
@@ -122,7 +133,7 @@ class BookingController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $bookings
+            'data'    => BookingListResource::collection($bookings)
         ]);
     }
 
@@ -174,7 +185,7 @@ class BookingController extends Controller
             $earnedPoints = (int) round(($booking->final_amount ?? 0) / 10000);
             
             $user = \App\Models\User::where('user_id', $user->user_id)->lockForUpdate()->firstOrFail();
-            if ($user->point < $earnedPoints) {
+            if ($user->total_points < $earnedPoints) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Không thể hủy vé vì bạn đã sử dụng số điểm thưởng tích lũy được từ giao dịch này.'

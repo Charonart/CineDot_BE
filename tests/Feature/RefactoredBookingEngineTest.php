@@ -8,6 +8,7 @@ use App\Models\Cinema;
 use App\Models\Movie;
 use App\Models\PricingRule;
 use App\Models\Province;
+use App\Models\Role;
 use App\Models\Room;
 use App\Models\SeatType;
 use App\Models\Showtime;
@@ -36,20 +37,22 @@ class RefactoredBookingEngineTest extends TestCase
         parent::setUp();
 
         // 1. Master data setup
-        $province = Province::create(['name' => 'TP. Hồ Chí Minh']);
+        $role = Role::firstOrCreate(['name' => 'customer'], ['description' => 'Customer']);
+        $province = Province::create([
+            'province_name' => 'TP. Hồ Chí Minh',
+            'province_code' => 'HCM',
+        ]);
         $cinema = Cinema::create([
             'province_id' => $province->province_id,
             'cinema_name' => 'CineDot Landmark 81',
             'slug' => 'cinedot-landmark-81',
-            'address' => '720A Điện Biên Phủ',
-            'is_active' => true,
+            'cinema_address' => '720A Điện Biên Phủ',
         ]);
         $room = Room::create([
             'cinema_id' => $cinema->cinema_id,
             'room_name' => 'Room 1 IMAX',
             'room_type' => 'IMAX',
             'total_seats' => 100,
-            'is_active' => true,
         ]);
         $movie = Movie::create([
             'title' => 'Lật Mặt 8',
@@ -90,8 +93,8 @@ class RefactoredBookingEngineTest extends TestCase
             'is_active' => true,
         ]);
 
-        $goldTier = UserTier::create([
-            'tier_name' => 'GOLD',
+        UserTier::create([
+            'tier' => 'Gold',
             'min_points' => 1000,
             'discount_percent' => 5.00,
         ]);
@@ -101,9 +104,8 @@ class RefactoredBookingEngineTest extends TestCase
             'email' => 'customer@cinedot.vn',
             'password' => bcrypt('password123'),
             'fullname' => 'Nguyen Van A',
-            'point' => 10000,
-            'tier_id' => $goldTier->tier_id,
-            'status' => 'active',
+            'total_points' => 10000,
+            'role_id' => $role->role_id,
         ]);
     }
 
@@ -136,7 +138,6 @@ class RefactoredBookingEngineTest extends TestCase
             [$this->seat1->showtime_seat_id, $this->seat2->showtime_seat_id],
             [['combo_id' => $this->combo->combo_id, 'quantity' => 1]],
             $voucher->code,
-            10000, // Points used
             $this->user
         );
 
@@ -145,8 +146,7 @@ class RefactoredBookingEngineTest extends TestCase
         $this->assertEquals(370000, $snapshot['financial_breakdown']['total_subtotal']);
         $this->assertEquals(18500, $snapshot['financial_breakdown']['discounts']['tier_discount']['deducted_amount']); // 5% of 370k
         $this->assertEquals(50000, $snapshot['financial_breakdown']['discounts']['voucher_discount']['deducted_amount']);
-        $this->assertEquals(10000, $snapshot['financial_breakdown']['discounts']['point_discount']['deducted_amount']);
-        $this->assertEquals(291500, $snapshot['financial_breakdown']['final_amount_to_pay']);
+        $this->assertEquals(301500, $snapshot['financial_breakdown']['final_amount_to_pay']);
         $this->assertTrue($snapshot['metadata']['is_zero_floor_enforced']);
     }
 
@@ -193,9 +193,12 @@ class RefactoredBookingEngineTest extends TestCase
         $response = $this->getJson("/api/v1/showtimes/{$this->showtime->showtime_id}/seat-status");
         $response->assertStatus(200);
 
-        $statusMap = $response->json();
-        $this->assertEquals('HOLD', $statusMap[$this->seat1->showtime_seat_id]);
-        $this->assertEquals('BOOKED', $statusMap[$this->seat2->showtime_seat_id]);
+        $seats = collect($response->json('data.seats'));
+        $seat1Data = $seats->firstWhere('showtime_seat_id', $this->seat1->showtime_seat_id);
+        $seat2Data = $seats->firstWhere('showtime_seat_id', $this->seat2->showtime_seat_id);
+
+        $this->assertEquals('holding', $seat1Data['status']);
+        $this->assertEquals('booked', $seat2Data['status']);
     }
 
     public function test_release_seats_clears_redis_keys()

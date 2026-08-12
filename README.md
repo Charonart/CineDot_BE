@@ -1,66 +1,111 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# CineDot Backend API (Sprint 1)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+> **CineDot** là hệ thống Backend đặt vé xem phim trực tuyến hiệu năng cao được xây dựng trên nền tảng **Laravel 10**, **PostgreSQL**, và **Redis Caching / Distributed Locking**.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 🚀 Các Tính Năng Cốt Lõi (Sprint 1)
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+1. **Authentication & Profile**:
+   - Xác thực người dùng qua Laravel Sanctum API Token.
+   - Quản lý hồ sơ cá nhân, đổi mật khẩu, quên mật khẩu và xác thực email.
+   - Tích hợp User Tier Loyalty tự động thăng hạng theo điểm tích lũy (`total_points`).
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+2. **Movies & Catalog**:
+   - Quản lý phim đang chiếu, sắp chiếu, xu hướng (trending), tìm kiếm nâng cao.
+   - Chi tiết phim kèm trailer YouTube, credits đạo diễn/diễn viên, đánh giá 1-5 sao.
 
-## Learning Laravel
+3. **Cinemas, Rooms & Dynamic Seat Matrix**:
+   - Quản lý cụm rạp, phòng chiếu đặc biệt (IMAX, 4DX, GOLD).
+   - Thiết kế sơ đồ ghế tĩnh dưới dạng JSON ma trận (`seat_matrix`) tọa độ canvas (cx, cy).
+   - Tự động sinh danh sách ghế thời gian thực theo từng suất chiếu.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+4. **Booking & Pricing Engine**:
+   - **Distributed Seat Locking**: Khóa giữ ghế tạm thời thời gian thực qua **Redis** với TTL 10 phút chống xung đột đặt trùng chỗ.
+   - **Stacking Discount Engine**: Tính hóa đơn đa tầng (Phụ thu loại ghế VIP/Couple + Chiết khấu Hạng thành viên + Giảm giá Voucher chiến dịch) với cơ chế chống số âm (Zero Floor).
+   - **E-Ticket**: Mã QR Code vé điện tử soát vé một lần (`checked_in_at`).
+   - Tự động hủy đơn quá hạn và giải phóng ghế qua Queue Job.
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+5. **Context-Aware RBAC (Phân quyền theo ngữ cảnh)**:
+   - Phân quyền nhân sự 3 cấp độ: `system` (Super Admin), `region` (Quản lý khu vực / Tỉnh thành), `cinema` (Quản lý rạp).
+   - Bộ nhớ đệm phân quyền Redis Caching siêu tốc (`user:{id}:permissions`).
+   - Tự động lọc dữ liệu (Data Scoping) tại các trang quản trị đơn vé, lịch chiếu, báo cáo doanh thu.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+6. **Payment & POS Staff Operations**:
+   - Tích hợp cổng thanh toán trực tuyến **VNPay Sandbox** (Tạo URL thanh toán, xử lý Webhook IPN, Return URL).
+   - API Quầy vé POS & Soát vé quét QR / nhập mã `booking_code`.
+   - Bàn giao Combo F&B (`is_claimed`).
 
-## Laravel Sponsors
+---
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## 🛠️ Yêu Cầu Môi Trường & Công Nghệ
 
-### Premium Partners
+- **PHP**: >= 8.1 / 8.2 (kèm extension `pdo_pgsql`, `redis`, `gd`, `bcmath`)
+- **Database**: PostgreSQL 14+
+- **Cache & Queue**: Redis 6+
+- **Composer**: 2.x
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+---
 
-## Contributing
+## ⚙️ Hướng Dẫn Cài Đặt & Khởi Chạy
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### 1. Clone Source Code & Cài Đặt Dependencies
+```bash
+git clone <repository-url>
+cd CineDot_BE
+composer install
+```
 
-## Code of Conduct
+### 2. Cấu Hình Biến Môi Trường (.env)
+```bash
+cp .env.example .env
+php artisan key:generate
+```
+*Cập nhật các thông số kết nối PostgreSQL và Redis trong file `.env`:*
+```ini
+DB_CONNECTION=pgsql
+DB_HOST=127.0.0.1
+DB_PORT=5432
+DB_DATABASE=cinedot
+DB_USERNAME=postgres
+DB_PASSWORD=your_password
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+REDIS_HOST=127.0.0.1
+REDIS_PORT=6379
+```
 
-## Security Vulnerabilities
+### 3. Khởi Chạy Migration & Nạp Dữ Liệu Mẫu (Seeders)
+```bash
+# Chạy migration và seed toàn bộ dữ liệu mẫu
+php artisan migrate:fresh --seed
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### 4. Khởi Chạy Server & Background Queue Worker
+```bash
+# Chạy HTTP Server
+php artisan serve --port=8000
 
-## License
+# Chạy Queue Worker xử lý hủy vé & hoàn tiền
+php artisan queue:work redis
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+---
+
+## 📚 Tài Liệu API & Postman Collection
+
+Toàn bộ **111 API Endpoints** được định nghĩa chuẩn RESTful và lưu trữ trong file:
+- **File Postman**: [`CineDot_API_Postman_Collection_V2.json`](./CineDot_API_Postman_Collection_V2.json)
+- **Cấu trúc 8 nhóm API**:
+  1. `1. Auth & Profile` (9 requests)
+  2. `2. Master Data` (6 requests)
+  3. `3. Movies & Catalog` (12 requests)
+  4. `4. Cinemas, Rooms & Showtimes` (11 requests)
+  5. `5. Booking & Pricing Engine` (9 requests)
+  6. `6. Payment & Webhooks` (5 requests)
+  7. `7. Staff Operations & POS` (4 requests)
+  8. `8. Admin Management` (55 requests)
+
+---
+
+## 📄 Bản Quyền & Giấy Phép
+Dự án được phát triển cho nền tảng **CineDot**. Mọi quyền được bảo lưu.

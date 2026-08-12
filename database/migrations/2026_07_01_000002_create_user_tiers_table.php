@@ -11,6 +11,7 @@ return new class extends Migration
         Schema::create('user_tiers', function (Blueprint $table) {
             $table->id('user_tier_id');
             $table->string('tier');
+            $table->integer('min_points')->default(0);
             $table->decimal('discount_percent', 5, 2)->default(0);
             $table->timestamps();
         });

@@ -24,6 +24,7 @@ class RbacRedisAuthTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        Redis::flushall();
 
         $this->adminRole = Role::create(['name' => 'super_admin', 'description' => 'Super Admin']);
         $this->staffRole = Role::create(['name' => 'cskh_staff', 'description' => 'CSKH Staff']);

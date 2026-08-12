@@ -23,19 +23,24 @@ class UpdateVoucherRequest extends FormRequest
         $voucherId = $this->route('voucher');
 
         return [
+            'campaign_id'        => 'nullable|exists:campaigns,campaign_id',
             'code'               => [
                 'nullable',
                 'string',
                 'max:50',
                 Rule::unique('vouchers', 'code')->ignore($voucherId, 'voucher_id'),
             ],
-            'discount_type'      => 'nullable|string|in:fixed,percent',
-            'discount_value'     => 'nullable|integer|min:1',
-            'min_order_value'    => 'nullable|integer|min:0',
-            'max_discount_value' => 'nullable|integer|min:1',
-            'valid_from'         => 'nullable|date',
-            'valid_until'        => 'nullable|date|after:valid_from',
+            'voucher_type'       => 'nullable|string|in:ticket,combo,order,all',
+            'discount_type'      => 'nullable|string|in:fixed_amount,percentage,fixed,percent',
+            'discount_value'     => 'nullable|numeric|min:0',
+            'min_order_value'    => 'nullable|numeric|min:0',
+            'max_discount_value' => 'nullable|numeric|min:0',
+            'system_limit'       => 'nullable|integer|min:1',
             'usage_limit'        => 'nullable|integer|min:1',
+            'limit_per_user'     => 'nullable|integer|min:1',
+            'valid_from'         => 'nullable|date',
+            'valid_until'        => 'nullable|date|after_or_equal:valid_from',
+            'rules_engine'       => 'nullable|array',
             'is_active'          => 'nullable|boolean',
         ];
     }
@@ -45,10 +50,23 @@ class UpdateVoucherRequest extends FormRequest
      */
     protected function prepareForValidation()
     {
+        $merge = [];
         if ($this->has('code')) {
-            $this->merge([
-                'code' => strtoupper($this->code)
-            ]);
+            $merge['code'] = strtoupper($this->code);
+        }
+        if ($this->has('discount_type')) {
+            if ($this->discount_type === 'fixed') {
+                $merge['discount_type'] = 'fixed_amount';
+            } elseif ($this->discount_type === 'percent') {
+                $merge['discount_type'] = 'percentage';
+            }
+        }
+        if ($this->has('usage_limit') && !$this->has('system_limit')) {
+            $merge['system_limit'] = $this->usage_limit;
+        }
+
+        if (!empty($merge)) {
+            $this->merge($merge);
         }
     }
 }

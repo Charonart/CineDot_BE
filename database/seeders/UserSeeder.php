@@ -12,7 +12,6 @@ class UserSeeder extends Seeder
     {
         $users = [
             [
-                'tier_id' => 4,
                 'role_id' => 1,
                 'province_id' => 1,
                 'username' => 'admin',
@@ -30,7 +29,6 @@ class UserSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
-                'tier_id' => 2,
                 'role_id' => 2,
                 'province_id' => 1,
                 'username' => 'staff_hn',
@@ -48,7 +46,6 @@ class UserSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
-                'tier_id' => 1,
                 'role_id' => 3,
                 'province_id' => 2,
                 'username' => 'customer1',
@@ -67,7 +64,6 @@ class UserSeeder extends Seeder
             ],
             [
                 'user_id' => 4,
-                'tier_id' => null,
                 'role_id' => 3,
                 'province_id' => null,
                 'username' => 'lequy27102006',

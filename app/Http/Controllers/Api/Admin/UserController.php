@@ -32,13 +32,15 @@ class UserController extends Controller
     {
         $perPage = min((int) $request->get('per_page', 15), 100);
 
-        $allowedSortFields = ['created_at', 'username', 'point', 'last_login'];
-        $sortBy  = in_array($request->get('sort_by'), $allowedSortFields)
-                       ? $request->get('sort_by')
-                       : 'created_at';
+        $allowedSortFields = ['created_at', 'username', 'point', 'total_points', 'last_login'];
+        $rawSortBy = $request->get('sort_by');
+        $sortBy = in_array($rawSortBy, $allowedSortFields) ? $rawSortBy : 'created_at';
+        if ($sortBy === 'point') {
+            $sortBy = 'total_points';
+        }
         $sortDir = $request->get('sort_dir') === 'asc' ? 'asc' : 'desc';
 
-        $query = User::with('province');
+        $query = User::with(['province', 'role']);
 
         // Tìm kiếm theo username + fullname
         if ($request->filled('search')) {
@@ -56,7 +58,10 @@ class UserController extends Controller
 
         // Lọc theo role
         if ($request->filled('role')) {
-            $query->where('role', $request->role);
+            $roleInput = $request->role;
+            $query->whereHas('role', function ($q) use ($roleInput) {
+                $q->where('name', $roleInput);
+            });
         }
 
         // Lọc theo giới tính
@@ -120,13 +125,15 @@ class UserController extends Controller
             ], 422);
         }
 
-        $user->role = $request->validated()['role'];
+        $roleName = $request->validated()['role'];
+        $roleModel = \App\Models\Role::where('name', $roleName)->firstOrFail();
+        $user->role_id = $roleModel->role_id;
         $user->save();
 
         return response()->json([
             'success' => true,
-            'message' => "Đã cập nhật role thành \"{$user->role}\" thành công.",
-            'data'    => new AdminUserResource($user->load('province')),
+            'message' => "Đã cập nhật role thành \"{$roleName}\" thành công.",
+            'data'    => new AdminUserResource($user->load('role', 'province')),
         ]);
     }
 }

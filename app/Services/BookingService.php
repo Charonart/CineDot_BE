@@ -26,10 +26,9 @@ class BookingService
         int $showtimeId,
         array $showtimeSeatIds,
         array $combos = [],
-        ?string $voucherCode = null,
-        int $pointsUsed = 0
+        ?string $voucherCode = null
     ) {
-        return DB::transaction(function () use ($userId, $showtimeId, $showtimeSeatIds, $combos, $voucherCode, $pointsUsed) {
+        return DB::transaction(function () use ($userId, $showtimeId, $showtimeSeatIds, $combos, $voucherCode) {
             $user = User::find($userId);
 
             // DB Lock in order to prevent deadlocks
@@ -39,21 +38,53 @@ class BookingService
                 ->lockForUpdate()
                 ->get();
 
-            if ($seats->count() !== count($showtimeSeatIds)) {
-                throw ValidationException::withMessages([
-                    'seats' => 'Một số ghế không tồn tại hoặc không thuộc suất chiếu này.'
-                ]);
+            $foundIds = $seats->pluck('showtime_seat_id')->toArray();
+            $missingIds = array_diff($showtimeSeatIds, $foundIds);
+            if (!empty($missingIds)) {
+                throw new HttpException(404, "Không tìm thấy các ghế có ID: [" . implode(', ', $missingIds) . "] trong suất chiếu #{$showtimeId}.");
             }
 
             $ttlSeconds = (int) env('HOLD_SEAT_EXPIRE_SECONDS', 600);
 
-            // Check seat status in DB and Redis
+            // Phase 1: Auto-recover stale DB 'holding' status if Redis key & active pending booking have expired
+            foreach ($seats as $seat) {
+                $redisKey = "hold:showtime:{$showtimeId}:seat:{$seat->showtime_seat_id}";
+                $isHeldInRedis = false;
+                try {
+                    if (Redis::exists($redisKey)) {
+                        $lockVal = Redis::get($redisKey);
+                        $heldBooking = is_numeric($lockVal) ? Booking::find((int) $lockVal) : null;
+                        $isGhostLock = !$heldBooking 
+                            || $heldBooking->booking_status !== 'pending' 
+                            || $heldBooking->showtime_id != $showtimeId 
+                            || $heldBooking->created_at < now()->subSeconds($ttlSeconds);
+
+                        if ($isGhostLock) {
+                            Redis::del($redisKey);
+                        } else {
+                            $isHeldInRedis = true;
+                        }
+                    }
+                } catch (\Exception $e) {}
+
+                $activePending = BookingSeat::where('showtime_seat_id', $seat->showtime_seat_id)
+                    ->whereHas('booking', function ($q) use ($showtimeId, $ttlSeconds) {
+                        $q->where('showtime_id', $showtimeId)
+                          ->where('booking_status', 'pending')
+                          ->where('created_at', '>=', now()->subSeconds($ttlSeconds));
+                    })->first();
+
+                if ($seat->status === 'holding' && !$activePending && !$isHeldInRedis) {
+                    $seat->update(['status' => 'available']);
+                }
+            }
+
+            // Phase 2: Check seat status in DB and Redis with exact diagnostic error messages
             foreach ($seats as $seat) {
                 if (in_array($seat->status, ['booked', 'blocked'])) {
-                    throw new HttpException(409, "Ghế {$seat->row_name}{$seat->seat_number} đã bị mua hoặc khóa.");
+                    throw new HttpException(409, "Ghế {$seat->row_name}{$seat->seat_number} (ID {$seat->showtime_seat_id}) đã bị mua hoặc khóa.");
                 }
 
-                // Check active pending bookings in DB
                 $activePending = BookingSeat::where('showtime_seat_id', $seat->showtime_seat_id)
                     ->whereHas('booking', function ($q) use ($showtimeId, $ttlSeconds) {
                         $q->where('showtime_id', $showtimeId)
@@ -62,19 +93,29 @@ class BookingService
                     })->first();
 
                 if ($activePending) {
-                    throw new HttpException(409, "Ghế {$seat->row_name}{$seat->seat_number} đang có người khác giữ.");
+                    throw new HttpException(409, "Ghế {$seat->row_name}{$seat->seat_number} (ID {$seat->showtime_seat_id}) đang bị giữ bởi đơn hàng #{$activePending->booking_id}.");
                 }
 
-                // Check Redis hold key with exception fallback
                 try {
                     $redisKey = "hold:showtime:{$showtimeId}:seat:{$seat->showtime_seat_id}";
                     if (Redis::exists($redisKey)) {
-                        throw new HttpException(409, "Ghế {$seat->row_name}{$seat->seat_number} đang có người khác giữ.");
+                        $lockVal = Redis::get($redisKey);
+                        $heldBooking = is_numeric($lockVal) ? Booking::find((int) $lockVal) : null;
+                        $isGhostLock = !$heldBooking 
+                            || $heldBooking->booking_status !== 'pending' 
+                            || $heldBooking->showtime_id != $showtimeId 
+                            || $heldBooking->created_at < now()->subSeconds($ttlSeconds);
+
+                        if ($isGhostLock) {
+                            Redis::del($redisKey);
+                        } else {
+                            throw new HttpException(409, "Ghế {$seat->row_name}{$seat->seat_number} (ID {$seat->showtime_seat_id}) đang được giữ bởi đơn hàng #{$heldBooking->booking_id}.");
+                        }
                     }
                 } catch (HttpException $e) {
                     throw $e;
                 } catch (\Exception $e) {
-                    // Redis connection issue; rely on DB lock
+                    // Redis connection issue; fallback to DB lock
                 }
             }
 
@@ -84,7 +125,6 @@ class BookingService
                 $showtimeSeatIds,
                 $combos,
                 $voucherCode,
-                $pointsUsed,
                 $user
             );
 
@@ -135,6 +175,16 @@ class BookingService
 
             return $booking;
         });
+
+        // Dispatch auto-cancel job AFTER DB transaction commits to prevent PostgreSQL transaction aborts
+        try {
+            $ttlSeconds = (int) env('HOLD_SEAT_EXPIRE_SECONDS', 600);
+            \App\Jobs\CancelExpiredBookingJob::dispatch($booking->booking_id)->delay(now()->addSeconds($ttlSeconds));
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning("Failed to dispatch CancelExpiredBookingJob for booking {$booking->booking_id}: " . $e->getMessage());
+        }
+
+        return $booking;
     }
 
     /**
@@ -204,47 +254,10 @@ class BookingService
 
             $user = $booking->user;
             if ($user) {
-                // Deduct points used if applicable
-                $pointsUsed = $booking->price_breakdown['financial_breakdown']['discounts']['point_discount']['points_used'] ?? 0;
-                if ($pointsUsed > 0 && $user->point >= $pointsUsed) {
-                    $user->decrement('point', $pointsUsed);
-                    \App\Models\PointHistory::create([
-                        'user_id'        => $user->user_id,
-                        'reference_type' => Booking::class,
-                        'reference_id'   => $booking->booking_id,
-                        'amount'         => -$pointsUsed,
-                        'action'         => 'redeem_booking',
-                    ]);
-                }
-
-                // Loyalty points calculation (1 point per 10,000 VND spent)
+                // Loyalty points calculation (1 point per 10,000 VND spent) -> updates users.total_points
                 $earnedPoints = (int) round($booking->final_amount / 10000);
                 if ($earnedPoints > 0) {
-                    $user->increment('point', $earnedPoints);
-
-                    \App\Models\PointHistory::create([
-                        'user_id'        => $user->user_id,
-                        'reference_type' => Booking::class,
-                        'reference_id'   => $booking->booking_id,
-                        'amount'         => $earnedPoints,
-                        'action'         => 'earn_booking',
-                    ]);
-                }
-            }
-
-            // Create record in payments table
-            if (class_exists('\App\Models\Payment')) {
-                try {
-                    \App\Models\Payment::create([
-                        'booking_id'     => $booking->booking_id,
-                        'transaction_id' => $paymentData['transaction_id'] ?? 'TXN-' . strtoupper(uniqid()),
-                        'payment_method' => $paymentData['payment_method'] ?? 'VNPAY',
-                        'amount'         => $booking->final_amount,
-                        'payment_status' => 'success',
-                        'payment_time'   => now(),
-                    ]);
-                } catch (\Exception $e) {
-                    // Table payments might have slightly different columns or constraints
+                    $user->increment('total_points', $earnedPoints);
                 }
             }
 
