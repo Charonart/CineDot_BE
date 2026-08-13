@@ -115,6 +115,10 @@ class ShowtimeController extends Controller
     public function seatStatus($id)
     {
         $showtimeSeats = \App\Models\ShowtimeSeat::where('showtime_id', $id)->get();
+        if ($showtimeSeats->isEmpty()) {
+            $this->seatService->getScheduleSeats((int) $id);
+            $showtimeSeats = \App\Models\ShowtimeSeat::where('showtime_id', $id)->get();
+        }
         $ttlSeconds = (int) env('HOLD_SEAT_EXPIRE_SECONDS', 600);
 
         $pendingSeatIds = \App\Models\BookingSeat::whereHas('booking', function ($query) use ($id, $ttlSeconds) {

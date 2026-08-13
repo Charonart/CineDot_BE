@@ -38,9 +38,7 @@ class DatabaseSeeder extends Seeder
             BookingSeeder::class,
             BookingSeatSeeder::class,
             BookingComboSeeder::class,
-            ReviewSeeder::class,
             PricingRuleSeeder::class,
-            LargeDataSeeder::class,
         ]);
 
         $this->fixPgsqlSequences();
@@ -71,7 +69,6 @@ class DatabaseSeeder extends Seeder
                 'bookings' => 'booking_id',
                 'booking_seats' => 'booking_seat_id',
                 'booking_combos' => 'booking_combo_id',
-                'reviews' => 'review_id',
                 'pricing_rules' => 'pricing_rule_id',
             ];
 
@@ -90,4 +87,3 @@ class DatabaseSeeder extends Seeder
         }
     }
 }
-

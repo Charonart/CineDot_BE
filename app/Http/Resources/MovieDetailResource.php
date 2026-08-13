@@ -28,8 +28,8 @@ class MovieDetailResource extends JsonResource
             'originalLanguage' => $this->original_language,
             'popularity'       => $this->popularity ? (float) $this->popularity : 0,
             'adult'            => (bool) $this->adult,
-            'rating'           => isset($this->reviews_avg_rating) ? round((float) $this->reviews_avg_rating, 1) : null,
-            'voteCount'        => (int) ($this->reviews_count ?? 0),
+            'rating'           => null,
+            'voteCount'        => 0,
             'genres'           => $this->whenLoaded('genres', function () {
                 return $this->genres->map(fn($g) => [
                     'id'   => $g->genre_id,

@@ -8,9 +8,7 @@ class MovieService
 {
     public function getList(array $filters)
     {
-        $query = Movie::with('genres')
-            ->withAvg('reviews', 'rating')
-            ->withCount('reviews');
+        $query = Movie::with('genres');
 
         if (!empty($filters['status'])) {
             $status = strtolower($filters['status']);
@@ -47,18 +45,14 @@ class MovieService
     public function getTrending(int $perPage = 20)
     {
         return Movie::with('genres')
-            ->withAvg('reviews', 'rating')
-            ->withCount('reviews')
-            ->orderByDesc('reviews_avg_rating')
+            ->orderByDesc('popularity')
             ->paginate($perPage);
     }
 
     public function getPopular(int $perPage = 20)
     {
         return Movie::with('genres')
-            ->withAvg('reviews', 'rating')
-            ->withCount('reviews')
-            ->orderByDesc('reviews_count')
+            ->orderByDesc('popularity')
             ->paginate($perPage);
     }
 
@@ -69,8 +63,7 @@ class MovieService
             ->limit(5)
             ->get();
 
-        $trending = Movie::withAvg('reviews', 'rating')
-            ->orderByDesc('reviews_avg_rating')
+        $trending = Movie::orderByDesc('popularity')
             ->limit(5)
             ->get();
 
@@ -83,8 +76,6 @@ class MovieService
     public function search(string $keyword, int $perPage = 20)
     {
         return Movie::with('genres')
-            ->withAvg('reviews', 'rating')
-            ->withCount('reviews')
             ->where(function ($q) use ($keyword) {
                 $q->where('title', 'ilike', '%' . $keyword . '%')
                   ->orWhere('original_title', 'ilike', '%' . $keyword . '%');
@@ -96,8 +87,6 @@ class MovieService
     public function getDetailBySlug(string $slug)
     {
         return Movie::with(['genres', 'castCredits.person', 'crewCredits.person', 'videos'])
-            ->withAvg('reviews', 'rating')
-            ->withCount('reviews')
             ->where('slug', $slug)
             ->firstOrFail();
     }
@@ -105,8 +94,6 @@ class MovieService
     public function getDetail(int $id)
     {
         return Movie::with(['genres', 'castCredits.person', 'crewCredits.person', 'videos'])
-            ->withAvg('reviews', 'rating')
-            ->withCount('reviews')
             ->findOrFail($id);
     }
 
@@ -117,14 +104,13 @@ class MovieService
         $genreIds = $movie->genres->pluck('genre_id')->toArray();
 
         return Movie::with('genres')
-            ->withAvg('reviews', 'rating')
             ->withCount(['genres as matching_genres_count' => function ($q) use ($genreIds) {
                 $q->whereIn('genres.genre_id', $genreIds);
             }])
             ->having('matching_genres_count', '>', 0)
             ->where('movie_id', '!=', $movieId)
             ->orderByDesc('matching_genres_count')
-            ->orderByDesc('reviews_avg_rating')
+            ->orderByDesc('popularity')
             ->paginate($perPage);
     }
 
@@ -134,14 +120,13 @@ class MovieService
         $genreIds = $movie->genres->pluck('genre_id')->toArray();
 
         return Movie::with('genres')
-            ->withAvg('reviews', 'rating')
             ->withCount(['genres as matching_genres_count' => function ($q) use ($genreIds) {
                 $q->whereIn('genres.genre_id', $genreIds);
             }])
             ->having('matching_genres_count', '>', 0)
             ->where('movie_id', '!=', $movie->movie_id)
             ->orderByDesc('matching_genres_count')
-            ->orderByDesc('reviews_avg_rating')
+            ->orderByDesc('popularity')
             ->paginate($perPage);
     }
 }

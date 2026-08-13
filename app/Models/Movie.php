@@ -63,11 +63,6 @@ class Movie extends Model
                     ->where('credit_type', 'crew');
     }
 
-    /** Đánh giá */
-    public function reviews()
-    {
-        return $this->hasMany(Review::class, 'movie_id', 'movie_id');
-    }
 
     /** Video trailer */
     public function videos()

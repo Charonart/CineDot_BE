@@ -21,7 +21,7 @@ class SeatService
                     $row = $mSeat['row_name'] ?? '';
                     $num = (string)($mSeat['seat_number'] ?? '');
                     $code = $row . $num;
-                    $sid = $mSeat['seat_id'] ?? $code;
+                    $sid = $mSeat['seat_id'] ?? $mSeat['id'] ?? $code;
                     
                     $canvasData = [
                         'cx'    => isset($mSeat['cx']) ? (int) $mSeat['cx'] : (isset($mSeat['position_x']) ? (int) $mSeat['position_x'] : 0),
@@ -41,8 +41,55 @@ class SeatService
 
         $seats = ShowtimeSeat::with('seatType')
             ->where('showtime_id', $showtimeId)
-            ->get()
-            ->sortBy(function ($ss) {
+            ->get();
+
+        if ($seats->isEmpty() && $room && is_array($room->seat_matrix)) {
+            $newSeats = [];
+            // To prevent duplicates if the matrix has both string and object forms, use seat codes as keys
+            $addedCodes = [];
+            foreach ($room->seat_matrix as $mSeat) {
+                if (!is_array($mSeat)) continue;
+                $row = $mSeat['row_name'] ?? '';
+                $num = (string)($mSeat['seat_number'] ?? '');
+                $code = $row . $num;
+                $sid = $mSeat['seat_id'] ?? $mSeat['id'] ?? $code;
+                
+                if (empty($sid)) continue;
+                
+                if (isset($addedCodes[$sid])) continue;
+                $addedCodes[$sid] = true;
+
+                // Extract row and number from ID if they are not explicitly set
+                if (empty($row) && preg_match('/^([A-Za-z]+)(\d+)$/', $sid, $m)) {
+                    $row = $m[1];
+                    $num = $m[2];
+                }
+
+                if (empty($row) || empty($num)) continue;
+
+                $seatType = match (strtoupper($mSeat['type'] ?? $mSeat['seat_type'] ?? 'STD')) {
+                    'VIP' => 'vip',
+                    'COUPLE' => 'couple',
+                    default => 'standard',
+                };
+
+                $newSeats[] = [
+                    'showtime_id' => $showtimeId,
+                    'seat_type'   => $seatType,
+                    'row_name'    => strtoupper($row),
+                    'seat_number' => $num,
+                    'status'      => 'available',
+                ];
+            }
+            if (!empty($newSeats)) {
+                \App\Models\ShowtimeSeat::insert($newSeats);
+                $seats = ShowtimeSeat::with('seatType')
+                    ->where('showtime_id', $showtimeId)
+                    ->get();
+            }
+        }
+
+        $seats = $seats->sortBy(function ($ss) {
                 return $ss->row_name . str_pad($ss->seat_number, 3, '0', STR_PAD_LEFT);
             })
             ->values();

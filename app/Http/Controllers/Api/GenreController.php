@@ -33,10 +33,8 @@ class GenreController extends Controller
         
         $perPage = (int) $request->get('per_page', 20);
         $paginated = Movie::with('genres')
-            ->withAvg('reviews', 'rating')
-            ->withCount('reviews')
             ->whereHas('genres', fn($q) => $q->where('genres.genre_id', $id))
-            ->orderByDesc('reviews_avg_rating')
+            ->orderByDesc('popularity')
             ->paginate($perPage);
 
         return response()->json([

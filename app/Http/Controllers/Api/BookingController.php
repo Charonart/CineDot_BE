@@ -103,15 +103,21 @@ class BookingController extends Controller
 
     public function show($id, Request $request)
     {
-        $booking = Booking::with([
+        $bookingQuery = Booking::with([
             'showtime.movie',
             'showtime.room.cinema',
             'bookingSeats.showtimeSeat',
             'bookingCombos.combo',
             'voucher'
-        ])
-        ->where('user_id', $request->user()->user_id)
-        ->findOrFail($id);
+        ])->where('user_id', $request->user()->user_id);
+        
+        if (is_numeric($id)) {
+            $bookingQuery->where('booking_id', $id);
+        } else {
+            $bookingQuery->where('booking_code', $id);
+        }
+        
+        $booking = $bookingQuery->firstOrFail();
 
         return response()->json([
             'success' => true,

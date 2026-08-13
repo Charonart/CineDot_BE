@@ -9,8 +9,6 @@ use App\Http\Controllers\Api\CinemaController;
 use App\Http\Controllers\Api\ShowtimeController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\UserController;
-use App\Http\Controllers\Api\ReviewController;
-
 /*
 |--------------------------------------------------------------------------
 | API Routes (CineDot Core API Specification v1.1.0)
@@ -51,8 +49,6 @@ Route::prefix('v1')->group(function () {
         Route::post('/payments',            [App\Http\Controllers\Api\PaymentController::class, 'process']);
         Route::post('/payments/create-url', [App\Http\Controllers\Api\PaymentController::class, 'createUrl']);
         
-        // ── Reviews ───────────────────────────────────────────────────────────────
-        Route::post('/movies/{id}/reviews', [App\Http\Controllers\Api\ReviewController::class, 'store']);
 
         Route::post('/bookings/{id}/cancel', [\App\Http\Controllers\Api\BookingController::class, 'cancel']);
 
@@ -94,7 +90,6 @@ Route::prefix('v1')->group(function () {
     Route::get('/movies/{id}/credits',      [CreditController::class, 'show']);
     Route::get('/movies/{id}/similar',      [MovieController::class, 'similar']);
     Route::get('/movies/{id}/videos',       [MovieController::class, 'videos']);
-    Route::get('/movies/{id}/reviews',      [ReviewController::class, 'index']);
 
 
     // ── Cinemas & Rooms ───────────────────────────────────────────────────────
@@ -164,12 +159,10 @@ Route::prefix('v1')->group(function () {
         Route::post('users/{userId}/roles', [\App\Http\Controllers\Api\Admin\UserRoleController::class, 'store']);
         Route::delete('users/{userId}/roles/{id}', [\App\Http\Controllers\Api\Admin\UserRoleController::class, 'destroy']);
         
-        // Bookings & Reviews
+        // Bookings
         Route::get('bookings', [\App\Http\Controllers\Api\Admin\BookingController::class, 'index']);
         Route::get('bookings/{id}', [\App\Http\Controllers\Api\Admin\BookingController::class, 'show']);
         Route::post('bookings/{id}/refund', [\App\Http\Controllers\Api\Admin\BookingController::class, 'refund']);
-        Route::get('reviews', [\App\Http\Controllers\Api\Admin\MovieReviewController::class, 'index']);
-        Route::delete('reviews/{id}', [\App\Http\Controllers\Api\Admin\MovieReviewController::class, 'destroy']);
 
         // Reports
         Route::get('reports/revenue', [\App\Http\Controllers\Api\Admin\ReportController::class, 'revenue']);

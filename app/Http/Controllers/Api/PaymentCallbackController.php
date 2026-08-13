@@ -150,36 +150,17 @@ class PaymentCallbackController extends Controller
                     }
                 }
                 
-                $confirmedBooking = $booking ? Booking::find($booking->booking_id) : null;
-
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Thanh toán VNPay thành công.',
-                    'order_id' => $vnp_TxnRef,
-                    'vnp_response_code' => $request->vnp_ResponseCode,
-                    'vnp_transaction_no' => $request->input('vnp_TransactionNo'),
-                    'booking' => $confirmedBooking
-                ]);
+                return redirect()->away($frontendUrl . '/booking/success?booking_code=' . $vnp_TxnRef);
             }
 
             if ($booking && in_array($booking->booking_status, ['pending', 'holding', 'unpaid'])) {
                 $booking->update(['booking_status' => 'cancelled']);
             }
 
-            return response()->json([
-                'success' => false,
-                'message' => 'Thanh toán thất bại hoặc người dùng hủy giao dịch.',
-                'order_id' => $vnp_TxnRef,
-                'vnp_response_code' => $request->vnp_ResponseCode,
-                'booking' => $booking ? $booking->fresh() : null
-            ], 400);
+            return redirect()->away($frontendUrl . '/booking/success?booking_code=' . $vnp_TxnRef . '&status=failed');
         }
 
-        return response()->json([
-            'success' => false,
-            'message' => 'Chữ ký VNPay không hợp lệ.',
-            'order_id' => $request->vnp_TxnRef
-        ], 400);
+        return redirect()->away($frontendUrl . '/booking/success?status=invalid_signature');
     }
 
     public function paymentWebhook(Request $request)
