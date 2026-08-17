@@ -46,9 +46,12 @@ class BookingResource extends JsonResource
             ] : null,
             'seats'           => $this->bookingSeats ? $this->bookingSeats->map(function ($bSeat) {
                 $stSeat = $bSeat->showtimeSeat;
+                $seatCode = $stSeat ? ($stSeat->row_name . $stSeat->seat_number) : null;
                 return [
                     'showtime_seat_id' => $bSeat->showtime_seat_id,
-                    'seat_number'      => $stSeat ? ($stSeat->row_name . $stSeat->seat_number) : null,
+                    'seat_code'        => $seatCode,
+                    'seat_number'      => $seatCode,
+                    'row_name'         => $stSeat?->row_name,
                     'ticket_type'      => $bSeat->ticket_type,
                     'price'            => (int) round($bSeat->price),
                 ];

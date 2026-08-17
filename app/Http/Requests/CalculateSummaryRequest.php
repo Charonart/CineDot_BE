@@ -13,11 +13,48 @@ class CalculateSummaryRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        if (!$this->has('showtime_id') && $this->has('schedule_id')) {
-            $this->merge(['showtime_id' => $this->input('schedule_id')]);
+        $rawShowtimeId = $this->input('showtime_id', $this->input('schedule_id'));
+        if ($rawShowtimeId !== null) {
+            $cleanShowtimeId = (int) str_replace('showtime-', '', (string) $rawShowtimeId);
+            $this->merge(['showtime_id' => $cleanShowtimeId]);
         }
-        if (!$this->has('showtime_seat_ids') && $this->has('schedule_seat_ids')) {
-            $this->merge(['showtime_seat_ids' => $this->input('schedule_seat_ids')]);
+
+        $seatIds = $this->input('showtime_seat_ids', $this->input('schedule_seat_ids'));
+        if (!empty($seatIds)) {
+            $this->merge(['showtime_seat_ids' => (array) $seatIds]);
+        } else {
+            $showtimeId = $this->input('showtime_id');
+            $seatCodes = $this->input('seats') ?? $this->input('seat_codes');
+            if ($seatCodes && $showtimeId) {
+                $codeArray = is_array($seatCodes) ? $seatCodes : explode(',', (string) $seatCodes);
+                $codeArray = array_filter(array_map('trim', $codeArray));
+                if (!empty($codeArray)) {
+                    // Ensure seats are generated in DB
+                    try {
+                        app(\App\Services\SeatService::class)->getScheduleSeats((int) $showtimeId);
+                    } catch (\Exception $e) {
+                        // ignore
+                    }
+
+                    $foundIds = \App\Models\ShowtimeSeat::where('showtime_id', $showtimeId)
+                        ->where(function ($q) use ($codeArray) {
+                            foreach ($codeArray as $code) {
+                                if (preg_match('/^([A-Za-z]+)(\d+)$/', $code, $m)) {
+                                    $q->orWhere(function ($sq) use ($m) {
+                                        $sq->where('row_name', strtoupper($m[1]))
+                                           ->where('seat_number', $m[2]);
+                                    });
+                                }
+                            }
+                        })
+                        ->pluck('showtime_seat_id')
+                        ->toArray();
+
+                    if (!empty($foundIds)) {
+                        $this->merge(['showtime_seat_ids' => $foundIds]);
+                    }
+                }
+            }
         }
     }
 

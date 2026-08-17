@@ -98,7 +98,10 @@ class BookingController extends Controller
             $request->user()
         );
 
-        return response()->json($summary);
+        return response()->json([
+            'success' => true,
+            'data'    => $summary,
+        ]);
     }
 
     public function show($id, Request $request)
@@ -144,19 +147,94 @@ class BookingController extends Controller
     }
 
     /**
+     * Get user's F&B Combos orders.
+     */
+    public function myFnbOrders(Request $request)
+    {
+        $userId = $request->user()->user_id;
+
+        $bookings = Booking::where('user_id', $userId)
+            ->whereHas('bookingCombos')
+            ->with([
+                'showtime.movie',
+                'showtime.room.cinema',
+                'bookingCombos.combo',
+            ])
+            ->orderByDesc('created_at')
+            ->get();
+
+        $orders = $bookings->map(function ($b) {
+            $cinema = $b->showtime?->room?->cinema;
+            $showtimeStart = $b->showtime?->showtime_start ? \Carbon\Carbon::parse($b->showtime->showtime_start) : null;
+            $now = \Carbon\Carbon::now();
+
+            $status = match ($b->booking_status) {
+                'cancelled' => 'CANCELLED',
+                'paid', 'completed' => ($showtimeStart && $now->greaterThan($showtimeStart)) ? 'COMPLETED' : 'WAITING_PICKUP',
+                default => 'COMPLETED',
+            };
+
+            $totalComboAmount = 0;
+            $items = $b->bookingCombos->map(function ($bc) use (&$totalComboAmount) {
+                $combo = $bc->combo;
+                $price = (int) round($bc->price_at_booking ?: ($combo?->price ?? 0));
+                $qty = (int) $bc->quantity;
+                $totalComboAmount += $price * $qty;
+
+                return [
+                    'name'       => $combo?->name ?? 'Combo Bắp Nước',
+                    'quantity'   => $qty,
+                    'price'      => $price,
+                    'image'      => $combo?->image_url ?? $combo?->imageUrl ?? '',
+                    'is_claimed' => (bool) $bc->is_claimed,
+                ];
+            })->values()->toArray();
+
+            return [
+                'orderId'     => $b->booking_code ?: ('ORD-' . $b->booking_id),
+                'bookingId'   => $b->booking_id,
+                'orderDate'   => $b->created_at?->format('d/m/Y H:i') ?: 'Gần đây',
+                'cinemaName'  => $cinema?->cinema_name ?? 'CineDot Cinema',
+                'totalAmount' => $totalComboAmount,
+                'status'      => $status,
+                'qrCodeUrl'   => $b->qr_code_url ?: ("https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=" . urlencode($b->booking_code ?: $b->booking_id)),
+                'items'       => $items,
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data'    => $orders,
+        ]);
+    }
+
+    /**
      * Cancel booking and request refund.
      */
     public function cancel(Request $request, $id)
     {
         return DB::transaction(function () use ($request, $id) {
-            $booking = Booking::where('user_id', $request->user()->user_id)
-                ->lockForUpdate()
-                ->findOrFail($id);
+            $bookingQuery = Booking::where('user_id', $request->user()->user_id)->lockForUpdate();
+
+            if (is_numeric($id)) {
+                $bookingQuery->where('booking_id', (int) $id);
+            } else {
+                $bookingQuery->where('booking_code', $id);
+            }
+
+            $booking = $bookingQuery->first();
+
+            if (!$booking) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Không tìm thấy đơn đặt vé cần hủy.'
+                ], 404);
+            }
 
             if (!in_array($booking->booking_status, ['completed', 'paid'])) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Chỉ có thể hủy đơn đặt vé ở trạng thái đã hoàn thành (completed).'
+                    'message' => 'Chỉ có thể hủy đơn đặt vé ở trạng thái đã thanh toán/hoàn thành.'
                 ], 400);
             }
 
@@ -189,7 +267,7 @@ class BookingController extends Controller
 
             $user = $request->user();
             $earnedPoints = (int) round(($booking->final_amount ?? 0) / 10000);
-            
+
             $user = \App\Models\User::where('user_id', $user->user_id)->lockForUpdate()->firstOrFail();
             if ($user->total_points < $earnedPoints) {
                 return response()->json([
@@ -206,20 +284,41 @@ class BookingController extends Controller
                 $returnVoucher = false;
             }
 
-            $booking->update(['booking_status' => 'cancelling']);
+            // 1. Update status to cancelled
+            $booking->update([
+                'booking_status' => 'cancelled',
+                'notes'          => "Khách yêu cầu hủy vé (Hoàn {$refundPercentage}%)"
+            ]);
 
-            if (class_exists('\App\Jobs\ProcessRefundJob')) {
-                \App\Jobs\ProcessRefundJob::dispatch($booking->booking_id, $refundPercentage, $returnVoucher);
+            // 2. Release seats immediately
+            $showtimeSeatIds = \App\Models\BookingSeat::where('booking_id', $booking->booking_id)
+                ->pluck('showtime_seat_id');
+
+            if ($showtimeSeatIds->isNotEmpty()) {
+                \App\Models\ShowtimeSeat::whereIn('showtime_seat_id', $showtimeSeatIds)
+                    ->update(['status' => 'available']);
+            }
+
+            // 3. Deduct earned points
+            if ($earnedPoints > 0) {
+                $user->decrement('total_points', $earnedPoints);
+            }
+
+            // 4. Restore voucher if eligible
+            if ($returnVoucher && $booking->voucher_id) {
+                \App\Models\Voucher::where('voucher_id', $booking->voucher_id)
+                    ->where('used_count', '>', 0)
+                    ->decrement('used_count');
             }
 
             return response()->json([
                 'success' => true,
-                'message' => 'Yêu cầu hủy vé đang được xử lý hoàn tiền.',
+                'message' => 'Hủy vé thành công! Số tiền hoàn trả (' . $refundPercentage . '%) sẽ được hoàn về phương thức thanh toán ban đầu.',
                 'data' => [
-                    'bookingId' => $booking->booking_id,
-                    'bookingStatus' => 'cancelling',
-                    'refundPercentage' => $refundPercentage,
-                    'returnVoucher' => $returnVoucher
+                    'booking_id'       => $booking->booking_id,
+                    'booking_code'     => $booking->booking_code,
+                    'booking_status'   => 'cancelled',
+                    'refund_percentage'=> $refundPercentage,
                 ]
             ]);
         });

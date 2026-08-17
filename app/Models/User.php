@@ -79,6 +79,13 @@ class User extends Authenticatable implements MustVerifyEmail
             ->first();
     }
 
+    public function nextUserTier()
+    {
+        return UserTier::where('min_points', '>', $this->total_points ?? 0)
+            ->orderBy('min_points', 'asc')
+            ->first();
+    }
+
 
     public function bookings()
     {

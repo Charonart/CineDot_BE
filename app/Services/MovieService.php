@@ -58,17 +58,41 @@ class MovieService
 
     public function getNavbar()
     {
-        $nowShowing = Movie::where('status', 'now_showing')
+        $nowShowing = Movie::with('genres')
+            ->where('status', 'now_showing')
             ->orderByDesc('popularity')
-            ->limit(5)
+            ->limit(4)
             ->get();
 
-        $trending = Movie::orderByDesc('popularity')
-            ->limit(5)
+        if ($nowShowing->isEmpty()) {
+            $nowShowing = Movie::with('genres')
+                ->orderByDesc('popularity')
+                ->limit(4)
+                ->get();
+        }
+
+        $comingSoon = Movie::with('genres')
+            ->where('status', 'coming_soon')
+            ->orderByDesc('popularity')
+            ->limit(4)
+            ->get();
+
+        if ($comingSoon->isEmpty()) {
+            $comingSoon = Movie::with('genres')
+                ->orderByDesc('created_at')
+                ->skip(4)
+                ->limit(4)
+                ->get();
+        }
+
+        $trending = Movie::with('genres')
+            ->orderByDesc('popularity')
+            ->limit(4)
             ->get();
 
         return [
             'now_showing' => $nowShowing,
+            'coming_soon' => $comingSoon,
             'trending'    => $trending,
         ];
     }

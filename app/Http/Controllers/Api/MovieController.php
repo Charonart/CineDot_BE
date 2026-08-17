@@ -38,6 +38,7 @@ class MovieController extends Controller
             'success' => true,
             'data'    => [
                 'now_showing' => MovieResource::collection($data['now_showing']),
+                'coming_soon' => MovieResource::collection($data['coming_soon']),
                 'trending'    => MovieResource::collection($data['trending']),
             ],
         ]);

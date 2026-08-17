@@ -165,6 +165,18 @@ class PricingEngineService
         $totalDiscountAmount = $tierDeducted + $voucherDeducted;
         $finalAmountToPay = max(0.0, $totalSubtotal - $totalDiscountAmount);
 
+        // VAT calculation (VAT-inclusive: 5% for movie tickets, 8% for F&B concessions)
+        $ticketVatRate = 0.05;
+        $comboVatRate = 0.08;
+
+        $ticketNet = round($subtotalTickets / (1 + $ticketVatRate));
+        $ticketVat = $subtotalTickets - $ticketNet;
+
+        $comboNet = round($subtotalCombos / (1 + $comboVatRate));
+        $comboVat = $subtotalCombos - $comboNet;
+
+        $totalVat = $ticketVat + $comboVat;
+
         return [
             'booking_summary' => [
                 'booking_code' => 'CINEMA-' . strtoupper(substr(md5(uniqid()), 0, 6)),
@@ -179,6 +191,16 @@ class PricingEngineService
                 'subtotal_tickets' => (int) round($subtotalTickets),
                 'subtotal_combos' => (int) round($subtotalCombos),
                 'total_subtotal' => (int) round($totalSubtotal),
+                'tier_discount_amount' => (int) round($tierDeducted),
+                'voucher_discount_amount' => (int) round($voucherDeducted),
+                'vat_breakdown' => [
+                    'ticket_vat_rate' => 5,
+                    'ticket_vat_amount' => (int) round($ticketVat),
+                    'combo_vat_rate' => 8,
+                    'combo_vat_amount' => (int) round($comboVat),
+                    'total_vat_amount' => (int) round($totalVat),
+                    'is_included_in_price' => true,
+                ],
                 'discounts' => array_filter([
                     'tier_discount' => $tierDiscountData,
                     'voucher_discount' => $voucherDiscountData,

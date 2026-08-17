@@ -33,17 +33,21 @@ Route::prefix('v1')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('/users/profile', [UserController::class, 'profile']);
         Route::match(['put', 'patch'], '/users/profile', [UserController::class, 'updateProfile']);
+        Route::post('/users/change-password', [UserController::class, 'changePassword']);
+        Route::get('/users/transactions', [UserController::class, 'transactions']);
 
         // ── Bookings ──────────────────────────────────────────────────────────────
         Route::post('/bookings/hold-seats', [App\Http\Controllers\Api\BookingController::class, 'holdSeats']);
         Route::post('/bookings/release-seats', [App\Http\Controllers\Api\BookingController::class, 'releaseSeats']);
         Route::post('/bookings/calculate-summary', [App\Http\Controllers\Api\BookingController::class, 'calculateSummary']);
         Route::get('/users/bookings',       [App\Http\Controllers\Api\BookingController::class, 'myBookings']);
+        Route::get('/users/fnb-orders',     [App\Http\Controllers\Api\BookingController::class, 'myFnbOrders']);
         Route::get('/bookings/history',     [App\Http\Controllers\Api\BookingController::class, 'myBookings']);
         Route::get('/bookings/{id}',        [App\Http\Controllers\Api\BookingController::class, 'show']);
         Route::post('/bookings/{id}/apply-voucher', [App\Http\Controllers\Api\VoucherController::class, 'apply']);
         Route::post('/bookings/{id}/remove-voucher', [App\Http\Controllers\Api\VoucherController::class, 'remove']);
         Route::post('/vouchers/apply',      [App\Http\Controllers\Api\VoucherController::class, 'applyStandalone']);
+        Route::get('/vouchers',             [App\Http\Controllers\Api\VoucherController::class, 'listActive']);
         
         // ── Payments ──────────────────────────────────────────────────────────────
         Route::post('/payments',            [App\Http\Controllers\Api\PaymentController::class, 'process']);

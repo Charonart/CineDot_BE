@@ -9,6 +9,11 @@ class UserResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        $currentTier = $this->userTier();
+        $nextTier = $this->nextUserTier();
+        $points = (int) ($this->total_points ?? 0);
+        $pointsNeeded = $nextTier ? max(0, $nextTier->min_points - $points) : 0;
+
         return [
             'id'           => $this->user_id,
             'user_id'      => $this->user_id,
@@ -22,8 +27,16 @@ class UserResource extends JsonResource
             'role'         => $this->whenLoaded('role', fn() => $this->role->name, $this->role?->name),
             'province'     => $this->whenLoaded('province', fn() => $this->province->province_name),
             'phone'        => $this->phone,
-            'total_points' => (int) ($this->total_points ?? 0),
-            'user_tier'    => $this->userTier()?->tier ?? 'Bronze',
+            'total_points' => $points,
+            'user_tier'    => $currentTier?->tier ?? 'Bronze',
+            'tier_info'    => [
+                'current_tier'         => $currentTier?->tier ?? 'Bronze',
+                'current_points'       => $points,
+                'discount_percent'     => (float) ($currentTier?->discount_percent ?? 0),
+                'next_tier'            => $nextTier?->tier,
+                'points_needed'        => $pointsNeeded,
+                'next_tier_min_points' => $nextTier?->min_points ?? ($points > 0 ? $points : 500),
+            ],
         ];
     }
 }

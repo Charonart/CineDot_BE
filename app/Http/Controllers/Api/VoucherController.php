@@ -184,4 +184,47 @@ class VoucherController extends Controller
             ]
         ]);
     }
+
+    /**
+     * List active available vouchers for members.
+     */
+    public function listActive(Request $request)
+    {
+        $now = Carbon::now();
+
+        $vouchers = Voucher::where('is_active', true)
+            ->where(function ($q) use ($now) {
+                $q->whereNull('valid_from')->orWhere('valid_from', '<=', $now);
+            })
+            ->where(function ($q) use ($now) {
+                $q->whereNull('valid_until')->orWhere('valid_until', '>=', $now);
+            })
+            ->orderByDesc('created_at')
+            ->get();
+
+        $mapped = $vouchers->map(function ($v) {
+            $formattedDiscount = $v->discount_type === 'fixed_amount'
+                ? number_format($v->discount_value) . 'đ'
+                : $v->discount_value . '%';
+
+            return [
+                'id'                 => $v->voucher_id,
+                'code'               => $v->code,
+                'title'              => 'Voucher Giảm ' . $formattedDiscount,
+                'description'        => $v->description ?: ('Giảm ' . $formattedDiscount . ($v->min_order_value ? ' cho đơn từ ' . number_format($v->min_order_value) . 'đ' : '')),
+                'discount_type'      => $v->discount_type,
+                'discount_value'     => (float) $v->discount_value,
+                'min_order_value'    => (float) ($v->min_order_value ?? 0),
+                'max_discount_value' => (float) ($v->max_discount_value ?? 0),
+                'valid_until'        => $v->valid_until?->format('d/m/Y') ?: 'Không thời hạn',
+                'is_active'          => (bool) $v->is_active,
+                'category'           => 'TICKET',
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data'    => $mapped,
+        ]);
+    }
 }

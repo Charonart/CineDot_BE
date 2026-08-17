@@ -18,6 +18,7 @@ class GetCinemasRequest extends FormRequest
             'province_code' => ['nullable', 'string', 'max:50'],
             'province_id'   => ['nullable', 'integer', 'exists:provinces,province_id'],
             'province'      => ['nullable', 'string', 'max:100'],
+            'city'          => ['nullable', 'string', 'max:100'],
         ];
     }
 }
