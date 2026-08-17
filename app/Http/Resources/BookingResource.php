@@ -25,8 +25,8 @@ class BookingResource extends JsonResource
             'movie'           => $movie ? [
                 'movie_id'   => $movie->movie_id,
                 'title'      => $movie->title,
-                'poster_url' => $movie->poster_url,
-                'age_rating' => $movie->age_rating,
+                'poster_url' => $movie->poster_path,
+                'age_rating' => $movie->adult ? 'T18' : 'P',
                 'duration'   => $movie->duration,
             ] : null,
             'cinema'          => $cinema ? [

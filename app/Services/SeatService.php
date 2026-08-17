@@ -78,7 +78,7 @@ class SeatService
                     'seat_type'   => $seatType,
                     'row_name'    => strtoupper($row),
                     'seat_number' => $num,
-                    'status'      => 'available',
+                    'status'      => $mSeat['status'] ?? 'available',
                 ];
             }
             if (!empty($newSeats)) {

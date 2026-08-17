@@ -56,6 +56,38 @@ class PaymentController extends Controller
             ], 400);
         }
 
+        if ($request->has('combos') || $request->has('voucher_code')) {
+            $combos = $request->input('combos', []);
+            $voucherCode = $request->input('voucher_code');
+            $showtimeSeatIds = \App\Models\BookingSeat::where('booking_id', $booking->booking_id)->pluck('showtime_seat_id')->toArray();
+            
+            $snapshot = app(\App\Services\PricingEngineService::class)->calculateSummary(
+                $booking->showtime_id,
+                $showtimeSeatIds,
+                $combos,
+                $voucherCode,
+                $request->user()
+            );
+
+            $booking->update([
+                'price_breakdown' => $snapshot,
+                'final_amount'    => $snapshot['financial_breakdown']['final_amount_to_pay'],
+                'discount_amount' => $snapshot['financial_breakdown']['total_discount_amount'],
+                'voucher_id'      => $snapshot['voucher_id'] ?? null,
+            ]);
+
+            \App\Models\BookingCombo::where('booking_id', $booking->booking_id)->delete();
+            foreach ($snapshot['items']['combos'] as $cItem) {
+                \App\Models\BookingCombo::create([
+                    'booking_id'       => $booking->booking_id,
+                    'combo_id'         => $cItem['combo_id'],
+                    'quantity'         => $cItem['quantity'],
+                    'price_at_booking' => $cItem['unit_price'],
+                    'is_claimed'       => false,
+                ]);
+            }
+        }
+
         $paymentMethod = strtoupper($request->input('payment_method', 'VNPAY'));
         $amount = (float) ($booking->final_amount ?? $booking->total_amount);
 
@@ -76,6 +108,11 @@ class PaymentController extends Controller
             $ipAddr = '127.0.0.1';
         }
 
+        $vnp_ExpireDate = \Carbon\Carbon::parse($expiresAt)
+            ->setTimezone('Asia/Ho_Chi_Minh')
+            ->subSeconds(10)
+            ->format('YmdHis');
+
         $inputData = [
             "vnp_Version" => "2.1.0",
             "vnp_TmnCode" => $vnp_TmnCode,
@@ -89,6 +126,7 @@ class PaymentController extends Controller
             "vnp_OrderType" => 'billpayment',
             "vnp_ReturnUrl" => $vnp_Returnurl,
             "vnp_TxnRef" => $vnp_TxnRef,
+            "vnp_ExpireDate" => $vnp_ExpireDate,
         ];
 
         ksort($inputData);
@@ -124,8 +162,8 @@ class PaymentController extends Controller
         ]);
     }
 
-    public function process(Request $request)
+    public function process(PaymentRequest $request)
     {
-        return $this->createUrl(new PaymentRequest($request->all()));
+        return $this->createUrl($request);
     }
 }
