@@ -66,7 +66,8 @@ class PaymentController extends Controller
                 $showtimeSeatIds,
                 $combos,
                 $voucherCode,
-                $request->user()
+                $request->user(),
+                $booking->booking_code
             );
 
             $booking->update([

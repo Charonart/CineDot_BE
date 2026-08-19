@@ -20,6 +20,7 @@ class StoreRoomRequest extends FormRequest
             'room_name'   => 'required|string|max:255',
             'room_type'   => 'nullable|string|max:50',
             'total_seats' => 'nullable|integer|min:0',
+            'seat_matrix' => 'nullable|array',
             'is_active'   => 'boolean',
         ];
     }

@@ -17,7 +17,7 @@ class GenreController extends Controller
     public function index(Request $request)
     {
         $limit = $request->get('limit', 15);
-        $query = Genre::query();
+        $query = Genre::withCount('movies');
 
         if ($request->has('search')) {
             $search = $request->search;

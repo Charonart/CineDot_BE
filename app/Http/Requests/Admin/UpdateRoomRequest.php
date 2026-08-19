@@ -20,6 +20,7 @@ class UpdateRoomRequest extends FormRequest
             'room_name'   => 'sometimes|required|string|max:255',
             'room_type'   => 'nullable|string|max:50',
             'total_seats' => 'nullable|integer|min:0',
+            'seat_matrix' => 'nullable|array',
             'is_active'   => 'boolean',
         ];
     }

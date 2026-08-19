@@ -18,6 +18,7 @@ class StoreCinemaRequest extends FormRequest
     {
         return [
             'cinema_name'    => 'required|string|max:255',
+            'slug'           => 'nullable|string|max:255',
             'cinema_address' => 'nullable|string|max:255',
             'province_id'    => 'nullable|exists:provinces,province_id',
             'phone'          => 'nullable|string|max:20',

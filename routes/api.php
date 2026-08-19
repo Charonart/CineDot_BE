@@ -168,6 +168,13 @@ Route::prefix('v1')->group(function () {
         Route::get('bookings/{id}', [\App\Http\Controllers\Api\Admin\BookingController::class, 'show']);
         Route::post('bookings/{id}/refund', [\App\Http\Controllers\Api\Admin\BookingController::class, 'refund']);
 
+        // Ticket Scanner & Check-in (Kiosk)
+        Route::post('tickets/lookup', [\App\Http\Controllers\Api\Staff\BookingCheckInController::class, 'lookupByQr']);
+        Route::post('tickets/scan', [\App\Http\Controllers\Api\Staff\BookingCheckInController::class, 'checkInByQr']);
+        Route::post('tickets/check-in', [\App\Http\Controllers\Api\Staff\BookingCheckInController::class, 'checkInByQr']);
+        Route::post('tickets/claim-fnb', [\App\Http\Controllers\Api\Staff\BookingCheckInController::class, 'claimFnb']);
+        Route::get('tickets/recent-scans', [\App\Http\Controllers\Api\Staff\BookingCheckInController::class, 'recentScans']);
+
         // Reports
         Route::get('reports/revenue', [\App\Http\Controllers\Api\Admin\ReportController::class, 'revenue']);
 

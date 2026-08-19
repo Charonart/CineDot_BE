@@ -21,7 +21,8 @@ class PricingEngineService
         array $showtimeSeatIds,
         array $comboInputs = [],
         ?string $voucherCode = null,
-        ?User $user = null
+        ?User $user = null,
+        ?string $existingBookingCode = null
     ): array {
         $showtime = Showtime::with(['movie', 'room.cinema'])->findOrFail($showtimeId);
         $seats = ShowtimeSeat::with('seatType')
@@ -179,7 +180,7 @@ class PricingEngineService
 
         return [
             'booking_summary' => [
-                'booking_code' => 'CINEMA-' . strtoupper(substr(md5(uniqid()), 0, 6)),
+                'booking_code' => $existingBookingCode ?: ('CINEMA-' . strtoupper(substr(md5(uniqid()), 0, 6))),
                 'showtime_id' => $showtimeId,
                 'user_id' => $user ? $user->user_id : null,
             ],

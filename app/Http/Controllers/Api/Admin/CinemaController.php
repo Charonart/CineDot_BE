@@ -16,13 +16,18 @@ class CinemaController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Cinema::query();
+        $query = Cinema::with(['province', 'rooms']);
 
-        if ($request->has('search')) {
+        if ($request->has('search') && !empty($request->search)) {
             $query->where('cinema_name', 'ilike', '%' . $request->search . '%');
         }
 
-        $cinemas = $query->orderBy('cinema_id', 'desc')->paginate($request->get('per_page', 15));
+        if ($request->has('province_id') && !empty($request->province_id)) {
+            $query->where('province_id', $request->province_id);
+        }
+
+        $perPage = $request->get('per_page', 50);
+        $cinemas = $query->orderBy('cinema_id', 'desc')->paginate($perPage);
 
         return response()->json([
             'success' => true,
@@ -37,11 +42,14 @@ class CinemaController extends Controller
     {
         $data = $request->validated();
         
-        if (!isset($data['slug'])) {
+        if (empty($data['slug'])) {
             $data['slug'] = Str::slug($data['cinema_name']) . '-' . time();
+        } else {
+            $data['slug'] = Str::slug($data['slug']);
         }
 
         $cinema = Cinema::create($data);
+        $cinema->load(['province', 'rooms']);
 
         return response()->json([
             'success' => true,
@@ -55,7 +63,7 @@ class CinemaController extends Controller
      */
     public function show(string $id)
     {
-        $cinema = Cinema::with('rooms')->findOrFail($id);
+        $cinema = Cinema::with(['province', 'rooms'])->findOrFail($id);
 
         return response()->json([
             'success' => true,
@@ -71,11 +79,14 @@ class CinemaController extends Controller
         $cinema = Cinema::findOrFail($id);
         $data = $request->validated();
 
-        if (isset($data['cinema_name']) && $data['cinema_name'] !== $cinema->cinema_name) {
+        if (!empty($data['slug'])) {
+            $data['slug'] = Str::slug($data['slug']);
+        } elseif (isset($data['cinema_name']) && $data['cinema_name'] !== $cinema->cinema_name && empty($cinema->slug)) {
             $data['slug'] = Str::slug($data['cinema_name']) . '-' . time();
         }
 
         $cinema->update($data);
+        $cinema->load(['province', 'rooms']);
 
         return response()->json([
             'success' => true,

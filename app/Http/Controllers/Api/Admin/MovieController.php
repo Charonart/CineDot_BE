@@ -24,8 +24,16 @@ class MovieController extends Controller
                   ->orWhere('original_title', 'ilike', '%' . $request->search . '%');
         }
 
-        if ($request->has('status')) {
-            $query->where('status', $request->status);
+        if ($request->has('status') && !empty($request->status) && $request->status !== 'ALL') {
+            $status = strtolower($request->status);
+            if ($status === 'coming_soon' || $status === 'coming-soon' || $status === 'upcoming') {
+                $status = 'upcoming';
+            } elseif ($status === 'stopped' || $status === 'ended' || $status === 'end_of_show') {
+                $status = 'ended';
+            } elseif ($status === 'now_showing' || $status === 'now-showing') {
+                $status = 'now_showing';
+            }
+            $query->where('status', $status);
         }
 
         $movies = $query->orderBy('created_at', 'desc')->paginate($request->get('per_page', 15));
@@ -45,6 +53,18 @@ class MovieController extends Controller
         try {
             $data = $request->validated();
             
+            // Normalize status to DB enum values: upcoming, now_showing, ended
+            if (isset($data['status'])) {
+                $st = strtolower($data['status']);
+                if ($st === 'coming_soon' || $st === 'coming-soon' || $st === 'upcoming') {
+                    $data['status'] = 'upcoming';
+                } elseif ($st === 'stopped' || $st === 'ended' || $st === 'end_of_show') {
+                    $data['status'] = 'ended';
+                } else {
+                    $data['status'] = 'now_showing';
+                }
+            }
+
             // Auto generate slug
             if (!isset($data['slug'])) {
                 $data['slug'] = Str::slug($data['title']) . '-' . time();
@@ -107,6 +127,18 @@ class MovieController extends Controller
         DB::beginTransaction();
         try {
             $data = $request->validated();
+
+            // Normalize status to DB enum values: upcoming, now_showing, ended
+            if (isset($data['status'])) {
+                $st = strtolower($data['status']);
+                if ($st === 'coming_soon' || $st === 'coming-soon' || $st === 'upcoming') {
+                    $data['status'] = 'upcoming';
+                } elseif ($st === 'stopped' || $st === 'ended' || $st === 'end_of_show') {
+                    $data['status'] = 'ended';
+                } else {
+                    $data['status'] = 'now_showing';
+                }
+            }
 
             if (isset($data['title']) && $data['title'] !== $movie->title) {
                 $data['slug'] = Str::slug($data['title']) . '-' . time();

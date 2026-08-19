@@ -68,7 +68,8 @@ class VoucherController extends Controller
                 $showtimeSeatIds,
                 $combos,
                 $voucher->code,
-                $request->user()
+                $request->user(),
+                $booking->booking_code
             );
 
             $booking->update([
@@ -110,7 +111,8 @@ class VoucherController extends Controller
                 $showtimeSeatIds,
                 $combos,
                 null,
-                $request->user()
+                $request->user(),
+                $booking->booking_code
             );
 
             $booking->update([

@@ -25,10 +25,10 @@ class UpdateMovieRequest extends FormRequest
             'adult'             => 'boolean',
             'video'             => 'boolean',
             'popularity'        => 'nullable|numeric|min:0',
-            'backdrop_path'     => 'nullable|string|url',
-            'poster_path'       => 'nullable|string|url',
+            'backdrop_path'     => 'nullable|string',
+            'poster_path'       => 'nullable|string',
             'duration_minutes'  => 'nullable|integer|min:1',
-            'status'            => 'sometimes|required|string|in:now_showing,coming_soon,stopped',
+            'status'            => 'sometimes|required|string|in:now_showing,upcoming,ended,coming_soon,stopped',
             'genre_ids'         => 'nullable|array',
             'genre_ids.*'       => 'exists:genres,genre_id',
 
