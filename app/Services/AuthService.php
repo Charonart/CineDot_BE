@@ -17,13 +17,21 @@ class AuthService
 
     public function register(array $data)
     {
-        if (!isset($data['role_id'])) {
-            $customerRole = \App\Models\Role::where('name', 'customer')->first();
-            $data['role_id'] = $customerRole ? $customerRole->role_id : 1;
-        }
+        $roleName = $data['role'] ?? 'customer';
+        unset($data['role_id'], $data['role']);
 
         $data['password'] = Hash::make($data['password']);
         $user = User::create($data);
+
+        $role = \App\Models\Role::where('name', $roleName)->first() ?? \App\Models\Role::where('name', 'customer')->first();
+        if ($role) {
+            \App\Models\UserRole::create([
+                'user_id'    => $user->user_id,
+                'role_id'    => $role->role_id,
+                'scope_type' => 'system',
+                'scope_id'   => null,
+            ]);
+        }
 
         // Send registration event & verification email after HTTP response is flushed (< 50ms response time)
         dispatch(function () use ($user) {

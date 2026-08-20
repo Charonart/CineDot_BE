@@ -24,29 +24,24 @@ class PermissionService
             }
         }
 
-        // Cache miss: aggregate permissions from primary role & user_roles
+        // Cache miss: aggregate permissions from all user_roles
         $permissions = [];
 
-        // 1. Primary role
-        $role = $user->role;
-        if ($role) {
-            if (in_array(strtolower($role->name), ['super_admin', 'super admin', 'admin'])) {
-                $permissions[] = '*';
-            } else {
-                $primaryPerms = $role->permissions()->pluck('name')->toArray();
-                $permissions = array_merge($permissions, $primaryPerms);
-            }
-        }
-
-        // 2. Context-aware roles
         $contextRoles = UserRole::with('role.permissions')->where('user_id', $user->user_id)->get();
-        foreach ($contextRoles as $ur) {
-            if ($ur->role) {
-                if (in_array(strtolower($ur->role->name), ['super_admin', 'super admin', 'admin']) && $ur->scope_type === 'system') {
-                    $permissions[] = '*';
-                } else {
-                    $scopedPerms = $ur->role->permissions->pluck('name')->toArray();
-                    $permissions = array_merge($permissions, $scopedPerms);
+        if ($contextRoles->isEmpty()) {
+            $customerRole = \App\Models\Role::where('name', 'customer')->with('permissions')->first();
+            if ($customerRole) {
+                $permissions = $customerRole->permissions->pluck('name')->toArray();
+            }
+        } else {
+            foreach ($contextRoles as $ur) {
+                if ($ur->role) {
+                    if (in_array(strtolower($ur->role->name), ['super_admin', 'super admin', 'admin']) && $ur->scope_type === 'system') {
+                        $permissions[] = '*';
+                    } else {
+                        $scopedPerms = $ur->role->permissions->pluck('name')->toArray();
+                        $permissions = array_merge($permissions, $scopedPerms);
+                    }
                 }
             }
         }

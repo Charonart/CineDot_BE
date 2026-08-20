@@ -5,8 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
 
+use App\Traits\FilterableAndSortable;
+
 class Voucher extends Model
 {
+    use FilterableAndSortable;
+
     protected $primaryKey = 'voucher_id';
 
     protected $fillable = [

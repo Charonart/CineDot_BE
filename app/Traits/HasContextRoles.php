@@ -33,9 +33,9 @@ trait HasContextRoles
         $userRoles = $this->getContextRoles();
         
         if ($userRoles->isEmpty()) {
-            // Fallback to primary role in users table (e.g. admin, staff, customer)
-            if ($this->role_id) {
-                return $this->roleHasPermission($this->role_id, $permissionName);
+            $customerRole = Role::where('name', 'customer')->first();
+            if ($customerRole) {
+                return $this->roleHasPermission($customerRole->role_id, $permissionName);
             }
             return false;
         }
@@ -90,11 +90,6 @@ trait HasContextRoles
                     return true;
                 }
             }
-        }
-
-        // 4. Fallback check for primary role in users table
-        if ($this->role_id && $this->roleHasPermission($this->role_id, $permissionName)) {
-            return true;
         }
 
         return false;

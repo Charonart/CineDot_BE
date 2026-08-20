@@ -22,6 +22,12 @@ class SeatTypeController extends Controller
         return response()->json([
             'success' => true,
             'data'    => $seatTypes,
+            'meta'    => [
+                'current_page' => 1,
+                'last_page'    => 1,
+                'per_page'     => $seatTypes->count(),
+                'total'        => $seatTypes->count(),
+            ]
         ]);
     }
 

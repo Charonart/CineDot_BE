@@ -15,16 +15,20 @@ class MovieController extends Controller
     /**
      * Display a listing of the resource.
      */
+    /**
+     * Display a listing of the resource (Standardized with FilterableAndSortable).
+     */
     public function index(Request $request)
     {
-        $query = Movie::with('genres');
+        $allowedFilters = ['title', 'original_title', 'status', 'release_date', 'duration', 'popularity', 'genres'];
+        $allowedSorts = ['movie_id', 'id', 'title', 'release_date', 'duration', 'popularity', 'created_at', 'status'];
+        $searchableFields = ['title', 'original_title', 'overview'];
+        $columnAliases = ['id' => 'movie_id'];
 
-        if ($request->has('search')) {
-            $query->where('title', 'ilike', '%' . $request->search . '%')
-                  ->orWhere('original_title', 'ilike', '%' . $request->search . '%');
-        }
+        $query = Movie::with(['genres', 'videos']);
 
-        if ($request->has('status') && !empty($request->status) && $request->status !== 'ALL') {
+        // Backward-compatible status filter if passed as simple string
+        if ($request->has('status') && !empty($request->status) && $request->status !== 'ALL' && !$request->has('filters.status')) {
             $status = strtolower($request->status);
             if ($status === 'coming_soon' || $status === 'coming-soon' || $status === 'upcoming') {
                 $status = 'upcoming';
@@ -36,11 +40,27 @@ class MovieController extends Controller
             $query->where('status', $status);
         }
 
-        $movies = $query->orderBy('created_at', 'desc')->paginate($request->get('per_page', 15));
+        $query->applyDataTableQuery($request, $allowedFilters, $allowedSorts, $searchableFields, $columnAliases);
+
+        $perPage = (int) $request->get('per_page', $request->get('limit', 15));
+        $movies = $query->paginate($perPage);
+
+        // Map items so each item has both 'id' and 'movie_id'
+        $items = collect($movies->items())->map(function ($m) {
+            $arr = $m->toArray();
+            $arr['id'] = $m->movie_id;
+            return $arr;
+        });
 
         return response()->json([
             'success' => true,
-            'data'    => $movies
+            'data'    => $items,
+            'meta'    => [
+                'current_page' => $movies->currentPage(),
+                'last_page'    => $movies->lastPage(),
+                'per_page'     => $movies->perPage(),
+                'total'        => $movies->total(),
+            ]
         ]);
     }
 
@@ -221,6 +241,116 @@ class MovieController extends Controller
             'data'    => [
                 'job_id' => $jobId,
             ]
+        ]);
+    }
+
+    /**
+     * Inline update a single field of a movie (Notion / Sheet cell patch)
+     */
+    public function updateCell(Request $request, string $id)
+    {
+        $movie = Movie::findOrFail($id);
+        $field = $request->input('field');
+        $value = $request->input('value');
+
+        $allowedFields = ['title', 'original_title', 'status', 'release_date', 'duration', 'popularity', 'overview'];
+        if (!in_array($field, $allowedFields, true)) {
+            return response()->json([
+                'success' => false,
+                'message' => "Không cho phép cập nhật trường: {$field}"
+            ], 422);
+        }
+
+        if ($field === 'status') {
+            $st = strtolower((string) $value);
+            if (in_array($st, ['upcoming', 'coming_soon', 'coming-soon'], true)) {
+                $value = 'upcoming';
+            } elseif (in_array($st, ['ended', 'stopped', 'end_of_show'], true)) {
+                $value = 'ended';
+            } else {
+                $value = 'now_showing';
+            }
+        }
+
+        $movie->update([$field => $value]);
+
+        $arr = $movie->fresh(['genres', 'videos'])->toArray();
+        $arr['id'] = $movie->movie_id;
+
+        return response()->json([
+            'success' => true,
+            'message' => "Đã cập nhật {$field} thành công.",
+            'data'    => $arr
+        ]);
+    }
+
+    /**
+     * Toggle Movie status (now_showing <-> ended / upcoming)
+     */
+    public function toggleStatus(string $id)
+    {
+        $movie = Movie::findOrFail($id);
+        $nextStatus = $movie->status === 'now_showing' ? 'ended' : 'now_showing';
+        $movie->update(['status' => $nextStatus]);
+
+        $arr = $movie->fresh(['genres', 'videos'])->toArray();
+        $arr['id'] = $movie->movie_id;
+
+        return response()->json([
+            'success' => true,
+            'message' => "Đã chuyển trạng thái phim sang: {$nextStatus}.",
+            'data'    => $arr
+        ]);
+    }
+
+    /**
+     * Execute bulk action on multiple movies
+     */
+    public function bulkAction(Request $request)
+    {
+        $action = $request->input('action');
+        $ids = $request->input('ids', []);
+
+        if (empty($ids) || !is_array($ids)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Danh sách ID không được để trống.'
+            ], 422);
+        }
+
+        $count = count($ids);
+
+        switch ($action) {
+            case 'delete':
+                Movie::whereIn('movie_id', $ids)->delete();
+                $msg = "Đã xóa {$count} phim thành công.";
+                break;
+
+            case 'set_now_showing':
+                Movie::whereIn('movie_id', $ids)->update(['status' => 'now_showing']);
+                $msg = "Đã chuyển {$count} phim sang Đang Chiếu.";
+                break;
+
+            case 'set_upcoming':
+                Movie::whereIn('movie_id', $ids)->update(['status' => 'upcoming']);
+                $msg = "Đã chuyển {$count} phim sang Sắp Chiếu.";
+                break;
+
+            case 'set_ended':
+                Movie::whereIn('movie_id', $ids)->update(['status' => 'ended']);
+                $msg = "Đã chuyển {$count} phim sang Đã Ngừng Chiếu.";
+                break;
+
+            default:
+                return response()->json([
+                    'success' => false,
+                    'message' => "Hành động hàng loạt không hợp lệ: {$action}"
+                ], 422);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => $msg
         ]);
     }
 }

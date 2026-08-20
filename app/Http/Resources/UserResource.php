@@ -14,6 +14,9 @@ class UserResource extends JsonResource
         $points = (int) ($this->total_points ?? 0);
         $pointsNeeded = $nextTier ? max(0, $nextTier->min_points - $points) : 0;
 
+        $userRoles = $this->relationLoaded('userRoles') ? $this->userRoles : $this->userRoles()->with('role')->get();
+        $primaryRole = $this->role?->name ?? (is_string($this->role) ? $this->role : 'customer');
+
         return [
             'id'           => $this->user_id,
             'user_id'      => $this->user_id,
@@ -23,8 +26,8 @@ class UserResource extends JsonResource
             'avatar'       => $this->avatar,
             'birthday'     => $this->birthday?->format('Y-m-d'),
             'gender'       => $this->gender,
-            'role_id'      => $this->role_id,
-            'role'         => $this->whenLoaded('role', fn() => $this->role->name, $this->role?->name),
+            'role'         => $primaryRole,
+            'roles'        => $userRoles->map(fn($ur) => $ur->role?->name)->filter()->values()->toArray(),
             'province'     => $this->whenLoaded('province', fn() => $this->province->province_name),
             'phone'        => $this->phone,
             'total_points' => $points,

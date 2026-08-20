@@ -4,8 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+use App\Traits\FilterableAndSortable;
+
 class Campaign extends Model
 {
+    use FilterableAndSortable;
+
     protected $primaryKey = 'campaign_id';
 
     protected $fillable = [

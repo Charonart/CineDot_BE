@@ -4,8 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+use App\Traits\FilterableAndSortable;
+
 class PricingRule extends Model
 {
+    use FilterableAndSortable;
+
     protected $primaryKey = 'pricing_rule_id';
     public $timestamps = false;
 

@@ -4,8 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+use App\Traits\FilterableAndSortable;
+
 class Role extends Model
 {
+    use FilterableAndSortable;
+
     protected $primaryKey = 'role_id';
     public $timestamps = false;
 

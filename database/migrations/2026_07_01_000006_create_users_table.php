@@ -10,7 +10,6 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id('user_id');
-            $table->foreignId('role_id')->constrained('roles', 'role_id')->cascadeOnDelete();
             $table->foreignId('province_id')->nullable()->constrained('provinces', 'province_id')->nullOnDelete();
             $table->string('username')->unique();
             $table->string('password');
@@ -23,6 +22,7 @@ return new class extends Migration
             $table->integer('total_points')->default(0);
             $table->timestamp('email_verified_at')->nullable();
             $table->timestamp('last_login')->nullable();
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
     }

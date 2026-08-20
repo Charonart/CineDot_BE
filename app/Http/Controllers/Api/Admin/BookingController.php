@@ -50,12 +50,16 @@ class BookingController extends Controller
     }
 
     /**
-     * Danh sách tất cả đơn đặt vé (Admin) - Hỗ trợ Context Scoping
+     * Danh sách tất cả đơn đặt vé (Admin) - Standardized with FilterableAndSortable & Context Scoping
      */
     public function index(Request $request)
     {
-        $limit = $request->get('limit', 15);
-        $query = Booking::with(['user', 'showtime.movie', 'showtime.room.cinema', 'bookingSeats.showtimeSeat', 'bookingCombos.combo']);
+        $allowedFilters = ['booking_code', 'booking_status', 'final_amount', 'discount_amount', 'created_at', 'checked_in_at', 'status'];
+        $allowedSorts = ['booking_id', 'id', 'booking_code', 'final_amount', 'created_at', 'booking_status'];
+        $searchableFields = ['booking_code'];
+        $columnAliases = ['id' => 'booking_id', 'status' => 'booking_status', 'total_amount' => 'final_amount'];
+
+        $query = Booking::with(['user', 'showtime.movie', 'showtime.room.cinema', 'bookingSeats.showtimeSeat', 'bookingCombos.combo', 'voucher']);
 
         // Data Scoping theo rạp/khu vực được phân quyền
         $user = $request->user();
@@ -68,7 +72,8 @@ class BookingController extends Controller
             }
         }
 
-        if ($request->has('status') && $request->status !== 'ALL') {
+        // Backward compatibility status query
+        if ($request->has('status') && $request->status !== 'ALL' && !$request->has('filters.status')) {
             $st = $request->status;
             if ($st === 'checked_in') {
                 $query->whereNotNull('checked_in_at')->whereNotIn('booking_status', ['cancelled', 'refunded']);
@@ -79,7 +84,8 @@ class BookingController extends Controller
             }
         }
 
-        if ($request->has('search')) {
+        // Search with User fields
+        if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('booking_code', 'ilike', '%' . $search . '%')
@@ -91,11 +97,26 @@ class BookingController extends Controller
             });
         }
 
-        $bookings = $query->orderBy('booking_id', 'desc')->paginate($limit);
+        $query->applyDataTableQuery($request, $allowedFilters, $allowedSorts, [], $columnAliases);
+
+        $perPage = (int) $request->get('per_page', $request->get('limit', 15));
+        $bookings = $query->paginate($perPage);
+
+        $items = collect($bookings->items())->map(function ($b) {
+            $arr = $b->toArray();
+            $arr['id'] = $b->booking_id;
+            return $arr;
+        });
 
         return response()->json([
             'success' => true,
-            'data'    => $bookings
+            'data'    => $items,
+            'meta'    => [
+                'current_page' => $bookings->currentPage(),
+                'last_page'    => $bookings->lastPage(),
+                'per_page'     => $bookings->perPage(),
+                'total'        => $bookings->total(),
+            ]
         ]);
     }
 
@@ -199,5 +220,46 @@ class BookingController extends Controller
                 'message' => 'Lỗi hoàn tiền: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Bulk actions for bookings
+     */
+    public function bulkAction(Request $request)
+    {
+        $action = $request->input('action');
+        $ids = $request->input('ids', []);
+
+        if (empty($ids) || !is_array($ids)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Danh sách ID không được để trống.'
+            ], 422);
+        }
+
+        $count = count($ids);
+
+        switch ($action) {
+            case 'cancel':
+                Booking::whereIn('booking_id', $ids)->whereNotIn('booking_status', ['completed', 'refunded'])->update(['booking_status' => 'cancelled']);
+                $msg = "Đã hủy {$count} đơn đặt vé.";
+                break;
+
+            case 'check_in':
+                Booking::whereIn('booking_id', $ids)->whereNull('checked_in_at')->update(['checked_in_at' => now()]);
+                $msg = "Đã soát vé check-in cho {$count} đơn đặt vé.";
+                break;
+
+            default:
+                return response()->json([
+                    'success' => false,
+                    'message' => "Hành động không hợp lệ: {$action}"
+                ], 422);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => $msg
+        ]);
     }
 }

@@ -4,8 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+use App\Traits\FilterableAndSortable;
+
 class Booking extends Model
 {
+    use FilterableAndSortable;
+
     protected $primaryKey = 'booking_id';
 
     protected $fillable = [

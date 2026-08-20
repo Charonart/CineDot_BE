@@ -10,7 +10,7 @@ use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
-    use HasApiTokens, HasFactory, Notifiable, \App\Traits\HasContextRoles;
+    use HasApiTokens, HasFactory, Notifiable, \App\Traits\HasContextRoles, \App\Traits\FilterableAndSortable;
 
     protected $primaryKey = 'user_id';
 
@@ -20,7 +20,6 @@ class User extends Authenticatable implements MustVerifyEmail
      * @var array<int, string>
      */
     protected $fillable = [
-        'role_id',
         'username',
         'password',
         'email',
@@ -31,6 +30,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'province_id',
         'phone',
         'total_points',
+        'is_active',
         'email_verified_at',
         'last_login',
     ];
@@ -55,6 +55,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'last_login'        => 'datetime',
         'email_verified_at' => 'datetime',
         'total_points'      => 'integer',
+        'is_active'         => 'boolean',
     ];
 
     public function province()
@@ -62,14 +63,47 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->belongsTo(Province::class, 'province_id', 'province_id');
     }
 
-    public function role()
+    public function roles()
     {
-        return $this->belongsTo(Role::class, 'role_id', 'role_id');
+        return $this->belongsToMany(Role::class, 'user_roles', 'user_id', 'role_id')
+            ->withPivot('id', 'scope_type', 'scope_id')
+            ->withTimestamps();
     }
 
     public function userRoles()
     {
         return $this->hasMany(UserRole::class, 'user_id', 'user_id');
+    }
+
+    /**
+     * Primary role accessor for backwards compatibility
+     */
+    public function getRoleAttribute()
+    {
+        $userRoles = $this->relationLoaded('userRoles') ? $this->userRoles : $this->userRoles()->with('role')->get();
+        if ($userRoles->isEmpty()) {
+            return (object) ['name' => 'customer', 'role_id' => 3];
+        }
+
+        $hierarchy = [
+            'admin'          => 100,
+            'super_admin'    => 100,
+            'cinema_manager' => 80,
+            'marketing'      => 60,
+            'accountant'     => 60,
+            'ticket_staff'   => 40,
+            'fnb_staff'      => 40,
+            'staff'          => 30,
+            'customer'       => 10,
+        ];
+
+        $sorted = $userRoles->sortByDesc(function ($ur) use ($hierarchy) {
+            $roleName = strtolower($ur->role?->name ?? 'customer');
+            return $hierarchy[$roleName] ?? 20;
+        });
+
+        $topRole = $sorted->first()?->role;
+        return $topRole ?: (object) ['name' => 'customer', 'role_id' => 3];
     }
 
     public function userTier()

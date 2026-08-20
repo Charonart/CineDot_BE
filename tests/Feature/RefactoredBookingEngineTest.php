@@ -68,8 +68,8 @@ class RefactoredBookingEngineTest extends TestCase
             'base_price' => 80000.00,
         ]);
 
-        SeatType::create(['seat_type' => 'STD', 'surcharge_amount' => 0.00]);
-        SeatType::create(['seat_type' => 'VIP', 'surcharge_amount' => 20000.00]);
+        SeatType::create(['seat_type' => 'STD', 'type_name' => 'Ghế Tiêu Chuẩn', 'surcharge_amount' => 0.00]);
+        SeatType::create(['seat_type' => 'VIP', 'type_name' => 'Ghế VIP', 'surcharge_amount' => 20000.00]);
 
         $this->seat1 = ShowtimeSeat::create([
             'showtime_id' => $this->showtime->showtime_id,
@@ -105,7 +105,13 @@ class RefactoredBookingEngineTest extends TestCase
             'password' => bcrypt('password123'),
             'fullname' => 'Nguyen Van A',
             'total_points' => 10000,
+            'is_active' => true,
+        ]);
+
+        \App\Models\UserRole::create([
+            'user_id' => $this->user->user_id,
             'role_id' => $role->role_id,
+            'scope_type' => 'system',
         ]);
     }
 

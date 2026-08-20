@@ -17,6 +17,8 @@ class ProvinceSeeder extends Seeder
             ['province_id' => 5, 'province_name' => 'Cần Thơ', 'province_code' => 'CT', 'created_at' => now()],
         ];
 
-        DB::table('provinces')->insertOrIgnore($provinces);
+        foreach ($provinces as $p) {
+            \App\Models\Province::updateOrCreate(['province_id' => $p['province_id']], $p);
+        }
     }
 }

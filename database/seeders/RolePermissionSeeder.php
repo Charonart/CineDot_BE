@@ -10,54 +10,130 @@ class RolePermissionSeeder extends Seeder
 {
     public function run(): void
     {
-        // 1. Create/Find Roles
-        $superAdmin = Role::firstOrCreate(['name' => 'admin'], ['description' => 'Quản trị viên hệ thống']);
-        $staff = Role::firstOrCreate(['name' => 'staff'], ['description' => 'Nhân viên rạp phim']);
-        $customer = Role::firstOrCreate(['name' => 'customer'], ['description' => 'Khách hàng']);
+        $allPermissions = Permission::all()->keyBy('name');
 
-        // 2. Create Permissions
-        $permissions = [
-            '*' => 'Quản trị toàn quyền',
-            'view:movie' => 'Xem danh sách phim',
-            'create:movie' => 'Thêm mới phim',
-            'edit:movie' => 'Cập nhật phim',
-            'delete:movie' => 'Xóa phim',
-            'create:showtime' => 'Tạo suất chiếu mới',
-            'view:showtime' => 'Xem lịch chiếu',
-            'view:booking' => 'Xem danh sách hóa đơn',
-            'search:booking' => 'Tra cứu hóa đơn',
-            'refund:ticket' => 'Xử lý hoàn tiền vé',
-            'resend:ticket' => 'Gửi lại mã vé',
-            'view:cinema_report' => 'Xem báo cáo doanh thu rạp',
-        ];
+        // Helper to get permission IDs by name list
+        $getIds = function (array $names) use ($allPermissions) {
+            $ids = [];
+            foreach ($names as $n) {
+                if (isset($allPermissions[$n])) {
+                    $ids[] = $allPermissions[$n]->permission_id;
+                }
+            }
+            return $ids;
+        };
 
-        $permissionModels = [];
-        foreach ($permissions as $name => $description) {
-            $permissionModels[$name] = Permission::firstOrCreate(['name' => $name], ['description' => $description]);
+        // 1. Admin (Super Admin) -> wildcard *
+        $admin = Role::where('name', 'admin')->first();
+        if ($admin && isset($allPermissions['*'])) {
+            $admin->permissions()->sync([$allPermissions['*']->permission_id]);
         }
 
-        // 3. Role-Permission Mappings
-        // Super Admin gets wildcard *
-        $superAdmin->permissions()->sync([$permissionModels['*']->permission_id]);
+        // 2. Cinema Manager
+        $manager = Role::where('name', 'cinema_manager')->first();
+        if ($manager) {
+            $manager->permissions()->sync($getIds([
+                'reports.dashboard.view',
+                'movies.view',
+                'movies.create',
+                'movies.edit',
+                'reviews.view',
+                'cinemas.view',
+                'cinemas.manage_rooms',
+                'seat_types.manage',
+                'showtimes.*',
+                'showtimes.view',
+                'showtimes.create',
+                'showtimes.edit',
+                'showtimes.delete',
+                'bookings.view',
+                'bookings.refund',
+                'bookings.cancel',
+                'tickets.scan',
+                'tickets.checkin',
+                'fnb.claim',
+                'concessions.view',
+                'concessions.manage',
+                'staff.view',
+                'staff.manage',
+                'reports.revenue',
+                'reports.tickets',
+                'reports.occupancy',
+            ]));
+        }
 
-        // Staff permissions
-        $staff->permissions()->sync([
-            $permissionModels['view:movie']->permission_id,
-            $permissionModels['create:movie']->permission_id,
-            $permissionModels['edit:movie']->permission_id,
-            $permissionModels['create:showtime']->permission_id,
-            $permissionModels['view:showtime']->permission_id,
-            $permissionModels['view:booking']->permission_id,
-            $permissionModels['search:booking']->permission_id,
-            $permissionModels['refund:ticket']->permission_id,
-            $permissionModels['resend:ticket']->permission_id,
-            $permissionModels['view:cinema_report']->permission_id,
-        ]);
+        // 3. Ticket Staff
+        $ticketStaff = Role::where('name', 'ticket_staff')->first();
+        if ($ticketStaff) {
+            $ticketStaff->permissions()->sync($getIds([
+                'showtimes.view',
+                'bookings.view',
+                'tickets.scan',
+                'tickets.checkin',
+                'fnb.claim',
+            ]));
+        }
 
-        // Customer permissions
-        $customer->permissions()->sync([
-            $permissionModels['view:movie']->permission_id,
-            $permissionModels['view:showtime']->permission_id,
-        ]);
+        // 4. F&B Staff
+        $fnbStaff = Role::where('name', 'fnb_staff')->first();
+        if ($fnbStaff) {
+            $fnbStaff->permissions()->sync($getIds([
+                'concessions.view',
+                'fnb.claim',
+                'bookings.view',
+            ]));
+        }
+
+        // 5. Marketing
+        $marketing = Role::where('name', 'marketing')->first();
+        if ($marketing) {
+            $marketing->permissions()->sync($getIds([
+                'campaigns.manage',
+                'vouchers.*',
+                'vouchers.view',
+                'vouchers.manage',
+                'banners.manage',
+                'movies.view',
+                'reviews.view',
+                'reports.dashboard.view',
+            ]));
+        }
+
+        // 6. Accountant
+        $accountant = Role::where('name', 'accountant')->first();
+        if ($accountant) {
+            $accountant->permissions()->sync($getIds([
+                'reports.*',
+                'reports.dashboard.view',
+                'reports.revenue',
+                'reports.tickets',
+                'reports.occupancy',
+                'bookings.view',
+                'bookings.refund',
+            ]));
+        }
+
+        // 7. General Staff
+        $staff = Role::where('name', 'staff')->first();
+        if ($staff) {
+            $staff->permissions()->sync($getIds([
+                'showtimes.view',
+                'bookings.view',
+                'tickets.scan',
+                'tickets.checkin',
+                'fnb.claim',
+                'concessions.view',
+            ]));
+        }
+
+        // 8. Customer
+        $customer = Role::where('name', 'customer')->first();
+        if ($customer) {
+            $customer->permissions()->sync($getIds([
+                'movies.view',
+                'showtimes.view',
+                'reviews.view',
+            ]));
+        }
     }
 }

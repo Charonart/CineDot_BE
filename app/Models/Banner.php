@@ -4,8 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+use App\Traits\FilterableAndSortable;
+
 class Banner extends Model
 {
+    use FilterableAndSortable;
+
     protected $table = 'banners';
     protected $primaryKey = 'banner_id';
 

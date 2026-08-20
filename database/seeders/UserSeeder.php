@@ -12,7 +12,6 @@ class UserSeeder extends Seeder
     {
         $users = [
             [
-                'role_id' => 1,
                 'province_id' => 1,
                 'username' => 'admin',
                 'password' => Hash::make('password123'),
@@ -29,7 +28,6 @@ class UserSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
-                'role_id' => 2,
                 'province_id' => 1,
                 'username' => 'staff_hn',
                 'password' => Hash::make('password123'),
@@ -46,7 +44,6 @@ class UserSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
-                'role_id' => 3,
                 'province_id' => 2,
                 'username' => 'customer1',
                 'password' => Hash::make('password123'),
@@ -64,7 +61,6 @@ class UserSeeder extends Seeder
             ],
             [
                 'user_id' => 4,
-                'role_id' => 3,
                 'province_id' => null,
                 'username' => 'lequy27102006',
                 'password' => '$2y$12$1XTHwGnMvaAlO16I29m1e.RoOxov1WoD4t/8CWGsXE3s9/qVLIvPe',
@@ -83,7 +79,7 @@ class UserSeeder extends Seeder
         ];
 
         foreach ($users as $user) {
-            DB::table('users')->insertOrIgnore($user);
+            \App\Models\User::updateOrCreate(['email' => $user['email']], $user);
         }
     }
 }

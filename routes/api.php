@@ -135,6 +135,9 @@ Route::prefix('v1')->group(function () {
     Route::prefix('admin')->middleware(['auth:sanctum', 'role:admin'])->group(function () {
         // Movies & TMDB Sync
         Route::post('movies/sync', [\App\Http\Controllers\Api\Admin\MovieController::class, 'sync']);
+        Route::post('movies/bulk', [\App\Http\Controllers\Api\Admin\MovieController::class, 'bulkAction']);
+        Route::patch('movies/{id}/cell', [\App\Http\Controllers\Api\Admin\MovieController::class, 'updateCell']);
+        Route::patch('movies/{id}/toggle-status', [\App\Http\Controllers\Api\Admin\MovieController::class, 'toggleStatus']);
         Route::apiResource('movies', \App\Http\Controllers\Api\Admin\MovieController::class);
         
         // Movie Credits
@@ -143,6 +146,9 @@ Route::prefix('v1')->group(function () {
         Route::delete('movies/{movie}/credits/{credit}', [\App\Http\Controllers\Api\Admin\MovieCreditController::class, 'destroy']);
         
         // Cinemas & Rooms
+        Route::post('cinemas/bulk', [\App\Http\Controllers\Api\Admin\CinemaController::class, 'bulkAction']);
+        Route::patch('cinemas/{id}/cell', [\App\Http\Controllers\Api\Admin\CinemaController::class, 'updateCell']);
+        Route::patch('cinemas/{id}/toggle-status', [\App\Http\Controllers\Api\Admin\CinemaController::class, 'toggleStatus']);
         Route::apiResource('cinemas', \App\Http\Controllers\Api\Admin\CinemaController::class);
         Route::apiResource('cinemas.rooms', \App\Http\Controllers\Api\Admin\RoomController::class)->shallow();
         
@@ -153,6 +159,8 @@ Route::prefix('v1')->group(function () {
         
         // Campaigns, Vouchers & Banners Suite
         Route::get('campaigns/stats', [\App\Http\Controllers\Api\Admin\CampaignController::class, 'stats']);
+        Route::post('campaigns/bulk', [\App\Http\Controllers\Api\Admin\CampaignController::class, 'bulkAction']);
+        Route::patch('campaigns/{id}/cell', [\App\Http\Controllers\Api\Admin\CampaignController::class, 'updateCell']);
         Route::patch('campaigns/{id}/toggle-status', [\App\Http\Controllers\Api\Admin\CampaignController::class, 'toggleStatus']);
         Route::post('campaigns/{id}/vouchers', [\App\Http\Controllers\Api\Admin\CampaignController::class, 'storeVoucher']);
         Route::post('campaigns/{id}/banners', [\App\Http\Controllers\Api\Admin\CampaignController::class, 'storeBanner']);
@@ -160,18 +168,43 @@ Route::prefix('v1')->group(function () {
         Route::apiResource('campaigns', \App\Http\Controllers\Api\Admin\CampaignController::class);
 
         Route::get('vouchers/stats', [\App\Http\Controllers\Api\Admin\VoucherController::class, 'stats']);
+        Route::post('vouchers/bulk', [\App\Http\Controllers\Api\Admin\VoucherController::class, 'bulkAction']);
+        Route::patch('vouchers/{id}/cell', [\App\Http\Controllers\Api\Admin\VoucherController::class, 'updateCell']);
         Route::patch('vouchers/{id}/toggle-status', [\App\Http\Controllers\Api\Admin\VoucherController::class, 'toggleStatus']);
-        Route::patch('banners/{id}/toggle-status', [\App\Http\Controllers\Api\Admin\BannerController::class, 'toggleStatus']);
+        Route::apiResource('vouchers', \App\Http\Controllers\Api\Admin\VoucherController::class);
 
-        // Users & Roles
+        Route::post('banners/bulk', [\App\Http\Controllers\Api\Admin\BannerController::class, 'bulkAction']);
+        Route::patch('banners/{id}/cell', [\App\Http\Controllers\Api\Admin\BannerController::class, 'updateCell']);
+        Route::patch('banners/{id}/toggle-status', [\App\Http\Controllers\Api\Admin\BannerController::class, 'toggleStatus']);
+        Route::apiResource('banners', \App\Http\Controllers\Api\Admin\BannerController::class);
+
+        // Users, Staff, RBAC & Customer Loyalty
+        Route::get('users/stats', [\App\Http\Controllers\Api\Admin\UserController::class, 'stats']);
+        Route::post('users/bulk', [\App\Http\Controllers\Api\Admin\UserController::class, 'bulkAction']);
         Route::get('users', [\App\Http\Controllers\Api\Admin\UserController::class, 'index']);
+        Route::post('users', [\App\Http\Controllers\Api\Admin\UserController::class, 'store']);
+        Route::get('users/{id}', [\App\Http\Controllers\Api\Admin\UserController::class, 'show']);
+        Route::put('users/{id}', [\App\Http\Controllers\Api\Admin\UserController::class, 'update']);
+        Route::delete('users/{id}', [\App\Http\Controllers\Api\Admin\UserController::class, 'destroy']);
+        Route::patch('users/{id}/cell', [\App\Http\Controllers\Api\Admin\UserController::class, 'updateCell']);
+        Route::patch('users/{id}/toggle-status', [\App\Http\Controllers\Api\Admin\UserController::class, 'toggleStatus']);
+        Route::post('users/{id}/adjust-points', [\App\Http\Controllers\Api\Admin\UserController::class, 'adjustPoints']);
         Route::put('users/{id}/role', [\App\Http\Controllers\Api\Admin\UserController::class, 'updateRole']);
         Route::get('users/{userId}/roles', [\App\Http\Controllers\Api\Admin\UserRoleController::class, 'index']);
         Route::post('users/{userId}/roles', [\App\Http\Controllers\Api\Admin\UserRoleController::class, 'store']);
         Route::delete('users/{userId}/roles/{id}', [\App\Http\Controllers\Api\Admin\UserRoleController::class, 'destroy']);
+
+        // Roles & Permission Matrix
+        Route::get('permissions', [\App\Http\Controllers\Api\Admin\PermissionController::class, 'index']);
+        Route::put('roles/{id}/permissions', [\App\Http\Controllers\Api\Admin\RoleController::class, 'syncPermissions']);
+        Route::apiResource('roles', \App\Http\Controllers\Api\Admin\RoleController::class);
+
+        // Customer Loyalty Tiers
+        Route::apiResource('user-tiers', \App\Http\Controllers\Api\Admin\UserTierController::class);
         
         // Bookings
         Route::get('bookings/stats', [\App\Http\Controllers\Api\Admin\BookingController::class, 'stats']);
+        Route::post('bookings/bulk', [\App\Http\Controllers\Api\Admin\BookingController::class, 'bulkAction']);
         Route::get('bookings', [\App\Http\Controllers\Api\Admin\BookingController::class, 'index']);
         Route::get('bookings/{id}', [\App\Http\Controllers\Api\Admin\BookingController::class, 'show']);
         Route::post('bookings/{id}/refund', [\App\Http\Controllers\Api\Admin\BookingController::class, 'refund']);
@@ -186,13 +219,11 @@ Route::prefix('v1')->group(function () {
         // Reports
         Route::get('reports/revenue', [\App\Http\Controllers\Api\Admin\ReportController::class, 'revenue']);
 
-        // Vouchers, Combos, Banners, Provinces, Genres, Persons
-        Route::apiResource('vouchers', \App\Http\Controllers\Api\Admin\VoucherController::class);
+        // Combos, Provinces, Genres, Persons
         Route::apiResource('combos', \App\Http\Controllers\Api\Admin\ComboController::class);
         Route::apiResource('provinces', \App\Http\Controllers\Api\Admin\ProvinceController::class);
         Route::apiResource('genres', \App\Http\Controllers\Api\Admin\GenreController::class);
         Route::apiResource('persons', \App\Http\Controllers\Api\Admin\PersonController::class);
-        Route::apiResource('banners', \App\Http\Controllers\Api\Admin\BannerController::class);
 
         // Pricing Rules
         Route::patch('pricing-rules/{id}/toggle-active', [\App\Http\Controllers\Api\Admin\PricingRuleController::class, 'toggleActive']);

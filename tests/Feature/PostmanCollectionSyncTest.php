@@ -37,7 +37,12 @@ class PostmanCollectionSyncTest extends TestCase
             'email' => 'customer1@cinedot.vn',
             'password' => bcrypt('password123'),
             'fullname' => 'Customer One',
+            'is_active' => true,
+        ]);
+        \App\Models\UserRole::create([
+            'user_id' => $this->customer->user_id,
             'role_id' => $roleCustomer->role_id,
+            'scope_type' => 'system',
         ]);
 
         $this->admin = User::create([
@@ -45,7 +50,12 @@ class PostmanCollectionSyncTest extends TestCase
             'email' => 'admin1@cinedot.vn',
             'password' => bcrypt('password123'),
             'fullname' => 'Admin One',
+            'is_active' => true,
+        ]);
+        \App\Models\UserRole::create([
+            'user_id' => $this->admin->user_id,
             'role_id' => $roleAdmin->role_id,
+            'scope_type' => 'system',
         ]);
 
         $this->staff = User::create([
@@ -53,7 +63,12 @@ class PostmanCollectionSyncTest extends TestCase
             'email' => 'staff1@cinedot.vn',
             'password' => bcrypt('password123'),
             'fullname' => 'Staff One',
+            'is_active' => true,
+        ]);
+        \App\Models\UserRole::create([
+            'user_id' => $this->staff->user_id,
             'role_id' => $roleStaff->role_id,
+            'scope_type' => 'system',
         ]);
     }
 

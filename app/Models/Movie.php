@@ -5,9 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+use App\Traits\FilterableAndSortable;
+
 class Movie extends Model
 {
-    use HasFactory;
+    use HasFactory, FilterableAndSortable;
 
 
     protected $table = 'movies';

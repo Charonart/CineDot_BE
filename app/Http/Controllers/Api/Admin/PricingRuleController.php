@@ -31,11 +31,23 @@ class PricingRuleController extends Controller
         $query->orderByDesc('priority')->orderByDesc('pricing_rule_id');
 
         $perPage = (int) $request->input('per_page', 15);
-        $rules = $perPage > 0 ? $query->paginate($perPage) : $query->get();
+        $rules = $query->paginate($perPage);
+
+        $items = collect($rules->items())->map(function ($r) {
+            $arr = $r->toArray();
+            $arr['id'] = $r->pricing_rule_id;
+            return $arr;
+        });
 
         return response()->json([
             'success' => true,
-            'data'    => $rules
+            'data'    => $items,
+            'meta'    => [
+                'current_page' => $rules->currentPage(),
+                'last_page'    => $rules->lastPage(),
+                'per_page'     => $rules->perPage(),
+                'total'        => $rules->total(),
+            ]
         ]);
     }
 

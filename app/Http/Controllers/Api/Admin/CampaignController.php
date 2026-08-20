@@ -15,21 +15,28 @@ class CampaignController extends Controller
     /**
      * Display a listing of marketing campaigns.
      */
+    /**
+     * Display a listing of marketing campaigns (Standardized with FilterableAndSortable).
+     */
     public function index(Request $request)
     {
-        $limit = (int) $request->get('limit', 15);
+        $allowedFilters = ['name', 'start_date', 'end_date', 'budget', 'is_active'];
+        $allowedSorts = ['campaign_id', 'id', 'name', 'start_date', 'end_date', 'budget', 'is_active', 'created_at'];
+        $searchableFields = ['name'];
+        $columnAliases = ['id' => 'campaign_id', 'status' => 'is_active'];
+
         $query = Campaign::with(['vouchers', 'banners']);
 
-        if ($request->filled('search')) {
-            $query->where('name', 'ilike', '%' . $request->search . '%');
-        }
-
-        if ($request->has('is_active') && $request->is_active !== null && $request->is_active !== '') {
+        // Backward compatibility for is_active query
+        if ($request->has('is_active') && $request->is_active !== null && $request->is_active !== '' && !$request->has('filters.is_active')) {
             $isActive = filter_var($request->is_active, FILTER_VALIDATE_BOOLEAN);
             $query->where('is_active', $isActive);
         }
 
-        $campaigns = $query->orderByDesc('created_at')->paginate($limit);
+        $query->applyDataTableQuery($request, $allowedFilters, $allowedSorts, $searchableFields, $columnAliases);
+
+        $perPage = (int) $request->get('per_page', $request->get('limit', 15));
+        $campaigns = $query->paginate($perPage);
 
         // Compute summary metrics for each campaign item
         $items = collect($campaigns->items())->map(function ($camp) {
@@ -54,6 +61,7 @@ class CampaignController extends Controller
 
             return [
                 'id'                => $camp->campaign_id,
+                'campaign_id'       => $camp->campaign_id,
                 'name'              => $camp->name,
                 'budget'            => $budget,
                 'usedBudget'        => $usedBudget,
@@ -61,21 +69,26 @@ class CampaignController extends Controller
                 'roiPercentage'     => $roiPercentage,
                 'startDate'         => $camp->start_date ? Carbon::parse($camp->start_date)->format('Y-m-d') : null,
                 'endDate'           => $camp->end_date ? Carbon::parse($camp->end_date)->format('Y-m-d') : null,
+                'start_date'        => $camp->start_date ? Carbon::parse($camp->start_date)->format('Y-m-d') : null,
+                'end_date'          => $camp->end_date ? Carbon::parse($camp->end_date)->format('Y-m-d') : null,
                 'isActive'          => (bool) $camp->is_active,
+                'is_active'         => (bool) $camp->is_active,
                 'vouchersCount'     => $camp->vouchers->count(),
                 'bannersCount'      => $camp->banners->count(),
                 'createdAt'         => $camp->created_at ? $camp->created_at->toIso8601String() : null,
+                'created_at'        => $camp->created_at ? $camp->created_at->toIso8601String() : null,
                 'updatedAt'         => $camp->updated_at ? $camp->updated_at->toIso8601String() : null,
             ];
         });
 
         return response()->json([
             'success' => true,
-            'data'    => [
-                'page'         => $campaigns->currentPage(),
-                'results'      => $items,
-                'totalPages'   => $campaigns->lastPage(),
-                'totalResults' => $campaigns->total(),
+            'data'    => $items,
+            'meta'    => [
+                'current_page' => $campaigns->currentPage(),
+                'last_page'    => $campaigns->lastPage(),
+                'per_page'     => $campaigns->perPage(),
+                'total'        => $campaigns->total(),
             ]
         ]);
     }
@@ -329,6 +342,86 @@ class CampaignController extends Controller
                 'revenue_generated' => $revenueGenerated,
                 'roi_percentage'    => $roiPercentage,
             ]
+        ]);
+    }
+
+    /**
+     * Inline update a single field of a campaign
+     */
+    public function updateCell(Request $request, string $id)
+    {
+        $campaign = Campaign::findOrFail($id);
+        $field = $request->input('field');
+        $value = $request->input('value');
+
+        $allowedFields = ['name', 'start_date', 'end_date', 'budget', 'is_active'];
+        if (!in_array($field, $allowedFields, true)) {
+            return response()->json([
+                'success' => false,
+                'message' => "Không cho phép cập nhật trường: {$field}"
+            ], 422);
+        }
+
+        if ($field === 'is_active') {
+            $value = filter_var($value, FILTER_VALIDATE_BOOLEAN);
+        } elseif ($field === 'budget') {
+            $value = (float) $value;
+        }
+
+        $campaign->update([$field => $value]);
+        $arr = $campaign->fresh(['vouchers', 'banners'])->toArray();
+        $arr['id'] = $campaign->campaign_id;
+
+        return response()->json([
+            'success' => true,
+            'message' => "Đã cập nhật {$field} thành công.",
+            'data'    => $arr
+        ]);
+    }
+
+    /**
+     * Bulk actions for campaigns
+     */
+    public function bulkAction(Request $request)
+    {
+        $action = $request->input('action');
+        $ids = $request->input('ids', []);
+
+        if (empty($ids) || !is_array($ids)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Danh sách ID không được để trống.'
+            ], 422);
+        }
+
+        $count = count($ids);
+
+        switch ($action) {
+            case 'delete':
+                Campaign::whereIn('campaign_id', $ids)->delete();
+                $msg = "Đã xóa {$count} chiến dịch thành công.";
+                break;
+
+            case 'set_active':
+                Campaign::whereIn('campaign_id', $ids)->update(['is_active' => true]);
+                $msg = "Đã kích hoạt {$count} chiến dịch.";
+                break;
+
+            case 'set_inactive':
+                Campaign::whereIn('campaign_id', $ids)->update(['is_active' => false]);
+                $msg = "Đã tạm dừng {$count} chiến dịch.";
+                break;
+
+            default:
+                return response()->json([
+                    'success' => false,
+                    'message' => "Hành động không hợp lệ: {$action}"
+                ], 422);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => $msg
         ]);
     }
 }

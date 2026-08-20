@@ -39,8 +39,12 @@ class RbacRedisAuthTest extends TestCase
             'email' => 'admin@cinedot.vn',
             'password' => bcrypt('password123'),
             'fullname' => 'Super Admin Test',
+            'is_active' => true,
+        ]);
+        \App\Models\UserRole::create([
+            'user_id' => $this->adminUser->user_id,
             'role_id' => $this->adminRole->role_id,
-            'status' => 'active',
+            'scope_type' => 'system',
         ]);
 
         $this->staffUser = User::create([
@@ -48,8 +52,12 @@ class RbacRedisAuthTest extends TestCase
             'email' => 'staff@cinedot.vn',
             'password' => bcrypt('password123'),
             'fullname' => 'Staff Test',
+            'is_active' => true,
+        ]);
+        \App\Models\UserRole::create([
+            'user_id' => $this->staffUser->user_id,
             'role_id' => $this->staffRole->role_id,
-            'status' => 'active',
+            'scope_type' => 'system',
         ]);
     }
 
