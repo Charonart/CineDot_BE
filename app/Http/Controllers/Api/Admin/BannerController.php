@@ -16,11 +16,20 @@ class BannerController extends Controller
      */
     public function index(Request $request)
     {
-        $limit = $request->get('limit', 15);
-        $query = Banner::query();
+        $limit = (int) $request->get('limit', 15);
+        $query = Banner::with('campaign');
 
-        if ($request->has('search')) {
+        if ($request->filled('search')) {
             $query->where('title', 'ilike', '%' . $request->search . '%');
+        }
+
+        if ($request->filled('campaign_id')) {
+            $query->where('campaign_id', $request->campaign_id);
+        }
+
+        if ($request->has('is_active') && $request->is_active !== null && $request->is_active !== '') {
+            $isActive = filter_var($request->is_active, FILTER_VALIDATE_BOOLEAN);
+            $query->where('is_active', $isActive);
         }
 
         $banners = $query->orderBy('order', 'asc')
@@ -47,8 +56,8 @@ class BannerController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Tạo banner thành công.',
-            'data'    => new BannerResource($banner),
+            'message' => 'Tạo banner quảng cáo thành công.',
+            'data'    => new BannerResource($banner->load('campaign')),
         ], 201);
     }
 
@@ -57,7 +66,7 @@ class BannerController extends Controller
      */
     public function show(string $id)
     {
-        $banner = Banner::findOrFail($id);
+        $banner = Banner::with('campaign')->findOrFail($id);
 
         return response()->json([
             'success' => true,
@@ -75,8 +84,24 @@ class BannerController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Cập nhật banner thành công.',
-            'data'    => new BannerResource($banner),
+            'message' => 'Cập nhật banner quảng cáo thành công.',
+            'data'    => new BannerResource($banner->fresh()->load('campaign')),
+        ]);
+    }
+
+    /**
+     * Toggle active status.
+     */
+    public function toggleStatus(string $id)
+    {
+        $banner = Banner::findOrFail($id);
+        $banner->is_active = !$banner->is_active;
+        $banner->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => $banner->is_active ? 'Đã kích hoạt hiển thị banner.' : 'Đã ẩn banner.',
+            'data'    => new BannerResource($banner->fresh()->load('campaign')),
         ]);
     }
 
@@ -90,7 +115,7 @@ class BannerController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Xóa banner thành công.',
+            'message' => 'Xóa banner quảng cáo thành công.',
         ]);
     }
 }

@@ -12,6 +12,8 @@ return new class extends Migration
             $table->id('voucher_id');
             $table->foreignId('campaign_id')->nullable()->constrained('campaigns', 'campaign_id')->nullOnDelete();
             $table->string('code')->unique();
+            $table->string('title')->nullable();
+            $table->text('description')->nullable();
             $table->enum('voucher_type', ['ticket', 'combo', 'order', 'all'])->default('order');
             $table->enum('discount_type', ['percentage', 'fixed_amount'])->default('percentage');
             $table->decimal('discount_value', 12, 2)->default(0);

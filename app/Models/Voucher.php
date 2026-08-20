@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Carbon\Carbon;
 
 class Voucher extends Model
 {
@@ -11,6 +12,8 @@ class Voucher extends Model
     protected $fillable = [
         'campaign_id',
         'code',
+        'title',
+        'description',
         'voucher_type',
         'discount_type',
         'discount_value',
@@ -39,5 +42,36 @@ class Voucher extends Model
     public function campaign()
     {
         return $this->belongsTo(Campaign::class, 'campaign_id', 'campaign_id');
+    }
+
+    public function bookings()
+    {
+        return $this->hasMany(Booking::class, 'voucher_id', 'voucher_id');
+    }
+
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
+
+    public function scopeValidNow($query)
+    {
+        $now = Carbon::now();
+        return $query->where('is_active', true)
+            ->where(function ($q) use ($now) {
+                $q->whereNull('valid_from')->orWhere('valid_from', '<=', $now);
+            })
+            ->where(function ($q) use ($now) {
+                $q->whereNull('valid_until')->orWhere('valid_until', '>=', $now);
+            });
+    }
+
+    public function scopeExpiringSoon($query, $days = 7)
+    {
+        $now = Carbon::now();
+        $soon = Carbon::now()->addDays($days);
+        return $query->where('is_active', true)
+            ->whereNotNull('valid_until')
+            ->whereBetween('valid_until', [$now, $soon]);
     }
 }

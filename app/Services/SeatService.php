@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Showtime;
 use App\Models\ShowtimeSeat;
+use App\Models\SeatType;
 use Illuminate\Support\Facades\Redis;
 
 class SeatService
@@ -13,13 +14,26 @@ class SeatService
         $showtime = Showtime::with(['movie', 'room.cinema'])->findOrFail($showtimeId);
         $room = $showtime->room;
 
+        // Parse layout_snaps or room seat_matrix
+        $layoutMatrix = $showtime->layout_snaps;
+        if (is_string($layoutMatrix)) {
+            $layoutMatrix = json_decode($layoutMatrix, true);
+        }
+        if (empty($layoutMatrix) && $room && $room->seat_matrix) {
+            $layoutMatrix = is_string($room->seat_matrix) ? json_decode($room->seat_matrix, true) : $room->seat_matrix;
+            // Backfill layout_snaps for showtime
+            if (!empty($layoutMatrix)) {
+                $showtime->update(['layout_snaps' => $layoutMatrix]);
+            }
+        }
+
         // Parse room seat_matrix layout map
         $matrixMap = [];
-        if ($room && is_array($room->seat_matrix)) {
-            foreach ($room->seat_matrix as $mSeat) {
+        if (is_array($layoutMatrix)) {
+            foreach ($layoutMatrix as $mSeat) {
                 if (is_array($mSeat)) {
-                    $row = $mSeat['row_name'] ?? '';
-                    $num = (string)($mSeat['seat_number'] ?? '');
+                    $row = $mSeat['row_name'] ?? $mSeat['row'] ?? '';
+                    $num = (string)($mSeat['seat_number'] ?? $mSeat['number'] ?? '');
                     $code = $row . $num;
                     $sid = $mSeat['seat_id'] ?? $mSeat['id'] ?? $code;
                     
@@ -43,14 +57,14 @@ class SeatService
             ->where('showtime_id', $showtimeId)
             ->get();
 
-        if ($seats->isEmpty() && $room && is_array($room->seat_matrix)) {
+        if ($seats->isEmpty() && is_array($layoutMatrix)) {
             $newSeats = [];
             // To prevent duplicates if the matrix has both string and object forms, use seat codes as keys
             $addedCodes = [];
-            foreach ($room->seat_matrix as $mSeat) {
+            foreach ($layoutMatrix as $mSeat) {
                 if (!is_array($mSeat)) continue;
-                $row = $mSeat['row_name'] ?? '';
-                $num = (string)($mSeat['seat_number'] ?? '');
+                $row = $mSeat['row_name'] ?? $mSeat['row'] ?? '';
+                $num = (string)($mSeat['seat_number'] ?? $mSeat['number'] ?? '');
                 $code = $row . $num;
                 $sid = $mSeat['seat_id'] ?? $mSeat['id'] ?? $code;
                 
@@ -67,15 +81,12 @@ class SeatService
 
                 if (empty($row) || empty($num)) continue;
 
-                $seatType = match (strtoupper($mSeat['type'] ?? $mSeat['seat_type'] ?? 'STD')) {
-                    'VIP' => 'vip',
-                    'COUPLE' => 'couple',
-                    default => 'standard',
-                };
+                $rawType = (string) ($mSeat['seat_type'] ?? $mSeat['type'] ?? 'standard');
+                $seatTypeKey = SeatType::resolveTypeKey($rawType);
 
                 $newSeats[] = [
                     'showtime_id' => $showtimeId,
-                    'seat_type'   => $seatType,
+                    'seat_type'   => $seatTypeKey,
                     'row_name'    => strtoupper($row),
                     'seat_number' => $num,
                     'status'      => $mSeat['status'] ?? 'available',
@@ -122,7 +133,8 @@ class SeatService
             }
 
             $seatCode = $ss->row_name . $ss->seat_number;
-            $surcharge = $ss->seatType ? (float) $ss->seatType->surcharge_amount : 0.0;
+            $seatTypeModel = $ss->seatType;
+            $surcharge = $seatTypeModel ? (float) $seatTypeModel->surcharge_amount : 0.0;
             $finalPrice = (int) round($basePrice + $surcharge);
 
             $canvas = $matrixMap[$seatCode] ?? $matrixMap[(string)$ss->showtime_seat_id] ?? ['cx' => 0, 'cy' => 0, 'angle' => 0];
@@ -133,12 +145,20 @@ class SeatService
                 'row_name'         => $ss->row_name,
                 'seat_number'      => (string) $ss->seat_number,
                 'seat_type'        => $ss->seat_type,
+                'type_name'        => $seatTypeModel ? $seatTypeModel->type_name : ucfirst($ss->seat_type),
+                'color_code'       => $seatTypeModel ? $seatTypeModel->color_code : '#64748B',
+                'icon_name'        => $seatTypeModel ? $seatTypeModel->icon_name : 'seat',
                 'surcharge'        => (int) round($surcharge),
                 'final_price'      => $finalPrice,
                 'status'           => $status,
                 'canvas'           => $canvas,
             ];
         }
+
+        $allActiveSeatTypes = SeatType::where('is_active', true)
+            ->orderBy('sort_order', 'asc')
+            ->orderBy('surcharge_amount', 'asc')
+            ->get();
 
         return [
             'showtime' => [
@@ -149,7 +169,8 @@ class SeatService
                 'base_price'     => (int) round($basePrice),
                 'showtime_start' => \Carbon\Carbon::parse($showtime->showtime_start)->toIso8601String(),
             ],
-            'seats' => $seatList,
+            'seats'      => $seatList,
+            'seat_types' => $allActiveSeatTypes,
         ];
     }
 }

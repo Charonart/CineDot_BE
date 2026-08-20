@@ -12,6 +12,44 @@ use Illuminate\Support\Facades\DB;
 class BookingController extends Controller
 {
     /**
+     * Thống kê tổng hợp số liệu đơn đặt vé (Admin)
+     */
+    public function stats(Request $request)
+    {
+        $user = $request->user();
+        $query = Booking::query();
+
+        // Data Scoping theo rạp/khu vực được phân quyền
+        if ($user && method_exists($user, 'getAuthorizedScopeIds')) {
+            $allowedCinemaIds = $user->getAuthorizedScopeIds('view:booking', 'cinema');
+            if (!in_array('*', $allowedCinemaIds)) {
+                $query->whereHas('showtime.room', function ($rq) use ($allowedCinemaIds) {
+                    $rq->whereIn('cinema_id', $allowedCinemaIds);
+                });
+            }
+        }
+
+        $totalBookings = (clone $query)->count();
+        $totalRevenue = (float) (clone $query)->whereIn('booking_status', ['completed', 'paid'])->sum('final_amount');
+        $todayRevenue = (float) (clone $query)->whereIn('booking_status', ['completed', 'paid'])->whereDate('created_at', now()->toDateString())->sum('final_amount');
+        $totalCheckedIn = (clone $query)->whereNotNull('checked_in_at')->count();
+        $totalRefunded = (clone $query)->whereIn('booking_status', ['cancelled', 'refunded'])->count();
+        $checkInRate = $totalBookings > 0 ? round(($totalCheckedIn / $totalBookings) * 100, 1) : 0;
+
+        return response()->json([
+            'success' => true,
+            'data'    => [
+                'totalBookings'   => $totalBookings,
+                'totalRevenue'    => $totalRevenue,
+                'todayRevenue'    => $todayRevenue,
+                'totalCheckedIn'  => $totalCheckedIn,
+                'totalRefunded'   => $totalRefunded,
+                'checkInRate'     => $checkInRate,
+            ]
+        ]);
+    }
+
+    /**
      * Danh sách tất cả đơn đặt vé (Admin) - Hỗ trợ Context Scoping
      */
     public function index(Request $request)
@@ -30,8 +68,15 @@ class BookingController extends Controller
             }
         }
 
-        if ($request->has('status')) {
-            $query->where('booking_status', $request->status);
+        if ($request->has('status') && $request->status !== 'ALL') {
+            $st = $request->status;
+            if ($st === 'checked_in') {
+                $query->whereNotNull('checked_in_at')->whereNotIn('booking_status', ['cancelled', 'refunded']);
+            } elseif ($st === 'completed' || $st === 'paid') {
+                $query->whereIn('booking_status', ['completed', 'paid']);
+            } else {
+                $query->where('booking_status', $st);
+            }
         }
 
         if ($request->has('search')) {
@@ -97,7 +142,7 @@ class BookingController extends Controller
             'reason' => 'required|string|max:500'
         ]);
 
-        $booking = Booking::with('bookingSeats.showtimeSeat')->findOrFail($id);
+        $booking = Booking::with(['user', 'bookingSeats.showtimeSeat', 'voucher'])->findOrFail($id);
 
         if (!in_array($booking->booking_status, ['paid', 'completed', 'cancelling'])) {
             return response()->json([
@@ -108,15 +153,44 @@ class BookingController extends Controller
 
         DB::beginTransaction();
         try {
-            // Dispatch refund job with reason
-            \App\Jobs\ProcessRefundJob::dispatch($booking, $request->reason);
+            // 1. Cập nhật trạng thái đơn sang refunded
+            $booking->update([
+                'booking_status' => 'refunded',
+                'notes'          => 'Admin hoàn tiền: ' . $request->reason,
+            ]);
+
+            // 2. Nhả ghế trong showtime_seats
+            $showtimeSeatIds = BookingSeat::where('booking_id', $booking->booking_id)
+                ->pluck('showtime_seat_id');
+
+            if ($showtimeSeatIds->isNotEmpty()) {
+                ShowtimeSeat::whereIn('showtime_seat_id', $showtimeSeatIds)
+                    ->update(['status' => 'available']);
+            }
+
+            // 3. Trừ lại điểm tích lũy của user nếu có
+            $user = $booking->user;
+            $earnedPoints = (int) round(($booking->final_amount ?? 0) / 10000);
+            if ($user && $earnedPoints > 0) {
+                $userObj = \App\Models\User::where('user_id', $user->user_id)->lockForUpdate()->first();
+                if ($userObj) {
+                    $userObj->decrement('total_points', $earnedPoints);
+                }
+            }
+
+            // 4. Khôi phục lượt dùng voucher nếu có
+            if ($booking->voucher_id) {
+                \App\Models\Voucher::where('voucher_id', $booking->voucher_id)
+                    ->where('used_count', '>', 0)
+                    ->decrement('used_count');
+            }
 
             DB::commit();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Xử lý hoàn tiền thành công.',
-                'data'    => $booking->fresh()
+                'message' => 'Xử lý hoàn tiền sự cố thành công.',
+                'data'    => $booking->fresh(['user', 'showtime.movie', 'showtime.room.cinema', 'bookingSeats.showtimeSeat', 'bookingCombos.combo', 'voucher'])
             ]);
         } catch (\Exception $e) {
             DB::rollBack();

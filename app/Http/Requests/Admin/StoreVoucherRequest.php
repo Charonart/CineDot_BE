@@ -22,6 +22,8 @@ class StoreVoucherRequest extends FormRequest
         return [
             'campaign_id'        => 'nullable|exists:campaigns,campaign_id',
             'code'               => 'required|string|unique:vouchers,code|max:50',
+            'title'              => 'nullable|string|max:150',
+            'description'        => 'nullable|string',
             'voucher_type'       => 'nullable|string|in:ticket,combo,order,all',
             'discount_type'      => 'required|string|in:fixed_amount,percentage,fixed,percent',
             'discount_value'     => 'required|numeric|min:0',

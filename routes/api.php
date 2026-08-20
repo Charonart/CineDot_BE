@@ -103,6 +103,7 @@ Route::prefix('v1')->group(function () {
     Route::get('/cinemas/detail/{slug}/showtimes', [CinemaController::class, 'showtimes']);
     Route::get('/rooms/{id}/seats', [App\Http\Controllers\Api\RoomController::class, 'seats']);
     Route::get('/rooms/{id}/layout', [App\Http\Controllers\Api\RoomController::class, 'layout']);
+    Route::get('/seat-types',       [\App\Http\Controllers\Api\SeatTypeController::class, 'index']);
 
     // ── Special Theaters ──────────────────────────────────────────────────────
     Route::get('/special-theaters/{type}', [CinemaController::class, 'specialTheaters']);
@@ -146,15 +147,21 @@ Route::prefix('v1')->group(function () {
         Route::apiResource('cinemas.rooms', \App\Http\Controllers\Api\Admin\RoomController::class)->shallow();
         
         // Showtimes & Schedules
-        Route::post('showtimes', [\App\Http\Controllers\Api\Admin\ScheduleController::class, 'store']);
+        Route::post('showtimes/clone-date', [\App\Http\Controllers\Api\Admin\ScheduleController::class, 'cloneDate']);
+        Route::apiResource('showtimes', \App\Http\Controllers\Api\Admin\ScheduleController::class);
         Route::apiResource('schedules', \App\Http\Controllers\Api\Admin\ScheduleController::class);
         
-        // Campaigns, Vouchers & Banners
-        Route::get('campaigns', [\App\Http\Controllers\Api\Admin\CampaignController::class, 'index']);
-        Route::post('campaigns', [\App\Http\Controllers\Api\Admin\CampaignController::class, 'store']);
+        // Campaigns, Vouchers & Banners Suite
+        Route::get('campaigns/stats', [\App\Http\Controllers\Api\Admin\CampaignController::class, 'stats']);
+        Route::patch('campaigns/{id}/toggle-status', [\App\Http\Controllers\Api\Admin\CampaignController::class, 'toggleStatus']);
         Route::post('campaigns/{id}/vouchers', [\App\Http\Controllers\Api\Admin\CampaignController::class, 'storeVoucher']);
         Route::post('campaigns/{id}/banners', [\App\Http\Controllers\Api\Admin\CampaignController::class, 'storeBanner']);
         Route::get('campaigns/{id}/roi', [\App\Http\Controllers\Api\Admin\CampaignController::class, 'roi']);
+        Route::apiResource('campaigns', \App\Http\Controllers\Api\Admin\CampaignController::class);
+
+        Route::get('vouchers/stats', [\App\Http\Controllers\Api\Admin\VoucherController::class, 'stats']);
+        Route::patch('vouchers/{id}/toggle-status', [\App\Http\Controllers\Api\Admin\VoucherController::class, 'toggleStatus']);
+        Route::patch('banners/{id}/toggle-status', [\App\Http\Controllers\Api\Admin\BannerController::class, 'toggleStatus']);
 
         // Users & Roles
         Route::get('users', [\App\Http\Controllers\Api\Admin\UserController::class, 'index']);
@@ -164,6 +171,7 @@ Route::prefix('v1')->group(function () {
         Route::delete('users/{userId}/roles/{id}', [\App\Http\Controllers\Api\Admin\UserRoleController::class, 'destroy']);
         
         // Bookings
+        Route::get('bookings/stats', [\App\Http\Controllers\Api\Admin\BookingController::class, 'stats']);
         Route::get('bookings', [\App\Http\Controllers\Api\Admin\BookingController::class, 'index']);
         Route::get('bookings/{id}', [\App\Http\Controllers\Api\Admin\BookingController::class, 'show']);
         Route::post('bookings/{id}/refund', [\App\Http\Controllers\Api\Admin\BookingController::class, 'refund']);
@@ -189,6 +197,9 @@ Route::prefix('v1')->group(function () {
         // Pricing Rules
         Route::patch('pricing-rules/{id}/toggle-active', [\App\Http\Controllers\Api\Admin\PricingRuleController::class, 'toggleActive']);
         Route::apiResource('pricing-rules', \App\Http\Controllers\Api\Admin\PricingRuleController::class);
+
+        // Seat Types Management
+        Route::apiResource('seat-types', \App\Http\Controllers\Api\Admin\SeatTypeController::class);
     });
 
 }); // End of v1 prefix

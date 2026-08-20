@@ -30,6 +30,8 @@ class UpdateVoucherRequest extends FormRequest
                 'max:50',
                 Rule::unique('vouchers', 'code')->ignore($voucherId, 'voucher_id'),
             ],
+            'title'              => 'nullable|string|max:150',
+            'description'        => 'nullable|string',
             'voucher_type'       => 'nullable|string|in:ticket,combo,order,all',
             'discount_type'      => 'nullable|string|in:fixed_amount,percentage,fixed,percent',
             'discount_value'     => 'nullable|numeric|min:0',
