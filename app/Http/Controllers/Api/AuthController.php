@@ -51,7 +51,7 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
-        $user = $request->user();
+        $user = Auth::guard('sanctum')->user() ?: $request->user();
         if ($user) {
             $this->authService->logout($user);
         }

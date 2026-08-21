@@ -59,17 +59,25 @@ class PricingRuleController extends Controller
         $validated = $request->validate([
             'name'           => 'required|string|max:150',
             'rule_category'  => 'nullable|string|max:100',
-            'conditions'     => 'nullable|array',
+            'conditions'     => 'nullable',
             'modifier_type'  => 'required|string|in:percentage,fixed_amount',
-            'modifier_value' => 'required|numeric|min:0',
+            'modifier_value' => 'required|numeric',
             'priority'       => 'nullable|integer',
             'is_active'      => 'nullable|boolean',
         ]);
 
+        $conditions = $validated['conditions'] ?? [];
+        if (is_string($conditions)) {
+            $decoded = json_decode($conditions, true);
+            if (is_array($decoded)) {
+                $conditions = $decoded;
+            }
+        }
+
         $rule = PricingRule::create([
             'name'           => $validated['name'],
             'rule_category'  => $validated['rule_category'] ?? 'general',
-            'conditions'     => $validated['conditions'] ?? [],
+            'conditions'     => $conditions,
             'modifier_type'  => $validated['modifier_type'],
             'modifier_value' => $validated['modifier_value'],
             'priority'       => $validated['priority'] ?? 0,
@@ -106,12 +114,19 @@ class PricingRuleController extends Controller
         $validated = $request->validate([
             'name'           => 'sometimes|required|string|max:150',
             'rule_category'  => 'nullable|string|max:100',
-            'conditions'     => 'nullable|array',
+            'conditions'     => 'nullable',
             'modifier_type'  => 'sometimes|required|string|in:percentage,fixed_amount',
-            'modifier_value' => 'sometimes|required|numeric|min:0',
+            'modifier_value' => 'sometimes|required|numeric',
             'priority'       => 'nullable|integer',
             'is_active'      => 'nullable|boolean',
         ]);
+
+        if (isset($validated['conditions']) && is_string($validated['conditions'])) {
+            $decoded = json_decode($validated['conditions'], true);
+            if (is_array($decoded)) {
+                $validated['conditions'] = $decoded;
+            }
+        }
 
         $rule->update($validated);
 

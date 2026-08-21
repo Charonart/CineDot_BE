@@ -22,7 +22,7 @@ Route::prefix('v1')->group(function () {
         Route::get('/csrf-cookie', [\Laravel\Sanctum\Http\Controllers\CsrfCookieController::class, 'show']);
         Route::post('/register', [AuthController::class, 'register']);
         Route::post('/login', [AuthController::class, 'login']);
-        Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
+        Route::post('/logout', [AuthController::class, 'logout']);
         
         Route::get('/me', [AuthController::class, 'me']);
         Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])->middleware('throttle:1,1');

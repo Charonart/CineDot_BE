@@ -30,7 +30,7 @@ class RoleMiddleware
         $allowedRoles = array_map('strtolower', $roles);
 
         // Super-admin bypass or match allowed roles
-        if ($userRoleName !== 'admin' && !in_array($userRoleName, $allowedRoles)) {
+        if ($userRoleName !== 'admin' && $userRoleName !== 'super_admin' && !in_array($userRoleName, $allowedRoles)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Forbidden. You do not have permission to access this resource.'
