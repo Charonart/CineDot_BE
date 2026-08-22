@@ -37,6 +37,8 @@ Route::prefix('v1')->group(function () {
         Route::get('/users/transactions', [UserController::class, 'transactions']);
 
         // ── Bookings ──────────────────────────────────────────────────────────────
+        Route::post('/bookings/selecting-seats', [App\Http\Controllers\Api\BookingController::class, 'selectingSeats']);
+        Route::post('/bookings/unselect-seats', [App\Http\Controllers\Api\BookingController::class, 'unselectSeats']);
         Route::post('/bookings/hold-seats', [App\Http\Controllers\Api\BookingController::class, 'holdSeats']);
         Route::post('/bookings/release-seats', [App\Http\Controllers\Api\BookingController::class, 'releaseSeats']);
         Route::post('/bookings/calculate-summary', [App\Http\Controllers\Api\BookingController::class, 'calculateSummary']);

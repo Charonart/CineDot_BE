@@ -15,7 +15,7 @@ class SeatStatusUpdated implements ShouldBroadcastNow
     /**
      * @param int $showtimeId
      * @param array|int $seatIds ShowtimeSeat IDs
-     * @param string $status 'holding' | 'booked' | 'available' | 'blocked'
+     * @param string $status 'available' | 'selecting' | 'holding' | 'booked' | 'blocked'
      * @param int|null $userId User ID who triggered the action
      */
     public function __construct(

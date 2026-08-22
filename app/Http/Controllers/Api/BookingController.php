@@ -92,6 +92,66 @@ class BookingController extends Controller
         ]);
     }
 
+    /**
+     * Broadcast realtime selecting status when user clicks/taps a seat (soft select)
+     */
+    public function selectingSeats(Request $request)
+    {
+        $showtimeId = (int) $request->input('showtime_id', $request->input('schedule_id'));
+        $seatInput = $request->input('showtime_seat_ids', $request->input('seat_ids', $request->input('schedule_seat_ids', $request->input('showtime_seat_id', $request->input('seat_id', [])))));
+        $seatIds = is_array($seatInput) ? $seatInput : [$seatInput];
+        $seatIds = array_values(array_filter(array_map('intval', $seatIds)));
+
+        if (!empty($seatIds) && $showtimeId > 0) {
+            event(new SeatStatusUpdated(
+                $showtimeId,
+                $seatIds,
+                'selecting',
+                $request->user()?->user_id
+            ));
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Đã phát tín hiệu đang chọn ghế.',
+            'data'    => [
+                'showtime_id' => $showtimeId,
+                'seat_ids'    => $seatIds,
+                'status'      => 'selecting',
+            ]
+        ]);
+    }
+
+    /**
+     * Broadcast realtime available status when user deselects a seat
+     */
+    public function unselectSeats(Request $request)
+    {
+        $showtimeId = (int) $request->input('showtime_id', $request->input('schedule_id'));
+        $seatInput = $request->input('showtime_seat_ids', $request->input('seat_ids', $request->input('schedule_seat_ids', $request->input('showtime_seat_id', $request->input('seat_id', [])))));
+        $seatIds = is_array($seatInput) ? $seatInput : [$seatInput];
+        $seatIds = array_values(array_filter(array_map('intval', $seatIds)));
+
+        if (!empty($seatIds) && $showtimeId > 0) {
+            event(new SeatStatusUpdated(
+                $showtimeId,
+                $seatIds,
+                'available',
+                $request->user()?->user_id
+            ));
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Đã hủy tín hiệu chọn ghế.',
+            'data'    => [
+                'showtime_id' => $showtimeId,
+                'seat_ids'    => $seatIds,
+                'status'      => 'available',
+            ]
+        ]);
+    }
+
     public function calculateSummary(CalculateSummaryRequest $request)
     {
         $showtimeId = $request->input('showtime_id', $request->input('schedule_id'));
