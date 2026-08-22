@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\Api;
-
+use App\Events\SeatStatusUpdated;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CalculateSummaryRequest;
 use App\Http\Requests\HoldSeatsRequest;
@@ -28,7 +28,6 @@ class BookingController extends Controller
             $showtimeSeatIds = $request->input('showtime_seat_ids', $request->input('schedule_seat_ids'));
             $combos = $request->input('combos', []);
             $voucherCode = $request->input('voucher_code');
-
             $booking = $this->bookingService->holdSeats(
                 $request->user()->user_id,
                 $showtimeId,
@@ -36,11 +35,16 @@ class BookingController extends Controller
                 $combos,
                 $voucherCode
             );
-
             $ttlSeconds = (int) env('HOLD_SEAT_EXPIRE_SECONDS', 600);
             $ttlMinutes = (int) ceil($ttlSeconds / 60);
             $expiresAt = \Carbon\Carbon::now()->addSeconds($ttlSeconds)->toIso8601String();
-
+            // 🔥 BẮN EVENT REALTIME PUSHER Ở ĐÂY 🔥
+            event(new SeatStatusUpdated(
+                (int) $showtimeId,
+                array_map('intval', (array) $showtimeSeatIds),
+                'holding',
+                $request->user()?->user_id
+            ));
             return response()->json([
                 'success' => true,
                 'message' => "Đã giữ " . count($showtimeSeatIds) . " ghế thành công trong {$ttlMinutes} phút.",
@@ -70,13 +74,18 @@ class BookingController extends Controller
     {
         $showtimeId = $request->input('showtime_id', $request->input('schedule_id'));
         $showtimeSeatIds = $request->input('showtime_seat_ids', $request->input('schedule_seat_ids'));
-
         $this->bookingService->releaseSeats(
             $request->user()->user_id,
             $showtimeId,
             $showtimeSeatIds
         );
-
+        // 🔥 BẮN EVENT REALTIME KHI HỦY GIỮ GHẾ 🔥
+        event(new SeatStatusUpdated(
+            (int) $showtimeId,
+            array_map('intval', (array) $showtimeSeatIds),
+            'available',
+            $request->user()?->user_id
+        ));
         return response()->json([
             'success' => true,
             'message' => 'Hủy giữ ghế thành công.'
