@@ -19,9 +19,9 @@ class ComboController extends Controller
         $limit = $request->get('limit', 15);
         $query = Combo::query();
 
-        if ($request->has('search')) {
+        if ($request->filled('search')) {
             $search = $request->search;
-            $query->where('name', 'ilike', '%' . $search . '%');
+            $query->where('name', 'like', '%' . $search . '%');
         }
 
         if ($request->has('is_active')) {
@@ -29,7 +29,8 @@ class ComboController extends Controller
             $query->where('is_active', $isActive);
         }
 
-        $combos = $query->orderBy('created_at', 'desc')->paginate($limit);
+        $page = (int) $request->get('page', 1);
+        $combos = $query->orderBy('created_at', 'desc')->paginate($limit, ['*'], 'page', $page);
 
         return response()->json([
             'success' => true,

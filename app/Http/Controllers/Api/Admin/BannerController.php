@@ -38,7 +38,8 @@ class BannerController extends Controller
         $query->applyDataTableQuery($request, $allowedFilters, $allowedSorts, $searchableFields, $columnAliases);
 
         $perPage = (int) $request->get('per_page', $request->get('limit', 15));
-        $banners = $query->paginate($perPage);
+        $page = (int) $request->get('page', 1);
+        $banners = $query->paginate($perPage, ['*'], 'page', $page);
 
         return response()->json([
             'success' => true,
@@ -48,6 +49,14 @@ class BannerController extends Controller
                 'last_page'    => $banners->lastPage(),
                 'per_page'     => $banners->perPage(),
                 'total'        => $banners->total(),
+                'totalPages'   => $banners->lastPage(),
+                'totalResults' => $banners->total(),
+            ],
+            'pagination' => [
+                'page'       => $banners->currentPage(),
+                'perPage'    => $banners->perPage(),
+                'total'      => $banners->total(),
+                'totalPages' => $banners->lastPage(),
             ]
         ]);
     }

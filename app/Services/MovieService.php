@@ -29,7 +29,7 @@ class MovieService
         }
 
         if (!empty($filters['search'])) {
-            $query->where('title', 'ilike', '%' . $filters['search'] . '%');
+            $query->where('title', 'like', '%' . $filters['search'] . '%');
         }
 
         if (!empty($filters['genre_id'])) {
@@ -101,8 +101,8 @@ class MovieService
     {
         return Movie::with('genres')
             ->where(function ($q) use ($keyword) {
-                $q->where('title', 'ilike', '%' . $keyword . '%')
-                  ->orWhere('original_title', 'ilike', '%' . $keyword . '%');
+                $q->where('title', 'like', '%' . $keyword . '%')
+                  ->orWhere('original_title', 'like', '%' . $keyword . '%');
             })
             ->orderByDesc('popularity')
             ->paginate($perPage);

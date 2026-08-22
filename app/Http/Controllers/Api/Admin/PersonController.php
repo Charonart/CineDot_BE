@@ -16,26 +16,57 @@ class PersonController extends Controller
      */
     public function index(Request $request)
     {
-        $limit = $request->get('limit', 15);
+        $limit = (int) $request->get('limit', $request->get('per_page', 15));
+        if ($limit <= 0) $limit = 15;
+        if ($limit > 100) $limit = 100;
+
         $query = Person::query();
 
-        if ($request->has('search')) {
+        if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'ilike', '%' . $search . '%')
-                    ->orWhere('original_name', 'ilike', '%' . $search . '%');
+                $q->where('name', 'like', '%' . $search . '%')
+                    ->orWhere('original_name', 'like', '%' . $search . '%')
+                    ->orWhere('person_id', 'like', '%' . $search . '%');
             });
         }
 
-        if ($request->has('gender')) {
+        if ($request->filled('gender')) {
             $query->where('gender', $request->gender);
         }
 
-        if ($request->has('department')) {
+        if ($request->filled('department')) {
             $query->where('known_for_department', $request->department);
         }
 
-        $persons = $query->orderBy('person_id', 'desc')->paginate($limit);
+        // Sorting
+        $sortBy = $request->get('sort_by', 'person_id');
+        $sortDirection = $request->get('sort_dir', $request->get('sort_direction', $request->get('sort_order', 'desc')));
+        
+        $allowedSorts = [
+            'person_id' => 'person_id',
+            'id' => 'person_id',
+            'name' => 'name',
+            'original_name' => 'original_name',
+            'originalName' => 'original_name',
+            'popularity' => 'popularity',
+            'known_for_department' => 'known_for_department',
+            'knownForDepartment' => 'known_for_department',
+            'birthday' => 'birthday',
+            'created_at' => 'created_at',
+            'createdAt' => 'created_at',
+            'updated_at' => 'updated_at',
+        ];
+
+        if (isset($allowedSorts[$sortBy])) {
+            $column = $allowedSorts[$sortBy];
+            $query->orderBy($column, strtolower($sortDirection) === 'asc' ? 'asc' : 'desc');
+        } else {
+            $query->orderBy('person_id', 'desc');
+        }
+
+        $page = (int) $request->get('page', 1);
+        $persons = $query->paginate($limit, ['*'], 'page', $page);
 
         return response()->json([
             'success' => true,
@@ -44,6 +75,20 @@ class PersonController extends Controller
                 'results' => AdminPersonResource::collection($persons->items()),
                 'totalPages' => $persons->lastPage(),
                 'totalResults' => $persons->total(),
+            ],
+            'meta' => [
+                'current_page' => $persons->currentPage(),
+                'per_page' => $persons->perPage(),
+                'total' => $persons->total(),
+                'last_page' => $persons->lastPage(),
+                'totalResults' => $persons->total(),
+                'totalPages' => $persons->lastPage(),
+            ],
+            'pagination' => [
+                'page' => $persons->currentPage(),
+                'perPage' => $persons->perPage(),
+                'total' => $persons->total(),
+                'totalPages' => $persons->lastPage(),
             ]
         ]);
     }

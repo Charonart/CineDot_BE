@@ -57,11 +57,26 @@ class ScheduleController extends Controller
         }
 
         $limit = (int) $request->get('limit', 100);
-        $showtimes = $query->orderBy('showtime_start', 'asc')->paginate($limit);
+        $page = (int) $request->get('page', 1);
+        $showtimes = $query->orderBy('showtime_start', 'asc')->paginate($limit, ['*'], 'page', $page);
 
         return response()->json([
             'success' => true,
-            'data'    => $showtimes
+            'data'    => $showtimes->items(),
+            'meta'    => [
+                'current_page' => $showtimes->currentPage(),
+                'last_page'    => $showtimes->lastPage(),
+                'per_page'     => $showtimes->perPage(),
+                'total'        => $showtimes->total(),
+                'totalPages'   => $showtimes->lastPage(),
+                'totalResults' => $showtimes->total(),
+            ],
+            'pagination' => [
+                'page'       => $showtimes->currentPage(),
+                'perPage'    => $showtimes->perPage(),
+                'total'      => $showtimes->total(),
+                'totalPages' => $showtimes->lastPage(),
+            ]
         ]);
     }
 

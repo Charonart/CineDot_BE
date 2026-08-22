@@ -20,11 +20,11 @@ class CinemaService
                 $query->whereHas('province', fn($q) => $q->where('province_code', $code)->orWhere('province_name', $code));
             } elseif ($provinceId && $provinceId !== 'all') {
                 $query->where('province_id', (int) $provinceId);
-            } elseif ($provinceName && $provinceName !== 'all' && $provinceName !== 'Tất cả thành phố') {
-                $query->whereHas('province', fn($q) => $q->where('province_name', 'ilike', '%' . $provinceName . '%')->orWhere('province_code', $provinceName));
+            } elseif (!empty($provinceName) && $provinceName !== 'Toàn quốc') {
+                $query->whereHas('province', fn($q) => $q->where('province_name', 'like', '%' . $provinceName . '%')->orWhere('province_code', $provinceName));
             }
-        } elseif (is_string($filter) && $filter !== 'all' && $filter !== 'Tất cả thành phố') {
-            $query->whereHas('province', fn($q) => $q->where('province_code', $filter)->orWhere('province_name', 'ilike', '%' . $filter . '%'));
+        } elseif (!empty($filter) && $filter !== 'all') {
+            $query->whereHas('province', fn($q) => $q->where('province_code', $filter)->orWhere('province_name', 'like', '%' . $filter . '%'));
         }
 
         return $query->orderBy('cinema_name')->get();

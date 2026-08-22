@@ -88,11 +88,11 @@ class BookingController extends Controller
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
-                $q->where('booking_code', 'ilike', '%' . $search . '%')
+                $q->where('booking_code', 'like', '%' . $search . '%')
                   ->orWhereHas('user', function ($uq) use ($search) {
-                      $uq->where('fullname', 'ilike', '%' . $search . '%')
-                        ->orWhere('email', 'ilike', '%' . $search . '%')
-                        ->orWhere('phone', 'ilike', '%' . $search . '%');
+                      $uq->where('fullname', 'like', '%' . $search . '%')
+                        ->orWhere('email', 'like', '%' . $search . '%')
+                        ->orWhere('phone', 'like', '%' . $search . '%');
                   });
             });
         }
@@ -100,7 +100,8 @@ class BookingController extends Controller
         $query->applyDataTableQuery($request, $allowedFilters, $allowedSorts, [], $columnAliases);
 
         $perPage = (int) $request->get('per_page', $request->get('limit', 15));
-        $bookings = $query->paginate($perPage);
+        $page = (int) $request->get('page', 1);
+        $bookings = $query->paginate($perPage, ['*'], 'page', $page);
 
         $items = collect($bookings->items())->map(function ($b) {
             $arr = $b->toArray();
@@ -116,6 +117,14 @@ class BookingController extends Controller
                 'last_page'    => $bookings->lastPage(),
                 'per_page'     => $bookings->perPage(),
                 'total'        => $bookings->total(),
+                'totalPages'   => $bookings->lastPage(),
+                'totalResults' => $bookings->total(),
+            ],
+            'pagination' => [
+                'page'       => $bookings->currentPage(),
+                'perPage'    => $bookings->perPage(),
+                'total'      => $bookings->total(),
+                'totalPages' => $bookings->lastPage(),
             ]
         ]);
     }

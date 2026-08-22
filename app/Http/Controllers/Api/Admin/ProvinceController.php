@@ -19,12 +19,13 @@ class ProvinceController extends Controller
         $limit = $request->get('limit', 15);
         $query = Province::query();
 
-        if ($request->has('search')) {
+        if ($request->filled('search')) {
             $search = $request->search;
-            $query->where('province_name', 'ilike', '%' . $search . '%');
+            $query->where('province_name', 'like', '%' . $search . '%');
         }
 
-        $provinces = $query->orderBy('province_id', 'asc')->paginate($limit);
+        $page = (int) $request->get('page', 1);
+        $provinces = $query->orderBy('province_id', 'asc')->paginate($limit, ['*'], 'page', $page);
 
         return response()->json([
             'success' => true,

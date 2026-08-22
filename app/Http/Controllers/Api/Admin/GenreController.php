@@ -19,12 +19,13 @@ class GenreController extends Controller
         $limit = $request->get('limit', 15);
         $query = Genre::withCount('movies');
 
-        if ($request->has('search')) {
+        if ($request->filled('search')) {
             $search = $request->search;
-            $query->where('genre_name', 'ilike', '%' . $search . '%');
+            $query->where('genre_name', 'like', '%' . $search . '%');
         }
 
-        $genres = $query->orderBy('genre_id', 'asc')->paginate($limit);
+        $page = (int) $request->get('page', 1);
+        $genres = $query->orderBy('genre_id', 'asc')->paginate($limit, ['*'], 'page', $page);
 
         return response()->json([
             'success' => true,

@@ -33,14 +33,17 @@ class FormatApiResponse
                 // Nếu Controller đã bọc payload trong 'data'
                 if (array_key_exists('data', $data)) {
                     $payloadData = $data['data'];
+                    unset($data['data']);
                 } else {
                     $payloadData = empty($data) ? null : $data;
+                    $data = [];
                 }
             } else {
                 $payloadData = $data;
+                $data = [];
             }
 
-            $formatted = [
+            $formatted = array_merge([
                 'success' => $success,
                 'req' => [
                     'method' => $request->method(),
@@ -48,7 +51,7 @@ class FormatApiResponse
                     'query' => (object) $request->query(),
                 ],
                 'data' => $payloadData,
-            ];
+            ], $data);
 
             $response->setData($formatted);
         }

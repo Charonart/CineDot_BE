@@ -43,7 +43,8 @@ class MovieController extends Controller
         $query->applyDataTableQuery($request, $allowedFilters, $allowedSorts, $searchableFields, $columnAliases);
 
         $perPage = (int) $request->get('per_page', $request->get('limit', 15));
-        $movies = $query->paginate($perPage);
+        $page = (int) $request->get('page', 1);
+        $movies = $query->paginate($perPage, ['*'], 'page', $page);
 
         // Map items so each item has both 'id' and 'movie_id'
         $items = collect($movies->items())->map(function ($m) {
@@ -60,6 +61,14 @@ class MovieController extends Controller
                 'last_page'    => $movies->lastPage(),
                 'per_page'     => $movies->perPage(),
                 'total'        => $movies->total(),
+                'totalPages'   => $movies->lastPage(),
+                'totalResults' => $movies->total(),
+            ],
+            'pagination' => [
+                'page'       => $movies->currentPage(),
+                'perPage'    => $movies->perPage(),
+                'total'      => $movies->total(),
+                'totalPages' => $movies->lastPage(),
             ]
         ]);
     }

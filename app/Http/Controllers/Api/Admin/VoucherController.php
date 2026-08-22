@@ -69,7 +69,8 @@ class VoucherController extends Controller
         $query->applyDataTableQuery($request, $allowedFilters, $allowedSorts, $searchableFields, $columnAliases);
 
         $perPage = (int) $request->get('per_page', $request->get('limit', 15));
-        $vouchers = $query->paginate($perPage);
+        $page = (int) $request->get('page', 1);
+        $vouchers = $query->paginate($perPage, ['*'], 'page', $page);
 
         return response()->json([
             'success' => true,
@@ -79,6 +80,14 @@ class VoucherController extends Controller
                 'last_page'    => $vouchers->lastPage(),
                 'per_page'     => $vouchers->perPage(),
                 'total'        => $vouchers->total(),
+                'totalPages'   => $vouchers->lastPage(),
+                'totalResults' => $vouchers->total(),
+            ],
+            'pagination' => [
+                'page'       => $vouchers->currentPage(),
+                'perPage'    => $vouchers->perPage(),
+                'total'      => $vouchers->total(),
+                'totalPages' => $vouchers->lastPage(),
             ]
         ]);
     }

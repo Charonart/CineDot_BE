@@ -36,7 +36,8 @@ class CampaignController extends Controller
         $query->applyDataTableQuery($request, $allowedFilters, $allowedSorts, $searchableFields, $columnAliases);
 
         $perPage = (int) $request->get('per_page', $request->get('limit', 15));
-        $campaigns = $query->paginate($perPage);
+        $page = (int) $request->get('page', 1);
+        $campaigns = $query->paginate($perPage, ['*'], 'page', $page);
 
         // Compute summary metrics for each campaign item
         $items = collect($campaigns->items())->map(function ($camp) {
@@ -89,6 +90,14 @@ class CampaignController extends Controller
                 'last_page'    => $campaigns->lastPage(),
                 'per_page'     => $campaigns->perPage(),
                 'total'        => $campaigns->total(),
+                'totalPages'   => $campaigns->lastPage(),
+                'totalResults' => $campaigns->total(),
+            ],
+            'pagination' => [
+                'page'       => $campaigns->currentPage(),
+                'perPage'    => $campaigns->perPage(),
+                'total'      => $campaigns->total(),
+                'totalPages' => $campaigns->lastPage(),
             ]
         ]);
     }

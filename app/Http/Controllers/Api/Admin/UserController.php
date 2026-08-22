@@ -58,7 +58,8 @@ class UserController extends Controller
         // Apply Universal Dynamic Filter & Sort Pipeline
         $query->applyDataTableQuery($request, $allowedFilterFields, $allowedSortFields, $searchableFields);
 
-        $users = $query->paginate($perPage);
+        $page = (int) $request->get('page', 1);
+        $users = $query->paginate($perPage, ['*'], 'page', $page);
 
         return response()->json([
             'success' => true,
@@ -68,7 +69,15 @@ class UserController extends Controller
                 'last_page'    => $users->lastPage(),
                 'per_page'     => $users->perPage(),
                 'total'        => $users->total(),
+                'totalPages'   => $users->lastPage(),
+                'totalResults' => $users->total(),
             ],
+            'pagination' => [
+                'page'       => $users->currentPage(),
+                'perPage'    => $users->perPage(),
+                'total'      => $users->total(),
+                'totalPages' => $users->lastPage(),
+            ]
         ]);
     }
 

@@ -31,7 +31,8 @@ class PricingRuleController extends Controller
         $query->orderByDesc('priority')->orderByDesc('pricing_rule_id');
 
         $perPage = (int) $request->input('per_page', 15);
-        $rules = $query->paginate($perPage);
+        $page = (int) $request->input('page', 1);
+        $rules = $query->paginate($perPage, ['*'], 'page', $page);
 
         $items = collect($rules->items())->map(function ($r) {
             $arr = $r->toArray();
@@ -47,6 +48,14 @@ class PricingRuleController extends Controller
                 'last_page'    => $rules->lastPage(),
                 'per_page'     => $rules->perPage(),
                 'total'        => $rules->total(),
+                'totalPages'   => $rules->lastPage(),
+                'totalResults' => $rules->total(),
+            ],
+            'pagination' => [
+                'page'       => $rules->currentPage(),
+                'perPage'    => $rules->perPage(),
+                'total'      => $rules->total(),
+                'totalPages' => $rules->lastPage(),
             ]
         ]);
     }

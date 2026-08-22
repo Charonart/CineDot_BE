@@ -34,7 +34,8 @@ class CinemaController extends Controller
         $query->applyDataTableQuery($request, $allowedFilters, $allowedSorts, $searchableFields, $columnAliases);
 
         $perPage = (int) $request->get('per_page', $request->get('limit', 15));
-        $cinemas = $query->paginate($perPage);
+        $page = (int) $request->get('page', 1);
+        $cinemas = $query->paginate($perPage, ['*'], 'page', $page);
 
         $items = collect($cinemas->items())->map(function ($c) {
             $arr = $c->toArray();
@@ -50,6 +51,14 @@ class CinemaController extends Controller
                 'last_page'    => $cinemas->lastPage(),
                 'per_page'     => $cinemas->perPage(),
                 'total'        => $cinemas->total(),
+                'totalPages'   => $cinemas->lastPage(),
+                'totalResults' => $cinemas->total(),
+            ],
+            'pagination' => [
+                'page'       => $cinemas->currentPage(),
+                'perPage'    => $cinemas->perPage(),
+                'total'      => $cinemas->total(),
+                'totalPages' => $cinemas->lastPage(),
             ]
         ]);
     }
