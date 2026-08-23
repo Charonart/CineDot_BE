@@ -277,6 +277,15 @@ class BookingService
                 }
             }
 
+            // Real-time Revenue Updated Broadcast (Triggered safely after DB Commit)
+            $booking->loadMissing('showtime.room');
+            \App\Events\RevenueUpdated::dispatchSafely(
+                $booking->booking_id,
+                'payment_completed',
+                $booking->showtime?->room?->cinema_id,
+                $booking->showtime?->movie_id
+            );
+
             return ['booking' => $booking, 'seatIds' => $seatIds->toArray()];
         });
 

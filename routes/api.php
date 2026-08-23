@@ -135,6 +135,13 @@ Route::prefix('v1')->group(function () {
 
     // ── Admin Routes ──────────────────────────────────────────────────────────
     Route::prefix('admin')->middleware(['auth:sanctum', 'role:admin'])->group(function () {
+        // Admin Dashboard 
+        Route::get('dashboard/overview', [\App\Http\Controllers\Api\Admin\DashboardController::class, 'overview']);
+        Route::get('dashboard/revenue-chart', [\App\Http\Controllers\Api\Admin\DashboardController::class, 'revenueChart']);
+        Route::get('dashboard/top-movies', [\App\Http\Controllers\Api\Admin\DashboardController::class, 'topMovies']);
+        Route::get('dashboard/showtimes', [\App\Http\Controllers\Api\Admin\DashboardController::class, 'showtimes']);
+        Route::get('dashboard/check-in-stats', [\App\Http\Controllers\Api\Admin\DashboardController::class, 'checkInStats']);
+        Route::get('dashboard/activities', [\App\Http\Controllers\Api\Admin\DashboardController::class, 'activities']);
         // Movies & TMDB Sync
         Route::post('movies/sync', [\App\Http\Controllers\Api\Admin\MovieController::class, 'sync']);
         Route::post('movies/bulk', [\App\Http\Controllers\Api\Admin\MovieController::class, 'bulkAction']);

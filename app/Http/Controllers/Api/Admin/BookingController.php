@@ -208,6 +208,15 @@ class BookingController extends Controller
 
             DB::commit();
 
+            // Real-time Revenue Updated Broadcast (Triggered after DB Commit)
+            $booking->loadMissing('showtime.room');
+            \App\Events\RevenueUpdated::dispatchSafely(
+                $booking->booking_id,
+                'booking_refunded',
+                $booking->showtime?->room?->cinema_id,
+                $booking->showtime?->movie_id
+            );
+
             return response()->json([
                 'success' => true,
                 'message' => 'Xử lý hoàn tiền sự cố thành công.',

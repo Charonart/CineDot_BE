@@ -380,6 +380,15 @@ class BookingController extends Controller
                     ->decrement('used_count');
             }
 
+            // Real-time Revenue Updated Broadcast (Triggered safely after DB Commit)
+            $booking->loadMissing('showtime.room');
+            \App\Events\RevenueUpdated::dispatchSafely(
+                $booking->booking_id,
+                'booking_cancelled',
+                $booking->showtime?->room?->cinema_id,
+                $booking->showtime?->movie_id
+            );
+
             return response()->json([
                 'success' => true,
                 'message' => 'Hủy vé thành công! Số tiền hoàn trả (' . $refundPercentage . '%) sẽ được hoàn về phương thức thanh toán ban đầu.',
