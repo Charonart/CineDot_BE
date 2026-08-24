@@ -46,8 +46,10 @@ class AuthService
 
     public function login(array $data)
     {
-        $user = User::where('email', $data['email'])
-            ->orWhere('username', $data['email'])
+        $emailInput = strtolower(trim($data['email']));
+
+        $user = User::whereRaw('LOWER(email) = ?', [$emailInput])
+            ->orWhereRaw('LOWER(username) = ?', [$emailInput])
             ->first();
 
         if (!$user || !Hash::check($data['password'], $user->password)) {

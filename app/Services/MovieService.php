@@ -8,7 +8,7 @@ class MovieService
 {
     public function getList(array $filters)
     {
-        $query = Movie::with('genres');
+        $query = Movie::with(['genres', 'videos']);
 
         if (!empty($filters['status'])) {
             $status = strtolower($filters['status']);
@@ -44,48 +44,48 @@ class MovieService
 
     public function getTrending(int $perPage = 20)
     {
-        return Movie::with('genres')
+        return Movie::with(['genres', 'videos'])
             ->orderByDesc('popularity')
             ->paginate($perPage);
     }
 
     public function getPopular(int $perPage = 20)
     {
-        return Movie::with('genres')
+        return Movie::with(['genres', 'videos'])
             ->orderByDesc('popularity')
             ->paginate($perPage);
     }
 
     public function getNavbar()
     {
-        $nowShowing = Movie::with('genres')
+        $nowShowing = Movie::with(['genres', 'videos'])
             ->where('status', 'now_showing')
             ->orderByDesc('popularity')
             ->limit(4)
             ->get();
 
         if ($nowShowing->isEmpty()) {
-            $nowShowing = Movie::with('genres')
+            $nowShowing = Movie::with(['genres', 'videos'])
                 ->orderByDesc('popularity')
                 ->limit(4)
                 ->get();
         }
 
-        $comingSoon = Movie::with('genres')
+        $comingSoon = Movie::with(['genres', 'videos'])
             ->where('status', 'coming_soon')
             ->orderByDesc('popularity')
             ->limit(4)
             ->get();
 
         if ($comingSoon->isEmpty()) {
-            $comingSoon = Movie::with('genres')
+            $comingSoon = Movie::with(['genres', 'videos'])
                 ->orderByDesc('created_at')
                 ->skip(4)
                 ->limit(4)
                 ->get();
         }
 
-        $trending = Movie::with('genres')
+        $trending = Movie::with(['genres', 'videos'])
             ->orderByDesc('popularity')
             ->limit(4)
             ->get();

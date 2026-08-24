@@ -36,6 +36,11 @@ class MovieResource extends JsonResource
                     'name' => $g->genre_name,
                 ])->values();
             }, []),
+            'trailerUrl'       => $this->relationLoaded('videos') ? (
+                (($trailer = $this->videos->firstWhere('type', 'Trailer') ?? $this->videos->first()) && !empty($trailer->key_value))
+                    ? "https://www.youtube.com/watch?v={$trailer->key_value}"
+                    : null
+            ) : null,
         ];
     }
 }
