@@ -83,6 +83,15 @@ class ProcessRefundJob implements ShouldQueue
                 Log::info("ProcessRefundJob: Voucher #{$booking->voucher_id} used_count decremented.");
             }
 
+            // Real-time Revenue Updated Broadcast (Triggered safely after DB Commit)
+            $booking->loadMissing('showtime.room');
+            \App\Events\RevenueUpdated::dispatchSafely(
+                $booking->booking_id,
+                'booking_refunded',
+                $booking->showtime?->room?->cinema_id,
+                $booking->showtime?->movie_id
+            );
+
             Log::info("ProcessRefundJob Completed: Booking ID {$this->bookingId} refunded successfully at {$this->refundPercentage}%.");
         });
     }

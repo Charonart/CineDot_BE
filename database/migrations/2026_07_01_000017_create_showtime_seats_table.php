@@ -15,7 +15,7 @@ return new class extends Migration
             $table->foreign('seat_type')->references('seat_type')->on('seat_types')->onDelete('cascade');
             $table->string('row_name', 10);
             $table->string('seat_number', 10);
-            $table->enum('status', ['available', 'holding', 'booked', 'blocked'])->default('available');
+            $table->enum('status', ['available', 'selecting', 'holding', 'booked', 'blocked'])->default('available');
         });
     }
 

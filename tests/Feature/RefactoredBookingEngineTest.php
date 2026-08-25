@@ -18,13 +18,13 @@ use App\Models\UserTier;
 use App\Models\Voucher;
 use App\Services\BookingService;
 use App\Services\PricingEngineService;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Redis;
 use Tests\TestCase;
 
 class RefactoredBookingEngineTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
 
     private User $user;
     private Showtime $showtime;

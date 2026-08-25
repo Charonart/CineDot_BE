@@ -258,7 +258,7 @@ class UserController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Cập nhật thông tin người dùng thành công.',
-            'data'    => new AdminUserResource($user->fresh()->load('role', 'province')),
+            'data'    => new AdminUserResource($user->fresh()->load('userRoles.role', 'province')),
         ]);
     }
 
@@ -285,7 +285,7 @@ class UserController extends Controller
         return response()->json([
             'success' => true,
             'message' => "Đã {$statusStr} tài khoản người dùng thành công.",
-            'data'    => new AdminUserResource($user->load('role', 'province')),
+            'data'    => new AdminUserResource($user->load('userRoles.role', 'province')),
         ]);
     }
 
@@ -310,7 +310,7 @@ class UserController extends Controller
         return response()->json([
             'success' => true,
             'message' => "Đã điều chỉnh " . ($pointsDelta >= 0 ? "+{$pointsDelta}" : "{$pointsDelta}") . " điểm thưởng.",
-            'data'    => new AdminUserResource($user->fresh()->load('role', 'province')),
+            'data'    => new AdminUserResource($user->fresh()->load('userRoles.role', 'province')),
         ]);
     }
 
@@ -412,7 +412,7 @@ class UserController extends Controller
         return response()->json([
             'success' => true,
             'message' => "Đã cập nhật {$field} thành công.",
-            'data'    => new AdminUserResource($user->fresh()->load('role', 'province')),
+            'data'    => new AdminUserResource($user->fresh()->load('userRoles.role', 'province')),
         ]);
     }
 

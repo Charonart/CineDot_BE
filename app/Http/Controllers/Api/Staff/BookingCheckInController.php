@@ -256,6 +256,9 @@ class BookingCheckInController extends Controller
                     'checked_in_at' => $nowTime,
                 ]);
 
+                // Phát Socket Broadcast thông báo vé đã soát thành công
+                \App\Events\TicketScanned::dispatchSafely($booking);
+
                 $showtimeStart = $booking->showtime?->showtime_start ? Carbon::parse($booking->showtime->showtime_start) : null;
                 $showtimeEnd = $booking->showtime?->showtime_end ? Carbon::parse($booking->showtime->showtime_end) : null;
                 $startTime = $showtimeStart ? $showtimeStart->format('H:i') : '';

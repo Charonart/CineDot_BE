@@ -52,6 +52,12 @@ class CancelExpiredBookingJob implements ShouldQueue
                             // Redis fallback
                         }
                     }
+
+                    try {
+                        event(new \App\Events\SeatStatusUpdated($booking->showtime_id, $seatIds, 'available'));
+                    } catch (\Exception $e) {
+                        Log::warning("Failed to broadcast SeatStatusUpdated in CancelExpiredBookingJob: " . $e->getMessage());
+                    }
                 }
 
                 Log::info("CancelExpiredBookingJob: Booking {$this->bookingId} and " . count($seatIds) . " seats released due to timeout.");

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Events\SeatStatusUpdated;
 use App\Models\Booking;
 use App\Models\BookingCombo;
 use App\Models\BookingSeat;
@@ -176,6 +177,13 @@ class BookingService
             return $booking;
         });
 
+        // Broadcast holding state to other users on the seat selection page
+        try {
+            event(new SeatStatusUpdated($showtimeId, $showtimeSeatIds, 'holding', $userId));
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning("Failed to broadcast SeatStatusUpdated (holding) for showtime {$showtimeId}: " . $e->getMessage());
+        }
+
         // Dispatch auto-cancel job AFTER DB transaction commits to prevent PostgreSQL transaction aborts
         try {
             $ttlSeconds = (int) env('HOLD_SEAT_EXPIRE_SECONDS', 600);
@@ -217,6 +225,14 @@ class BookingService
                 $pBooking->update(['booking_status' => 'cancelled']);
             }
         }
+
+        // Broadcast available state so others see seats are unlocked
+        try {
+            event(new SeatStatusUpdated($showtimeId, $showtimeSeatIds, 'available', $userId));
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning("Failed to broadcast SeatStatusUpdated (available) for showtime {$showtimeId}: " . $e->getMessage());
+        }
+
         return true;
     }
 
@@ -225,11 +241,11 @@ class BookingService
      */
     public function confirmBooking(int $bookingId, array $paymentData = [])
     {
-        return DB::transaction(function () use ($bookingId, $paymentData) {
+        $confirmedResult = DB::transaction(function () use ($bookingId, $paymentData) {
             $booking = Booking::where('booking_id', $bookingId)->lockForUpdate()->firstOrFail();
 
             if ($booking->booking_status === 'completed' || $booking->booking_status === 'paid') {
-                return $booking;
+                return ['booking' => $booking, 'seatIds' => []];
             }
 
             $booking->update(['booking_status' => 'completed']);
@@ -261,7 +277,30 @@ class BookingService
                 }
             }
 
-            return $booking;
+            // Real-time Revenue Updated Broadcast (Triggered safely after DB Commit)
+            $booking->loadMissing('showtime.room');
+            \App\Events\RevenueUpdated::dispatchSafely(
+                $booking->booking_id,
+                'payment_completed',
+                $booking->showtime?->room?->cinema_id,
+                $booking->showtime?->movie_id
+            );
+
+            return ['booking' => $booking, 'seatIds' => $seatIds->toArray()];
         });
+
+        $booking = $confirmedResult['booking'];
+        $seatIds = $confirmedResult['seatIds'];
+
+        // Broadcast booked status in real-time
+        if (!empty($seatIds)) {
+            try {
+                event(new SeatStatusUpdated($booking->showtime_id, $seatIds, 'booked', $booking->user_id));
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::warning("Failed to broadcast SeatStatusUpdated (booked) for showtime {$booking->showtime_id}: " . $e->getMessage());
+            }
+        }
+
+        return $booking;
     }
 }
