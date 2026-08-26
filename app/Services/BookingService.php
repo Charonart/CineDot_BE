@@ -79,15 +79,16 @@ class BookingService
                 }
             }
 
-            // Phase 2: Check seat status in DB and Redis with exact diagnostic error messages
+            // Phase 2: Check seat status in DB and Redis with exact diagnostic error messages (excluding current user's own pending bookings)
             foreach ($seats as $seat) {
                 if (in_array($seat->status, ['booked', 'blocked'])) {
                     throw new HttpException(409, "Ghế {$seat->row_name}{$seat->seat_number} (ID {$seat->showtime_seat_id}) đã bị mua hoặc khóa.");
                 }
 
                 $activePending = BookingSeat::where('showtime_seat_id', $seat->showtime_seat_id)
-                    ->whereHas('booking', function ($q) use ($showtimeId, $ttlSeconds) {
+                    ->whereHas('booking', function ($q) use ($showtimeId, $ttlSeconds, $userId) {
                         $q->where('showtime_id', $showtimeId)
+                          ->where('user_id', '!=', $userId)
                           ->where('booking_status', 'pending')
                           ->where('created_at', '>=', now()->subSeconds($ttlSeconds));
                     })->first();
@@ -108,7 +109,7 @@ class BookingService
 
                         if ($isGhostLock) {
                             Redis::del($redisKey);
-                        } else {
+                        } else if ($heldBooking && $heldBooking->user_id != $userId) {
                             throw new HttpException(409, "Ghế {$seat->row_name}{$seat->seat_number} (ID {$seat->showtime_seat_id}) đang được giữ bởi đơn hàng #{$heldBooking->booking_id}.");
                         }
                     }
@@ -117,6 +118,25 @@ class BookingService
                 } catch (\Exception $e) {
                     // Redis connection issue; fallback to DB lock
                 }
+            }
+
+            // Phase 2.5: Auto-cancel previous pending bookings for this user & showtime, releasing their unselected seats
+            $previousUserPending = Booking::where('user_id', $userId)
+                ->where('showtime_id', $showtimeId)
+                ->where('booking_status', 'pending')
+                ->get();
+
+            foreach ($previousUserPending as $oldBooking) {
+                $oldSeatIds = BookingSeat::where('booking_id', $oldBooking->booking_id)->pluck('showtime_seat_id')->toArray();
+                if (!empty($oldSeatIds)) {
+                    ShowtimeSeat::whereIn('showtime_seat_id', $oldSeatIds)->update(['status' => 'available']);
+                    foreach ($oldSeatIds as $sId) {
+                        try {
+                            Redis::del("hold:showtime:{$showtimeId}:seat:{$sId}");
+                        } catch (\Exception $e) {}
+                    }
+                }
+                $oldBooking->update(['booking_status' => 'cancelled']);
             }
 
             // Calculate financial breakdown snapshot using PricingEngineService

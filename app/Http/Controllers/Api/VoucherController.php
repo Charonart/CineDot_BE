@@ -212,7 +212,7 @@ class VoucherController extends Controller
             return [
                 'id'                 => $v->voucher_id,
                 'code'               => $v->code,
-                'title'              => 'Voucher Giảm ' . $formattedDiscount,
+                'title'              => $v->title ?: ('Voucher Giảm ' . $formattedDiscount),
                 'description'        => $v->description ?: ('Giảm ' . $formattedDiscount . ($v->min_order_value ? ' cho đơn từ ' . number_format($v->min_order_value) . 'đ' : '')),
                 'discount_type'      => $v->discount_type,
                 'discount_value'     => (float) $v->discount_value,
@@ -220,7 +220,8 @@ class VoucherController extends Controller
                 'max_discount_value' => (float) ($v->max_discount_value ?? 0),
                 'valid_until'        => $v->valid_until?->format('d/m/Y') ?: 'Không thời hạn',
                 'is_active'          => (bool) $v->is_active,
-                'category'           => 'TICKET',
+                'voucher_type'       => $v->voucher_type ?: 'all',
+                'category'           => $v->voucher_type === 'combo' ? 'FNB' : 'TICKET',
             ];
         });
 
