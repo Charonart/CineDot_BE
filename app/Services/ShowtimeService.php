@@ -4,54 +4,59 @@ namespace App\Services;
 
 use App\Models\Movie;
 use App\Models\Showtime;
+use Illuminate\Support\Facades\Cache;
 
 class ShowtimeService
 {
     public function getGroupedShowtimes(array $filters)
     {
-        $date = $filters['date'] ?? now()->toDateString();
+        $cacheKey = 'showtimes_grouped_' . md5(json_encode($filters));
         
-        $query = Showtime::with(['movie.genres', 'room.cinema.province'])
-            ->withCount(['showtimeSeats as available_seats' => fn($q) => $q->where('status', 'available')])
-            ->whereDate('showtime_start', $date)
-            ->orderBy('showtime_start');
-
-        if (!empty($filters['cinema_id'])) {
-            $query->whereHas('room', fn($q) => $q->where('cinema_id', $filters['cinema_id']));
-        }
-
-        $movieParam = $filters['movie_slug'] ?? $filters['movie'] ?? $filters['movie_id'] ?? null;
-        if (!empty($movieParam)) {
-            if (is_numeric($movieParam)) {
-                $query->where('movie_id', (int) $movieParam);
-            } else {
-                $query->whereHas('movie', fn($q) => $q->where('slug', $movieParam));
-            }
-        }
-
-        if (!empty($filters['province'])) {
-            $province = $filters['province'];
-            $query->whereHas('room.cinema.province', fn($q) => $q->where('province_name', $province));
-        }
-
-        $showtimes = $query->get();
-
-        return $showtimes->groupBy('movie_id')->map(function ($items) {
-            $movie = $items->first()->movie;
+        return Cache::remember($cacheKey, now()->addMinutes(5), function () use ($filters) {
+            $date = $filters['date'] ?? now()->toDateString();
             
-            $cinemaGroups = $items->groupBy(fn($s) => $s->room->cinema_id)->map(function ($cinemaItems) {
-                $cinema = $cinemaItems->first()->room->cinema;
+            $query = Showtime::with(['movie.genres', 'room.cinema.province'])
+                ->withCount(['showtimeSeats as available_seats' => fn($q) => $q->where('status', 'available')])
+                ->whereDate('showtime_start', $date)
+                ->orderBy('showtime_start');
+
+            if (!empty($filters['cinema_id'])) {
+                $query->whereHas('room', fn($q) => $q->where('cinema_id', $filters['cinema_id']));
+            }
+
+            $movieParam = $filters['movie_slug'] ?? $filters['movie'] ?? $filters['movie_id'] ?? null;
+            if (!empty($movieParam)) {
+                if (is_numeric($movieParam)) {
+                    $query->where('movie_id', (int) $movieParam);
+                } else {
+                    $query->whereHas('movie', fn($q) => $q->where('slug', $movieParam));
+                }
+            }
+
+            if (!empty($filters['province'])) {
+                $province = $filters['province'];
+                $query->whereHas('room.cinema.province', fn($q) => $q->where('province_name', $province));
+            }
+
+            $showtimes = $query->get();
+
+            return $showtimes->groupBy('movie_id')->map(function ($items) {
+                $movie = $items->first()->movie;
+                
+                $cinemaGroups = $items->groupBy(fn($s) => $s->room->cinema_id)->map(function ($cinemaItems) {
+                    $cinema = $cinemaItems->first()->room->cinema;
+                    return [
+                        'cinema' => $cinema,
+                        'times'  => \App\Http\Resources\ShowtimeResource::collection($cinemaItems->values())
+                    ];
+                })->values();
+
                 return [
-                    'cinema' => $cinema,
-                    'times'  => \App\Http\Resources\ShowtimeResource::collection($cinemaItems->values())
+                    'movie'   => $movie,
+                    'cinemas' => $cinemaGroups,
                 ];
             })->values();
-
-            return [
-                'movie'   => $movie,
-                'cinemas' => $cinemaGroups,
-            ];
-        })->values();
+        });
     }
 
     public function getShowtimesByMovie($movieIdentifier, array $filters)

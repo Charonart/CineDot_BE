@@ -173,4 +173,67 @@ class SeatService
             'seat_types' => $allActiveSeatTypes,
         ];
     }
+
+    public function getRealtimeSeatStatus(int $id): array
+    {
+        $showtimeSeats = ShowtimeSeat::where('showtime_id', $id)->get();
+        if ($showtimeSeats->isEmpty()) {
+            $this->getScheduleSeats((int) $id);
+            $showtimeSeats = ShowtimeSeat::where('showtime_id', $id)->get();
+        }
+        
+        $ttlSeconds = (int) env('HOLD_SEAT_EXPIRE_SECONDS', 600);
+
+        $pendingSeatIds = \App\Models\BookingSeat::whereHas('booking', function ($query) use ($id, $ttlSeconds) {
+            $query->where('showtime_id', $id)
+                  ->where('booking_status', 'pending')
+                  ->where('created_at', '>=', \Carbon\Carbon::now()->subSeconds($ttlSeconds));
+        })->pluck('showtime_seat_id')->flip()->toArray();
+
+        $seatsData = [];
+        
+        // Optimize Redis calls by checking multiple keys at once
+        $redisKeys = [];
+        foreach ($showtimeSeats as $seat) {
+            $redisKeys[] = "hold:showtime:{$id}:seat:{$seat->showtime_seat_id}";
+        }
+        
+        $heldInRedisKeys = [];
+        try {
+            // Using pipeline or mget could be faster, but let's stick to safe fallback if redis is down
+            foreach ($redisKeys as $key) {
+                if (Redis::exists($key)) {
+                    $heldInRedisKeys[$key] = true;
+                }
+            }
+        } catch (\Exception $e) {
+            // Redis fallback
+        }
+
+        foreach ($showtimeSeats as $seat) {
+            $status = strtolower($seat->status);
+            
+            if ($status === 'available') {
+                $isHeldInDb = isset($pendingSeatIds[$seat->showtime_seat_id]);
+                $redisKey = "hold:showtime:{$id}:seat:{$seat->showtime_seat_id}";
+                $isHeldInRedis = isset($heldInRedisKeys[$redisKey]);
+
+                if ($isHeldInDb || $isHeldInRedis) {
+                    $status = 'holding';
+                }
+            }
+
+            $seatsData[] = [
+                'showtime_seat_id' => $seat->showtime_seat_id,
+                'showtime_id'      => (int) $seat->showtime_id,
+                'row_name'         => $seat->row_name,
+                'seat_number'      => $seat->seat_number,
+                'seat_code'        => $seat->row_name . $seat->seat_number,
+                'seat_type'        => $seat->seat_type,
+                'status'           => $status,
+            ];
+        }
+
+        return $seatsData;
+    }
 }

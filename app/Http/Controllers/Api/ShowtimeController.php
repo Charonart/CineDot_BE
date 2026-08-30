@@ -114,49 +114,7 @@ class ShowtimeController extends Controller
      */
     public function seatStatus($id)
     {
-        $showtimeSeats = \App\Models\ShowtimeSeat::where('showtime_id', $id)->get();
-        if ($showtimeSeats->isEmpty()) {
-            $this->seatService->getScheduleSeats((int) $id);
-            $showtimeSeats = \App\Models\ShowtimeSeat::where('showtime_id', $id)->get();
-        }
-        $ttlSeconds = (int) env('HOLD_SEAT_EXPIRE_SECONDS', 600);
-
-        $pendingSeatIds = \App\Models\BookingSeat::whereHas('booking', function ($query) use ($id, $ttlSeconds) {
-            $query->where('showtime_id', $id)
-                  ->where('booking_status', 'pending')
-                  ->where('created_at', '>=', \Carbon\Carbon::now()->subSeconds($ttlSeconds));
-        })->pluck('showtime_seat_id')->flip()->toArray();
-
-        $seatsData = [];
-        foreach ($showtimeSeats as $seat) {
-            $status = strtolower($seat->status);
-            
-            if ($status === 'available') {
-                $isHeldInDb = isset($pendingSeatIds[$seat->showtime_seat_id]);
-                $isHeldInRedis = false;
-                
-                try {
-                    $redisKey = "hold:showtime:{$id}:seat:{$seat->showtime_seat_id}";
-                    $isHeldInRedis = (bool) \Illuminate\Support\Facades\Redis::exists($redisKey);
-                } catch (\Exception $e) {
-                    // Redis fallback
-                }
-
-                if ($isHeldInDb || $isHeldInRedis) {
-                    $status = 'holding';
-                }
-            }
-
-            $seatsData[] = [
-                'showtime_seat_id' => $seat->showtime_seat_id,
-                'showtime_id'      => (int) $seat->showtime_id,
-                'row_name'         => $seat->row_name,
-                'seat_number'      => $seat->seat_number,
-                'seat_code'        => $seat->row_name . $seat->seat_number,
-                'seat_type'        => $seat->seat_type,
-                'status'           => $status,
-            ];
-        }
+        $seatsData = $this->seatService->getRealtimeSeatStatus((int) $id);
 
         return response()->json([
             'success' => true,

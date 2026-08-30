@@ -121,7 +121,7 @@ class MovieController extends Controller
 
     public function videos($id)
     {
-        $movie = \App\Models\Movie::findOrFail($id);
+        $movie = $this->movieService->getDetail($id);
 
         return response()->json([
             'success' => true,

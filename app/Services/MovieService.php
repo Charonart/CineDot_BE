@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Movie;
+use Illuminate\Support\Facades\Cache;
 
 class MovieService
 {
@@ -44,57 +45,65 @@ class MovieService
 
     public function getTrending(int $perPage = 20)
     {
-        return Movie::with('genres')
-            ->orderByDesc('popularity')
-            ->paginate($perPage);
+        $cacheKey = "movies_trending_page_" . request()->get('page', 1) . "_limit_" . $perPage;
+        return Cache::remember($cacheKey, now()->addMinutes(10), function () use ($perPage) {
+            return Movie::with('genres')
+                ->orderByDesc('popularity')
+                ->paginate($perPage);
+        });
     }
 
     public function getPopular(int $perPage = 20)
     {
-        return Movie::with('genres')
-            ->orderByDesc('popularity')
-            ->paginate($perPage);
+        $cacheKey = "movies_popular_page_" . request()->get('page', 1) . "_limit_" . $perPage;
+        return Cache::remember($cacheKey, now()->addMinutes(10), function () use ($perPage) {
+            return Movie::with('genres')
+                ->orderByDesc('popularity')
+                ->paginate($perPage);
+        });
     }
 
     public function getNavbar()
     {
-        $nowShowing = Movie::with('genres')
-            ->where('status', 'now_showing')
-            ->orderByDesc('popularity')
-            ->limit(4)
-            ->get();
-
-        if ($nowShowing->isEmpty()) {
+        return Cache::remember('movies_navbar', now()->addMinutes(15), function () {
             $nowShowing = Movie::with('genres')
+                ->where('status', 'now_showing')
                 ->orderByDesc('popularity')
                 ->limit(4)
                 ->get();
-        }
 
-        $comingSoon = Movie::with('genres')
-            ->where('status', 'coming_soon')
-            ->orderByDesc('popularity')
-            ->limit(4)
-            ->get();
+            if ($nowShowing->isEmpty()) {
+                $nowShowing = Movie::with('genres')
+                    ->orderByDesc('popularity')
+                    ->limit(4)
+                    ->get();
+            }
 
-        if ($comingSoon->isEmpty()) {
             $comingSoon = Movie::with('genres')
-                ->orderByDesc('created_at')
-                ->skip(4)
+                ->where('status', 'coming_soon')
+                ->orderByDesc('popularity')
                 ->limit(4)
                 ->get();
-        }
 
-        $trending = Movie::with('genres')
-            ->orderByDesc('popularity')
-            ->limit(4)
-            ->get();
+            if ($comingSoon->isEmpty()) {
+                $comingSoon = Movie::with('genres')
+                    ->orderByDesc('created_at')
+                    ->skip(4)
+                    ->limit(4)
+                    ->get();
+            }
 
-        return [
-            'now_showing' => $nowShowing,
-            'coming_soon' => $comingSoon,
-            'trending'    => $trending,
-        ];
+            $trending = Movie::with('genres')
+                ->orderByDesc('popularity')
+                ->limit(4)
+                ->get();
+
+            return [
+                'now_showing' => $nowShowing,
+                'coming_soon' => $comingSoon,
+                'trending'    => $trending,
+            ];
+        });
     }
 
     public function search(string $keyword, int $perPage = 20)
