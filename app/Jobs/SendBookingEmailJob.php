@@ -16,28 +16,40 @@ class SendBookingEmailJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $booking;
+    public int $bookingId;
 
-    public function __construct(Booking $booking)
+    /**
+     * Queue configuration & retry policies
+     */
+    public $tries = 3;
+    public $backoff = [10, 30, 60];
+    public $timeout = 30;
+
+    public function __construct(int $bookingId)
     {
-        $this->booking = $booking;
+        $this->bookingId = $bookingId;
+        $this->onQueue('emails');
     }
 
     public function handle(): void
     {
-        try {
-            // Đảm bảo user đã load
-            $user = $this->booking->user;
-
-            if ($user && $user->email) {
-                Mail::to($user->email)->send(new BookingConfirmedMail($this->booking));
-            } else {
-                Log::warning('SendBookingEmailJob: Booking ' . $this->booking->booking_id . ' does not have a valid user email.');
-            }
-        } catch (\Exception $e) {
-            Log::error('SendBookingEmailJob Error: ' . $e->getMessage());
-            // Có thể throw lại để retry nếu cần thiết
-            throw $e;
+        $booking = Booking::with('user')->find($this->bookingId);
+        if (!$booking) {
+            Log::warning("SendBookingEmailJob: Booking #{$this->bookingId} not found. Skipping.");
+            return;
         }
+
+        $user = $booking->user;
+        if ($user && !empty($user->email)) {
+            Mail::to($user->email)->send(new BookingConfirmedMail($booking));
+            Log::info("SendBookingEmailJob: Confirmation email sent for booking #{$this->bookingId} to {$user->email}");
+        } else {
+            Log::warning("SendBookingEmailJob: Booking #{$this->bookingId} does not have a valid user email.");
+        }
+    }
+
+    public function failed(\Throwable $exception): void
+    {
+        Log::error("SendBookingEmailJob Failed for booking #{$this->bookingId}: " . $exception->getMessage());
     }
 }

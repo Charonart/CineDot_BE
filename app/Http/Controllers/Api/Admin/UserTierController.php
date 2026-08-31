@@ -17,15 +17,23 @@ class UserTierController extends Controller
     {
         $tiers = UserTier::orderBy('min_points', 'asc')->get();
 
-        $tierData = $tiers->map(function ($tier, $index) use ($tiers) {
-            $nextTier = $tiers->get($index + 1);
-
-            // Tính số lượng user thuộc khoảng điểm của tier này
-            $userCountQuery = User::where('total_points', '>=', $tier->min_points);
-            if ($nextTier) {
-                $userCountQuery->where('total_points', '<', $nextTier->min_points);
+        $selects = [];
+        foreach ($tiers as $index => $tier) {
+            $min = (int) $tier->min_points;
+            $next = $tiers->get($index + 1);
+            if ($next) {
+                $max = (int) $next->min_points;
+                $selects[] = "COUNT(CASE WHEN total_points >= {$min} AND total_points < {$max} THEN 1 END) as tier_{$tier->user_tier_id}";
+            } else {
+                $selects[] = "COUNT(CASE WHEN total_points >= {$min} THEN 1 END) as tier_{$tier->user_tier_id}";
             }
-            $membersCount = $userCountQuery->count();
+        }
+
+        $countsRow = (!empty($selects) && $tiers->isNotEmpty()) ? User::selectRaw(implode(', ', $selects))->first() : null;
+
+        $tierData = $tiers->map(function ($tier) use ($countsRow) {
+            $key = "tier_{$tier->user_tier_id}";
+            $membersCount = $countsRow ? (int) ($countsRow->{$key} ?? 0) : 0;
 
             return [
                 'id'               => $tier->user_tier_id,
@@ -65,6 +73,7 @@ class UserTierController extends Controller
         ]);
 
         $tier = UserTier::create($validated);
+        \Illuminate\Support\Facades\Cache::forget('user_tiers:all');
 
         return response()->json([
             'success' => true,
@@ -96,6 +105,7 @@ class UserTierController extends Controller
         ]);
 
         $tier->update($validated);
+        \Illuminate\Support\Facades\Cache::forget('user_tiers:all');
 
         return response()->json([
             'success' => true,
@@ -127,6 +137,7 @@ class UserTierController extends Controller
         }
 
         $tier->delete();
+        \Illuminate\Support\Facades\Cache::forget('user_tiers:all');
 
         return response()->json([
             'success' => true,

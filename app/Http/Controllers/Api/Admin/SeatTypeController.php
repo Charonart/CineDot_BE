@@ -54,6 +54,8 @@ class SeatTypeController extends Controller
         $validated['sort_order'] = $validated['sort_order'] ?? 10;
 
         $seatType = SeatType::create($validated);
+        \Illuminate\Support\Facades\Cache::forget('seat_types:keys');
+        \Illuminate\Support\Facades\Cache::forget('seat_types:active_list');
 
         return response()->json([
             'success' => true,
@@ -93,6 +95,8 @@ class SeatTypeController extends Controller
         ]);
 
         $seatType->update($validated);
+        \Illuminate\Support\Facades\Cache::forget('seat_types:keys');
+        \Illuminate\Support\Facades\Cache::forget('seat_types:active_list');
 
         return response()->json([
             'success' => true,
@@ -126,6 +130,8 @@ class SeatTypeController extends Controller
         }
 
         $seatType->delete();
+        \Illuminate\Support\Facades\Cache::forget('seat_types:keys');
+        \Illuminate\Support\Facades\Cache::forget('seat_types:active_list');
 
         return response()->json([
             'success' => true,

@@ -112,6 +112,24 @@ class SeatService
                   ->where('created_at', '>=', \Carbon\Carbon::now()->subSeconds($ttlSeconds));
         })->pluck('showtime_seat_id')->flip()->toArray();
 
+        // Single batch Redis pipeline lookup for all seats
+        $heldInRedisMap = [];
+        try {
+            $pipelineResults = Redis::pipeline(function ($pipe) use ($showtimeId, $seats) {
+                foreach ($seats as $ss) {
+                    $pipe->exists("hold:showtime:{$showtimeId}:seat:{$ss->showtime_seat_id}");
+                }
+            });
+
+            foreach ($seats as $idx => $ss) {
+                if (!empty($pipelineResults[$idx])) {
+                    $heldInRedisMap[$ss->showtime_seat_id] = true;
+                }
+            }
+        } catch (\Throwable $e) {
+            // Redis fallback
+        }
+
         $basePrice = (float) $showtime->base_price;
 
         $seatList = [];
@@ -119,13 +137,7 @@ class SeatService
             $status = strtoupper($ss->status);
             if ($status === 'AVAILABLE') {
                 $isHeldInDb = isset($pendingSeatIds[$ss->showtime_seat_id]);
-                $isHeldInRedis = false;
-                try {
-                    $redisKey = "hold:showtime:{$showtimeId}:seat:{$ss->showtime_seat_id}";
-                    $isHeldInRedis = (bool) Redis::exists($redisKey);
-                } catch (\Exception $e) {
-                    // Redis fallback
-                }
+                $isHeldInRedis = isset($heldInRedisMap[$ss->showtime_seat_id]);
 
                 if ($isHeldInDb || $isHeldInRedis) {
                     $status = 'HOLDING';
@@ -155,10 +167,12 @@ class SeatService
             ];
         }
 
-        $allActiveSeatTypes = SeatType::where('is_active', true)
-            ->orderBy('sort_order', 'asc')
-            ->orderBy('surcharge_amount', 'asc')
-            ->get();
+        $allActiveSeatTypes = \Illuminate\Support\Facades\Cache::remember('seat_types:active_list', 3600, function () {
+            return SeatType::where('is_active', true)
+                ->orderBy('sort_order', 'asc')
+                ->orderBy('surcharge_amount', 'asc')
+                ->get();
+        });
 
         return [
             'showtime' => [

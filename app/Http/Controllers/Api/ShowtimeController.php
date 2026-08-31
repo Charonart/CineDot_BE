@@ -56,8 +56,6 @@ class ShowtimeController extends Controller
         $showtimeData['movie'] = new MovieResource($schedule->movie);
         $showtimeData['cinema'] = new CinemaResource($cinema);
 
-        $cinema = $schedule->room->cinema;
-
         return response()->json([
             'success' => true,
             'data'    => $showtimeData,
@@ -70,7 +68,7 @@ class ShowtimeController extends Controller
             ? Movie::findOrFail((int) $identifier)
             : Movie::where('slug', $identifier)->firstOrFail();
 
-        $grouped = $this->showtimeService->getShowtimesByMovie($movie->movie_id, $request->validated());
+        $grouped = $this->showtimeService->getShowtimesByMovie($movie, $request->validated());
 
         $results = $grouped->map(function ($item) {
             return [
@@ -127,20 +125,31 @@ class ShowtimeController extends Controller
                   ->where('created_at', '>=', \Carbon\Carbon::now()->subSeconds($ttlSeconds));
         })->pluck('showtime_seat_id')->flip()->toArray();
 
+        // Single batch Redis pipeline lookup for all seats
+        $heldInRedisMap = [];
+        try {
+            $pipelineResults = \Illuminate\Support\Facades\Redis::pipeline(function ($pipe) use ($id, $showtimeSeats) {
+                foreach ($showtimeSeats as $seat) {
+                    $pipe->exists("hold:showtime:{$id}:seat:{$seat->showtime_seat_id}");
+                }
+            });
+
+            foreach ($showtimeSeats as $idx => $seat) {
+                if (!empty($pipelineResults[$idx])) {
+                    $heldInRedisMap[$seat->showtime_seat_id] = true;
+                }
+            }
+        } catch (\Throwable $e) {
+            // Redis fallback
+        }
+
         $seatsData = [];
         foreach ($showtimeSeats as $seat) {
             $status = strtolower($seat->status);
             
             if ($status === 'available') {
                 $isHeldInDb = isset($pendingSeatIds[$seat->showtime_seat_id]);
-                $isHeldInRedis = false;
-                
-                try {
-                    $redisKey = "hold:showtime:{$id}:seat:{$seat->showtime_seat_id}";
-                    $isHeldInRedis = (bool) \Illuminate\Support\Facades\Redis::exists($redisKey);
-                } catch (\Exception $e) {
-                    // Redis fallback
-                }
+                $isHeldInRedis = isset($heldInRedisMap[$seat->showtime_seat_id]);
 
                 if ($isHeldInDb || $isHeldInRedis) {
                     $status = 'holding';

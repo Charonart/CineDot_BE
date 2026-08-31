@@ -49,6 +49,7 @@ class ComboController extends Controller
     public function store(StoreComboRequest $request)
     {
         $combo = Combo::create($request->validated());
+        \Illuminate\Support\Facades\Cache::forget('combos:active');
 
         return response()->json([
             'success' => true,
@@ -77,6 +78,7 @@ class ComboController extends Controller
     {
         $combo = Combo::findOrFail($id);
         $combo->update($request->validated());
+        \Illuminate\Support\Facades\Cache::forget('combos:active');
 
         return response()->json([
             'success' => true,
@@ -92,6 +94,7 @@ class ComboController extends Controller
     {
         $combo = Combo::findOrFail($id);
         $combo->delete();
+        \Illuminate\Support\Facades\Cache::forget('combos:active');
 
         return response()->json([
             'success' => true,

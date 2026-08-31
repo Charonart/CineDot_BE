@@ -14,11 +14,17 @@ trait HasContextRoles
      */
     public function getContextRoles()
     {
-        return DB::table('user_roles')
+        if (isset($this->cachedContextRoles)) {
+            return $this->cachedContextRoles;
+        }
+
+        $this->cachedContextRoles = DB::table('user_roles')
             ->join('roles', 'user_roles.role_id', '=', 'roles.role_id')
             ->where('user_roles.user_id', $this->user_id)
             ->select('user_roles.*', 'roles.name as role_name')
             ->get();
+
+        return $this->cachedContextRoles;
     }
 
     /**
@@ -100,20 +106,25 @@ trait HasContextRoles
      */
     protected function roleHasPermission(int $roleId, string $permissionName): bool
     {
-        $role = Role::find($roleId);
-        if (!$role) {
-            return false;
+        static $rolePermCache = [];
+
+        if (!isset($rolePermCache[$roleId])) {
+            $role = Role::find($roleId);
+            if (!$role) {
+                $rolePermCache[$roleId] = [];
+            } elseif (in_array(strtolower($role->name), ['super_admin', 'super admin', 'admin'])) {
+                $rolePermCache[$roleId] = ['*'];
+            } else {
+                $rolePermCache[$roleId] = DB::table('role_permissions')
+                    ->join('permissions', 'role_permissions.permission_id', '=', 'permissions.permission_id')
+                    ->where('role_permissions.role_id', $roleId)
+                    ->pluck('permissions.name')
+                    ->toArray();
+            }
         }
 
-        if (in_array(strtolower($role->name), ['super_admin', 'super admin', 'admin'])) {
-            return true;
-        }
-
-        return DB::table('role_permissions')
-            ->join('permissions', 'role_permissions.permission_id', '=', 'permissions.permission_id')
-            ->where('role_permissions.role_id', $roleId)
-            ->where('permissions.name', $permissionName)
-            ->exists();
+        $perms = $rolePermCache[$roleId];
+        return in_array('*', $perms, true) || in_array($permissionName, $perms, true);
     }
 
     /**

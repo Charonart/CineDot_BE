@@ -14,10 +14,12 @@ class BannerController extends Controller
      */
     public function index()
     {
-        $banners = Banner::where('is_active', true)
-            ->orderBy('order', 'asc')
-            ->orderBy('banner_id', 'desc')
-            ->get();
+        $banners = \Illuminate\Support\Facades\Cache::remember('banners:active', 1800, function () {
+            return Banner::where('is_active', true)
+                ->orderBy('order', 'asc')
+                ->orderBy('banner_id', 'desc')
+                ->get();
+        });
 
         return response()->json([
             'success' => true,

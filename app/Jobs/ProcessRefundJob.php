@@ -23,6 +23,13 @@ class ProcessRefundJob implements ShouldQueue
     protected $returnVoucher;
 
     /**
+     * Queue configuration & retry policies
+     */
+    public $tries = 3;
+    public $backoff = [10, 30];
+    public $timeout = 45;
+
+    /**
      * Create a new job instance.
      */
     public function __construct(int $bookingId, int $refundPercentage, bool $returnVoucher)
@@ -30,6 +37,7 @@ class ProcessRefundJob implements ShouldQueue
         $this->bookingId = $bookingId;
         $this->refundPercentage = $refundPercentage;
         $this->returnVoucher = $returnVoucher;
+        $this->onQueue('high');
     }
 
     /**
@@ -93,6 +101,15 @@ class ProcessRefundJob implements ShouldQueue
             );
 
             Log::info("ProcessRefundJob Completed: Booking ID {$this->bookingId} refunded successfully at {$this->refundPercentage}%.");
+
+            // Dispatch Refund Email
+            if ($booking->user && !empty($booking->user->email)) {
+                try {
+                    \Illuminate\Support\Facades\Mail::to($booking->user->email)->queue(new \App\Mail\BookingCancelledMail($booking, $this->refundPercentage));
+                } catch (\Throwable $e) {
+                    Log::warning("Failed to send BookingCancelledMail for booking #{$this->bookingId}: " . $e->getMessage());
+                }
+            }
         });
     }
 }

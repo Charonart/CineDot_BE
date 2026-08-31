@@ -117,6 +117,7 @@ class MovieController extends Controller
             }
 
             DB::commit();
+            \Illuminate\Support\Facades\Cache::forget('movies:navbar');
 
             return response()->json([
                 'success' => true,
@@ -175,26 +176,28 @@ class MovieController extends Controller
 
             $movie->update($data);
 
-            if ($request->has('genre_ids')) {
-                $movie->genres()->sync($request->genre_ids);
+            // Sync Genres
+            if (isset($data['genre_ids'])) {
+                $movie->genres()->sync($data['genre_ids']);
             }
 
-            if ($request->has('trailer_url')) {
-                // Remove old trailer and add new one
-                $movie->videos()->where('type', 'Trailer')->delete();
-                if (!empty($request->trailer_url)) {
-                    $movie->videos()->create([
-                        'name' => 'Trailer',
-                        'key' => $this->extractYoutubeKey($request->trailer_url),
-                        'site' => 'YouTube',
-                        'type' => 'Trailer',
-                        'official' => true,
-                        'published_at' => now(),
-                    ]);
+            // Sync / Replace Trailer Videos
+            if (isset($data['trailer_url']) && !empty($data['trailer_url'])) {
+                $ytKey = $this->extractYoutubeKey($data['trailer_url']);
+                if ($ytKey) {
+                    $movie->videos()->updateOrCreate(
+                        ['movie_id' => $movie->movie_id, 'type' => 'Trailer'],
+                        [
+                            'site' => 'YouTube',
+                            'key'  => $ytKey,
+                            'name' => "Trailer chính thức - {$movie->title}",
+                        ]
+                    );
                 }
             }
 
             DB::commit();
+            \Illuminate\Support\Facades\Cache::forget('movies:navbar');
 
             return response()->json([
                 'success' => true,
@@ -220,6 +223,7 @@ class MovieController extends Controller
         
         // Soft delete
         $movie->delete();
+        \Illuminate\Support\Facades\Cache::forget('movies:navbar');
 
         return response()->json([
             'success' => true,
@@ -282,6 +286,7 @@ class MovieController extends Controller
         }
 
         $movie->update([$field => $value]);
+        \Illuminate\Support\Facades\Cache::forget('movies:navbar');
 
         $arr = $movie->fresh(['genres', 'videos'])->toArray();
         $arr['id'] = $movie->movie_id;
@@ -301,6 +306,7 @@ class MovieController extends Controller
         $movie = Movie::findOrFail($id);
         $nextStatus = $movie->status === 'now_showing' ? 'ended' : 'now_showing';
         $movie->update(['status' => $nextStatus]);
+        \Illuminate\Support\Facades\Cache::forget('movies:navbar');
 
         $arr = $movie->fresh(['genres', 'videos'])->toArray();
         $arr['id'] = $movie->movie_id;
@@ -356,6 +362,8 @@ class MovieController extends Controller
                     'message' => "Hành động hàng loạt không hợp lệ: {$action}"
                 ], 422);
         }
+
+        \Illuminate\Support\Facades\Cache::forget('movies:navbar');
 
         return response()->json([
             'success' => true,

@@ -9,35 +9,34 @@ use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 use App\Models\Booking;
 
-class BookingConfirmedMail extends Mailable
+class BookingCancelledMail extends Mailable
 {
     use Queueable, SerializesModels;
 
     public $booking;
+    public int $refundPercentage;
 
-    public function __construct(Booking $booking)
+    public function __construct(Booking $booking, int $refundPercentage = 100)
     {
         $this->booking = $booking->loadMissing([
             'showtime.movie',
             'showtime.room.cinema',
-            'bookingSeats.showtimeSeat',
-            'bookingCombos.combo',
             'user'
         ]);
+        $this->refundPercentage = $refundPercentage;
     }
 
     public function envelope(): Envelope
     {
-        $movieTitle = $this->booking->showtime?->movie?->title ?? 'Phim';
         return new Envelope(
-            subject: "🎟️ Vé xem phim điện tử #{$this->booking->booking_code} - {$movieTitle} | CineDot",
+            subject: "Thông báo Hủy vé #{$this->booking->booking_code} - Hoàn tiền thành công | CineDot",
         );
     }
 
     public function content(): Content
     {
         return new Content(
-            view: 'emails.booking_confirmed',
+            view: 'emails.booking_cancelled',
         );
     }
 

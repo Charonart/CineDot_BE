@@ -36,9 +36,14 @@ class AuthService
             ]);
         }
 
-        // Send registration event & verification email after HTTP response is flushed (< 50ms response time)
+        // Send registration event & welcome onboarding email after HTTP response is flushed (< 50ms response time)
         dispatch(function () use ($user) {
             event(new Registered($user));
+            try {
+                \Illuminate\Support\Facades\Mail::to($user->email)->queue(new \App\Mail\WelcomeUserMail($user));
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning("Failed to queue WelcomeUserMail for user #{$user->user_id}: " . $e->getMessage());
+            }
         })->afterResponse();
 
         $token = $user->createToken('auth_token')->plainTextToken;

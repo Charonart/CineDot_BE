@@ -29,11 +29,21 @@ class BookingController extends Controller
             }
         }
 
-        $totalBookings = (clone $query)->count();
-        $totalRevenue = (float) (clone $query)->whereIn('booking_status', ['completed', 'paid'])->sum('final_amount');
-        $todayRevenue = (float) (clone $query)->whereIn('booking_status', ['completed', 'paid'])->whereDate('created_at', now()->toDateString())->sum('final_amount');
-        $totalCheckedIn = (clone $query)->whereNotNull('checked_in_at')->count();
-        $totalRefunded = (clone $query)->whereIn('booking_status', ['cancelled', 'refunded'])->count();
+        $todayStr = now()->toDateString();
+
+        $stats = (clone $query)->selectRaw("
+            COUNT(*) as total_bookings,
+            COALESCE(SUM(CASE WHEN booking_status IN ('completed', 'paid') THEN final_amount ELSE 0 END), 0) as total_revenue,
+            COALESCE(SUM(CASE WHEN booking_status IN ('completed', 'paid') AND DATE(created_at) = '{$todayStr}' THEN final_amount ELSE 0 END), 0) as today_revenue,
+            COUNT(CASE WHEN checked_in_at IS NOT NULL THEN 1 END) as total_checked_in,
+            COUNT(CASE WHEN booking_status IN ('cancelled', 'refunded') THEN 1 END) as total_refunded
+        ")->first();
+
+        $totalBookings = (int) ($stats->total_bookings ?? 0);
+        $totalRevenue = (float) ($stats->total_revenue ?? 0);
+        $todayRevenue = (float) ($stats->today_revenue ?? 0);
+        $totalCheckedIn = (int) ($stats->total_checked_in ?? 0);
+        $totalRefunded = (int) ($stats->total_refunded ?? 0);
         $checkInRate = $totalBookings > 0 ? round(($totalCheckedIn / $totalBookings) * 100, 1) : 0;
 
         return response()->json([

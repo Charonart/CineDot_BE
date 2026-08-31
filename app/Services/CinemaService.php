@@ -48,10 +48,9 @@ class CinemaService
             ->get();
 
         $grouped = $showtimes->groupBy('movie_id')->map(function ($times) {
-            $movie = $times->first()->movie;
             return [
-                'movie' => $movie,
-                'times' => \App\Http\Resources\ShowtimeResource::collection($times),
+                'movie' => $times->first()->movie,
+                'times' => $times->values(),
             ];
         })->values();
 

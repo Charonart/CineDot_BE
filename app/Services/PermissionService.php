@@ -61,9 +61,21 @@ class PermissionService
     /**
      * Clear user permissions cache on logout or role update.
      */
-    public function clearPermissionsCache(int $userId): void
+    public function clearPermissionsCache(?int $userId = null): void
     {
-        $redisKey = "user:{$userId}:permissions";
-        Redis::del($redisKey);
+        try {
+            if ($userId !== null) {
+                $redisKey = "user:{$userId}:permissions";
+                Redis::del($redisKey);
+            } else {
+                // Clear all user permissions caches
+                $keys = Redis::keys("user:*:permissions");
+                if (!empty($keys)) {
+                    Redis::del($keys);
+                }
+            }
+        } catch (\Throwable $e) {
+            // Redis fallback
+        }
     }
 }

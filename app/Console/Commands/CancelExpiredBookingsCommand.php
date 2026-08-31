@@ -42,12 +42,14 @@ class CancelExpiredBookingsCommand extends Command
                     ->where('status', 'holding')
                     ->update(['status' => 'available']);
 
-                foreach ($seatIds as $sId) {
-                    try {
-                        Redis::del("hold:showtime:{$booking->showtime_id}:seat:{$sId}");
-                    } catch (\Exception $e) {
-                        // Redis fallback
-                    }
+                try {
+                    Redis::pipeline(function ($pipe) use ($booking, $seatIds) {
+                        foreach ($seatIds as $sId) {
+                            $pipe->del("hold:showtime:{$booking->showtime_id}:seat:{$sId}");
+                        }
+                    });
+                } catch (\Throwable $e) {
+                    // Redis fallback
                 }
 
                 try {

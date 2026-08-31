@@ -203,16 +203,17 @@ class BookingCheckInController extends Controller
     public function checkIn(Request $request, string $code)
     {
         $lockKey = "lock:checkin:{$code}";
+        $acquired = false;
         
         try {
-            $acquired = Redis::set($lockKey, true, 'NX', 'EX', 5);
+            $acquired = (bool) Redis::set($lockKey, true, 'NX', 'EX', 5);
             if (!$acquired) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Yêu cầu soát vé đang được xử lý, vui lòng thử lại.'
                 ], 429);
             }
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             // Redis optional fallback
         }
 
@@ -320,9 +321,11 @@ class BookingCheckInController extends Controller
                 ]);
             });
         } finally {
-            try {
-                Redis::del($lockKey);
-            } catch (\Exception $e) {
+            if ($acquired) {
+                try {
+                    Redis::del($lockKey);
+                } catch (\Throwable $e) {
+                }
             }
         }
     }

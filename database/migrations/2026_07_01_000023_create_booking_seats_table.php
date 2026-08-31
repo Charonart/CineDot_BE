@@ -15,6 +15,10 @@ return new class extends Migration
             $table->string('ticket_type')->nullable();
             $table->decimal('price', 12, 2);
             $table->timestamp('created_at')->nullable();
+
+            // Performance Indexes
+            $table->index(['booking_id', 'showtime_seat_id']);
+            $table->index('showtime_seat_id');
         });
     }
 

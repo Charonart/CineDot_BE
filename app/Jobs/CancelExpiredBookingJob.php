@@ -16,9 +16,17 @@ class CancelExpiredBookingJob implements ShouldQueue
 
     public $bookingId;
 
+    /**
+     * Queue configuration & retry policies
+     */
+    public $tries = 3;
+    public $backoff = [5, 10];
+    public $timeout = 30;
+
     public function __construct($bookingId)
     {
         $this->bookingId = $bookingId;
+        $this->onQueue('high');
     }
 
     public function handle(): void
@@ -45,12 +53,14 @@ class CancelExpiredBookingJob implements ShouldQueue
                         ->where('status', 'holding')
                         ->update(['status' => 'available']);
 
-                    foreach ($seatIds as $sId) {
-                        try {
-                            \Illuminate\Support\Facades\Redis::del("hold:showtime:{$booking->showtime_id}:seat:{$sId}");
-                        } catch (\Exception $e) {
-                            // Redis fallback
-                        }
+                    try {
+                        \Illuminate\Support\Facades\Redis::pipeline(function ($pipe) use ($booking, $seatIds) {
+                            foreach ($seatIds as $sId) {
+                                $pipe->del("hold:showtime:{$booking->showtime_id}:seat:{$sId}");
+                            }
+                        });
+                    } catch (\Throwable $e) {
+                        // Redis fallback
                     }
 
                     try {

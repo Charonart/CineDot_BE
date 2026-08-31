@@ -132,6 +132,7 @@ class RoleController extends Controller
 
         if (isset($validated['permission_ids'])) {
             $role->permissions()->sync($validated['permission_ids']);
+            app(\App\Services\PermissionService::class)->clearPermissionsCache();
         }
 
         return response()->json([
@@ -203,6 +204,8 @@ class RoleController extends Controller
 
         $role->permissions()->detach();
         $role->delete();
+
+        app(\App\Services\PermissionService::class)->clearPermissionsCache();
 
         return response()->json([
             'success' => true,

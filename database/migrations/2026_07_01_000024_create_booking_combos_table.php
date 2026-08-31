@@ -16,6 +16,9 @@ return new class extends Migration
             $table->decimal('price_at_booking', 12, 2);
             $table->boolean('is_claimed')->default(false);
             $table->timestamps();
+
+            // Performance Indexes
+            $table->index(['booking_id', 'combo_id']);
         });
     }
 

@@ -97,35 +97,29 @@ class VoucherController extends Controller
      */
     public function stats()
     {
-        $now = Carbon::now();
-        $soon = Carbon::now()->addDays(7);
+        $nowStr = Carbon::now()->toDateTimeString();
+        $soonStr = Carbon::now()->addDays(7)->toDateTimeString();
 
-        $totalVouchers = Voucher::count();
-        $activeVouchers = Voucher::where('is_active', true)
-            ->where(function ($q) use ($now) {
-                $q->whereNull('valid_from')->orWhere('valid_from', '<=', $now);
-            })
-            ->where(function ($q) use ($now) {
-                $q->whereNull('valid_until')->orWhere('valid_until', '>=', $now);
-            })
-            ->where(function ($q) {
-                $q->whereNull('system_limit')->orWhereRaw('used_count < system_limit');
-            })
-            ->count();
-
-        $totalUsedCount = (int) Voucher::sum('used_count');
-        $expiringSoonCount = Voucher::where('is_active', true)
-            ->whereNotNull('valid_until')
-            ->whereBetween('valid_until', [$now, $soon])
-            ->count();
+        $stats = Voucher::selectRaw("
+            COUNT(*) as total_vouchers,
+            SUM(CASE WHEN is_active = true 
+                AND (valid_from IS NULL OR valid_from <= '{$nowStr}') 
+                AND (valid_until IS NULL OR valid_until >= '{$nowStr}') 
+                AND (system_limit IS NULL OR used_count < system_limit) THEN 1 ELSE 0 END) as active_vouchers,
+            COALESCE(SUM(used_count), 0) as total_used_count,
+            SUM(CASE WHEN is_active = true 
+                AND valid_until IS NOT NULL 
+                AND valid_until >= '{$nowStr}' 
+                AND valid_until <= '{$soonStr}' THEN 1 ELSE 0 END) as expiring_soon_count
+        ")->first();
 
         return response()->json([
             'success' => true,
             'data'    => [
-                'total_vouchers'      => $totalVouchers,
-                'active_vouchers'     => $activeVouchers,
-                'total_used_count'    => $totalUsedCount,
-                'expiring_soon_count' => $expiringSoonCount,
+                'total_vouchers'      => (int) ($stats->total_vouchers ?? 0),
+                'active_vouchers'     => (int) ($stats->active_vouchers ?? 0),
+                'total_used_count'    => (int) ($stats->total_used_count ?? 0),
+                'expiring_soon_count' => (int) ($stats->expiring_soon_count ?? 0),
             ]
         ]);
     }

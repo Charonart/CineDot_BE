@@ -10,7 +10,9 @@ class ComboController extends Controller
 {
     public function index()
     {
-        $combos = Combo::where('is_active', true)->get();
+        $combos = \Illuminate\Support\Facades\Cache::remember('combos:active', 3600, function () {
+            return Combo::where('is_active', true)->get();
+        });
 
         return response()->json([
             'success' => true,

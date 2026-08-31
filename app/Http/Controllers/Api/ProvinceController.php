@@ -10,9 +10,13 @@ class ProvinceController extends Controller
 {
     public function index()
     {
+        $provinces = \Illuminate\Support\Facades\Cache::remember('provinces:all', 3600, function () {
+            return Province::all();
+        });
+
         return response()->json([
             'success' => true,
-            'data'    => ProvinceResource::collection(Province::all())
+            'data'    => ProvinceResource::collection($provinces)
         ]);
     }
 }

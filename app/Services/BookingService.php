@@ -47,77 +47,54 @@ class BookingService
 
             $ttlSeconds = (int) env('HOLD_SEAT_EXPIRE_SECONDS', 600);
 
-            // Phase 1: Auto-recover stale DB 'holding' status if Redis key & active pending booking have expired
-            foreach ($seats as $seat) {
-                $redisKey = "hold:showtime:{$showtimeId}:seat:{$seat->showtime_seat_id}";
-                $isHeldInRedis = false;
-                try {
-                    if (Redis::exists($redisKey)) {
-                        $lockVal = Redis::get($redisKey);
-                        $heldBooking = is_numeric($lockVal) ? Booking::find((int) $lockVal) : null;
-                        $isGhostLock = !$heldBooking 
-                            || $heldBooking->booking_status !== 'pending' 
-                            || $heldBooking->showtime_id != $showtimeId 
-                            || $heldBooking->created_at < now()->subSeconds($ttlSeconds);
+            // Fetch active pending bookings for all requested seats in 1 query
+            $activePendingSeats = BookingSeat::whereIn('showtime_seat_id', $showtimeSeatIds)
+                ->whereHas('booking', function ($q) use ($showtimeId, $ttlSeconds) {
+                    $q->where('showtime_id', $showtimeId)
+                      ->where('booking_status', 'pending')
+                      ->where('created_at', '>=', now()->subSeconds($ttlSeconds));
+                })
+                ->with('booking')
+                ->get()
+                ->keyBy('showtime_seat_id');
 
-                        if ($isGhostLock) {
-                            Redis::del($redisKey);
-                        } else {
-                            $isHeldInRedis = true;
-                        }
+            // Batch Redis pipeline lookup for lock values
+            $redisLocks = [];
+            try {
+                $pipeResults = Redis::pipeline(function ($pipe) use ($showtimeId, $showtimeSeatIds) {
+                    foreach ($showtimeSeatIds as $sId) {
+                        $pipe->get("hold:showtime:{$showtimeId}:seat:{$sId}");
                     }
-                } catch (\Exception $e) {}
-
-                $activePending = BookingSeat::where('showtime_seat_id', $seat->showtime_seat_id)
-                    ->whereHas('booking', function ($q) use ($showtimeId, $ttlSeconds) {
-                        $q->where('showtime_id', $showtimeId)
-                          ->where('booking_status', 'pending')
-                          ->where('created_at', '>=', now()->subSeconds($ttlSeconds));
-                    })->first();
-
-                if ($seat->status === 'holding' && !$activePending && !$isHeldInRedis) {
-                    $seat->update(['status' => 'available']);
+                });
+                foreach ($showtimeSeatIds as $idx => $sId) {
+                    $redisLocks[$sId] = $pipeResults[$idx] ?? null;
                 }
-            }
+            } catch (\Throwable $e) {}
 
-            // Phase 2: Check seat status in DB and Redis with exact diagnostic error messages (excluding current user's own pending bookings)
+            // Validate seats status
             foreach ($seats as $seat) {
                 if (in_array($seat->status, ['booked', 'blocked'])) {
                     throw new HttpException(409, "Ghế {$seat->row_name}{$seat->seat_number} (ID {$seat->showtime_seat_id}) đã bị mua hoặc khóa.");
                 }
 
-                $activePending = BookingSeat::where('showtime_seat_id', $seat->showtime_seat_id)
-                    ->whereHas('booking', function ($q) use ($showtimeId, $ttlSeconds, $userId) {
-                        $q->where('showtime_id', $showtimeId)
-                          ->where('user_id', '!=', $userId)
-                          ->where('booking_status', 'pending')
-                          ->where('created_at', '>=', now()->subSeconds($ttlSeconds));
-                    })->first();
-
-                if ($activePending) {
+                $activePending = $activePendingSeats->get($seat->showtime_seat_id);
+                if ($activePending && $activePending->booking && $activePending->booking->user_id != $userId) {
                     throw new HttpException(409, "Ghế {$seat->row_name}{$seat->seat_number} (ID {$seat->showtime_seat_id}) đang bị giữ bởi đơn hàng #{$activePending->booking_id}.");
                 }
 
-                try {
-                    $redisKey = "hold:showtime:{$showtimeId}:seat:{$seat->showtime_seat_id}";
-                    if (Redis::exists($redisKey)) {
-                        $lockVal = Redis::get($redisKey);
-                        $heldBooking = is_numeric($lockVal) ? Booking::find((int) $lockVal) : null;
-                        $isGhostLock = !$heldBooking 
-                            || $heldBooking->booking_status !== 'pending' 
-                            || $heldBooking->showtime_id != $showtimeId 
-                            || $heldBooking->created_at < now()->subSeconds($ttlSeconds);
+                $lockVal = $redisLocks[$seat->showtime_seat_id] ?? null;
+                if ($lockVal) {
+                    $heldBooking = is_numeric($lockVal) ? Booking::find((int) $lockVal) : null;
+                    $isGhostLock = !$heldBooking 
+                        || $heldBooking->booking_status !== 'pending' 
+                        || $heldBooking->showtime_id != $showtimeId 
+                        || $heldBooking->created_at < now()->subSeconds($ttlSeconds);
 
-                        if ($isGhostLock) {
-                            Redis::del($redisKey);
-                        } else if ($heldBooking && $heldBooking->user_id != $userId) {
-                            throw new HttpException(409, "Ghế {$seat->row_name}{$seat->seat_number} (ID {$seat->showtime_seat_id}) đang được giữ bởi đơn hàng #{$heldBooking->booking_id}.");
-                        }
+                    if ($isGhostLock) {
+                        try { Redis::del("hold:showtime:{$showtimeId}:seat:{$seat->showtime_seat_id}"); } catch (\Throwable $e) {}
+                    } elseif ($heldBooking && $heldBooking->user_id != $userId) {
+                        throw new HttpException(409, "Ghế {$seat->row_name}{$seat->seat_number} (ID {$seat->showtime_seat_id}) đang được giữ bởi đơn hàng #{$heldBooking->booking_id}.");
                     }
-                } catch (HttpException $e) {
-                    throw $e;
-                } catch (\Exception $e) {
-                    // Redis connection issue; fallback to DB lock
                 }
             }
 
@@ -127,17 +104,21 @@ class BookingService
                 ->where('booking_status', 'pending')
                 ->get();
 
-            foreach ($previousUserPending as $oldBooking) {
-                $oldSeatIds = BookingSeat::where('booking_id', $oldBooking->booking_id)->pluck('showtime_seat_id')->toArray();
+            if ($previousUserPending->isNotEmpty()) {
+                $prevBookingIds = $previousUserPending->pluck('booking_id');
+                $oldSeatIds = BookingSeat::whereIn('booking_id', $prevBookingIds)->pluck('showtime_seat_id')->toArray();
+                
                 if (!empty($oldSeatIds)) {
                     ShowtimeSeat::whereIn('showtime_seat_id', $oldSeatIds)->update(['status' => 'available']);
-                    foreach ($oldSeatIds as $sId) {
-                        try {
-                            Redis::del("hold:showtime:{$showtimeId}:seat:{$sId}");
-                        } catch (\Exception $e) {}
-                    }
+                    try {
+                        Redis::pipeline(function ($pipe) use ($showtimeId, $oldSeatIds) {
+                            foreach ($oldSeatIds as $sId) {
+                                $pipe->del("hold:showtime:{$showtimeId}:seat:{$sId}");
+                            }
+                        });
+                    } catch (\Throwable $e) {}
                 }
-                $oldBooking->update(['booking_status' => 'cancelled']);
+                Booking::whereIn('booking_id', $prevBookingIds)->update(['booking_status' => 'cancelled']);
             }
 
             // Calculate financial breakdown snapshot using PricingEngineService
@@ -164,34 +145,45 @@ class BookingService
             // Update DB showtime_seats status to holding
             ShowtimeSeat::whereIn('showtime_seat_id', $showtimeSeatIds)->update(['status' => 'holding']);
 
-            // Create BookingSeat entries and set Redis TTL keys
+            // Batch create BookingSeat entries and set Redis TTL keys via pipeline
+            $nowTime = now();
+            $batchSeats = [];
             foreach ($snapshot['items']['tickets'] as $tItem) {
-                $seatId = $tItem['showtime_seat_id'];
-                
-                try {
-                    $redisKey = "hold:showtime:{$showtimeId}:seat:{$seatId}";
-                    Redis::setex($redisKey, $ttlSeconds, $booking->booking_id);
-                } catch (\Exception $e) {
-                    // Redis fallback
-                }
-
-                BookingSeat::create([
+                $batchSeats[] = [
                     'booking_id'       => $booking->booking_id,
-                    'showtime_seat_id' => $seatId,
+                    'showtime_seat_id' => $tItem['showtime_seat_id'],
                     'ticket_type'      => $tItem['seat_type'],
                     'price'            => $tItem['final_seat_price'],
-                ]);
+                    'created_at'       => $nowTime,
+                ];
+            }
+            if (!empty($batchSeats)) {
+                BookingSeat::insert($batchSeats);
             }
 
-            // Create BookingCombo entries
+            try {
+                Redis::pipeline(function ($pipe) use ($showtimeId, $showtimeSeatIds, $ttlSeconds, $booking) {
+                    foreach ($showtimeSeatIds as $seatId) {
+                        $pipe->setex("hold:showtime:{$showtimeId}:seat:{$seatId}", $ttlSeconds, $booking->booking_id);
+                    }
+                });
+            } catch (\Throwable $e) {}
+
+            // Batch create BookingCombo entries
+            $batchCombos = [];
             foreach ($snapshot['items']['combos'] as $cItem) {
-                BookingCombo::create([
+                $batchCombos[] = [
                     'booking_id'       => $booking->booking_id,
                     'combo_id'         => $cItem['combo_id'],
                     'quantity'         => $cItem['quantity'],
                     'price_at_booking' => $cItem['unit_price'],
                     'is_claimed'       => false,
-                ]);
+                    'created_at'       => $nowTime,
+                    'updated_at'       => $nowTime,
+                ];
+            }
+            if (!empty($batchCombos)) {
+                BookingCombo::insert($batchCombos);
             }
 
             return $booking;
@@ -225,26 +217,25 @@ class BookingService
             ->where('status', 'holding')
             ->update(['status' => 'available']);
 
-        foreach ($showtimeSeatIds as $seatId) {
-            try {
-                $redisKey = "hold:showtime:{$showtimeId}:seat:{$seatId}";
-                Redis::del($redisKey);
-            } catch (\Exception $e) {
-                // Redis fallback
-            }
-
-            // Cancel any pending booking in DB for these seats by this user
-            $pendingBookings = Booking::where('user_id', $userId)
-                ->where('showtime_id', $showtimeId)
-                ->where('booking_status', 'pending')
-                ->whereHas('bookingSeats', function ($q) use ($seatId) {
-                    $q->where('showtime_seat_id', $seatId);
-                })->get();
-
-            foreach ($pendingBookings as $pBooking) {
-                $pBooking->update(['booking_status' => 'cancelled']);
-            }
+        // Batch delete Redis keys via pipeline
+        try {
+            Redis::pipeline(function ($pipe) use ($showtimeId, $showtimeSeatIds) {
+                foreach ($showtimeSeatIds as $seatId) {
+                    $pipe->del("hold:showtime:{$showtimeId}:seat:{$seatId}");
+                }
+            });
+        } catch (\Throwable $e) {
+            // Redis fallback
         }
+
+        // Cancel any pending booking in DB for these seats by this user in 1 query
+        Booking::where('user_id', $userId)
+            ->where('showtime_id', $showtimeId)
+            ->where('booking_status', 'pending')
+            ->whereHas('bookingSeats', function ($q) use ($showtimeSeatIds) {
+                $q->whereIn('showtime_seat_id', $showtimeSeatIds);
+            })
+            ->update(['booking_status' => 'cancelled']);
 
         // Broadcast available state so others see seats are unlocked
         try {
@@ -271,16 +262,18 @@ class BookingService
             $booking->update(['booking_status' => 'completed']);
 
             // Update showtime seats to booked in DB
-            $seatIds = BookingSeat::where('booking_id', $booking->booking_id)->pluck('showtime_seat_id');
+            $seatIds = BookingSeat::where('booking_id', $booking->booking_id)->pluck('showtime_seat_id')->toArray();
             ShowtimeSeat::whereIn('showtime_seat_id', $seatIds)->update(['status' => 'booked']);
 
-            // Remove Redis hold keys
-            foreach ($seatIds as $sId) {
-                try {
-                    Redis::del("hold:showtime:{$booking->showtime_id}:seat:{$sId}");
-                } catch (\Exception $e) {
-                    // Redis fallback
-                }
+            // Remove Redis hold keys via pipeline
+            try {
+                Redis::pipeline(function ($pipe) use ($booking, $seatIds) {
+                    foreach ($seatIds as $sId) {
+                        $pipe->del("hold:showtime:{$booking->showtime_id}:seat:{$sId}");
+                    }
+                });
+            } catch (\Throwable $e) {
+                // Redis fallback
             }
 
             // Increment voucher used count if voucher was applied
@@ -289,11 +282,19 @@ class BookingService
             }
 
             $user = $booking->user;
+            $tierUpgraded = false;
+            $newTier = null;
             if ($user) {
+                $oldTier = $user->userTier();
                 // Loyalty points calculation (1 point per 10,000 VND spent) -> updates users.total_points
                 $earnedPoints = (int) round($booking->final_amount / 10000);
                 if ($earnedPoints > 0) {
                     $user->increment('total_points', $earnedPoints);
+                    $user->refresh();
+                    $newTier = $user->userTier();
+                    if ($newTier && (!$oldTier || $newTier->user_tier_id !== $oldTier->user_tier_id)) {
+                        $tierUpgraded = true;
+                    }
                 }
             }
 
@@ -306,16 +307,37 @@ class BookingService
                 $booking->showtime?->movie_id
             );
 
-            return ['booking' => $booking, 'seatIds' => $seatIds->toArray()];
+            return [
+                'booking'      => $booking, 
+                'seatIds'      => (array) $seatIds,
+                'tierUpgraded' => $tierUpgraded,
+                'newTier'      => $newTier
+            ];
         });
 
         $booking = $confirmedResult['booking'];
         $seatIds = $confirmedResult['seatIds'];
 
+        // Dispatch Confirmation Email Job asynchronously
+        try {
+            \App\Jobs\SendBookingEmailJob::dispatch($booking->booking_id);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning("Failed to dispatch SendBookingEmailJob for booking #{$booking->booking_id}: " . $e->getMessage());
+        }
+
+        // Dispatch Tier Upgrade Email if loyalty points unlocked new tier
+        if (!empty($confirmedResult['tierUpgraded']) && !empty($confirmedResult['newTier']) && $booking->user && !empty($booking->user->email)) {
+            try {
+                \Illuminate\Support\Facades\Mail::to($booking->user->email)->queue(new \App\Mail\TierUpgradedMail($booking->user, $confirmedResult['newTier']));
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning("Failed to queue TierUpgradedMail for user #{$booking->user_id}: " . $e->getMessage());
+            }
+        }
+
         // Broadcast booked status in real-time
         if (!empty($seatIds)) {
             try {
-                event(new SeatStatusUpdated($booking->showtime_id, $seatIds, 'booked', $booking->user_id));
+                event(new SeatStatusUpdated($booking->showtime_id, $seatIds, 'booked'));
             } catch (\Exception $e) {
                 \Illuminate\Support\Facades\Log::warning("Failed to broadcast SeatStatusUpdated (booked) for showtime {$booking->showtime_id}: " . $e->getMessage());
             }

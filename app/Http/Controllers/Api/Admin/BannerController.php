@@ -67,6 +67,7 @@ class BannerController extends Controller
     public function store(StoreBannerRequest $request)
     {
         $banner = Banner::create($request->validated());
+        \Illuminate\Support\Facades\Cache::forget('banners:active');
 
         return response()->json([
             'success' => true,
@@ -95,6 +96,7 @@ class BannerController extends Controller
     {
         $banner = Banner::findOrFail($id);
         $banner->update($request->validated());
+        \Illuminate\Support\Facades\Cache::forget('banners:active');
 
         return response()->json([
             'success' => true,
@@ -111,6 +113,7 @@ class BannerController extends Controller
         $banner = Banner::findOrFail($id);
         $banner->is_active = !$banner->is_active;
         $banner->save();
+        \Illuminate\Support\Facades\Cache::forget('banners:active');
 
         return response()->json([
             'success' => true,
@@ -126,6 +129,7 @@ class BannerController extends Controller
     {
         $banner = Banner::findOrFail($id);
         $banner->delete();
+        \Illuminate\Support\Facades\Cache::forget('banners:active');
 
         return response()->json([
             'success' => true,
@@ -157,6 +161,7 @@ class BannerController extends Controller
         }
 
         $banner->update([$field => $value]);
+        \Illuminate\Support\Facades\Cache::forget('banners:active');
 
         return response()->json([
             'success' => true,
@@ -204,6 +209,8 @@ class BannerController extends Controller
                     'message' => "Hành động không hợp lệ: {$action}"
                 ], 422);
         }
+
+        \Illuminate\Support\Facades\Cache::forget('banners:active');
 
         return response()->json([
             'success' => true,

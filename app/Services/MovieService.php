@@ -58,43 +58,45 @@ class MovieService
 
     public function getNavbar()
     {
-        $nowShowing = Movie::with(['genres', 'videos'])
-            ->where('status', 'now_showing')
-            ->orderByDesc('popularity')
-            ->limit(4)
-            ->get();
-
-        if ($nowShowing->isEmpty()) {
+        return \Illuminate\Support\Facades\Cache::remember('movies:navbar', 600, function () {
             $nowShowing = Movie::with(['genres', 'videos'])
+                ->where('status', 'now_showing')
                 ->orderByDesc('popularity')
                 ->limit(4)
                 ->get();
-        }
 
-        $comingSoon = Movie::with(['genres', 'videos'])
-            ->where('status', 'coming_soon')
-            ->orderByDesc('popularity')
-            ->limit(4)
-            ->get();
+            if ($nowShowing->isEmpty()) {
+                $nowShowing = Movie::with(['genres', 'videos'])
+                    ->orderByDesc('popularity')
+                    ->limit(4)
+                    ->get();
+            }
 
-        if ($comingSoon->isEmpty()) {
             $comingSoon = Movie::with(['genres', 'videos'])
-                ->orderByDesc('created_at')
-                ->skip(4)
+                ->where('status', 'upcoming')
+                ->orderByDesc('popularity')
                 ->limit(4)
                 ->get();
-        }
 
-        $trending = Movie::with(['genres', 'videos'])
-            ->orderByDesc('popularity')
-            ->limit(4)
-            ->get();
+            if ($comingSoon->isEmpty()) {
+                $comingSoon = Movie::with(['genres', 'videos'])
+                    ->orderByDesc('created_at')
+                    ->skip(4)
+                    ->limit(4)
+                    ->get();
+            }
 
-        return [
-            'now_showing' => $nowShowing,
-            'coming_soon' => $comingSoon,
-            'trending'    => $trending,
-        ];
+            $trending = Movie::with(['genres', 'videos'])
+                ->orderByDesc('popularity')
+                ->limit(4)
+                ->get();
+
+            return [
+                'now_showing' => $nowShowing,
+                'coming_soon' => $comingSoon,
+                'trending'    => $trending,
+            ];
+        });
     }
 
     public function search(string $keyword, int $perPage = 20)
@@ -127,13 +129,18 @@ class MovieService
         $movie = Movie::with('genres')->findOrFail($movieId);
         $genreIds = $movie->genres->pluck('genre_id')->toArray();
 
-        return Movie::with('genres')
-            ->withCount(['genres as matching_genres_count' => function ($q) use ($genreIds) {
+        if (empty($genreIds)) {
+            return Movie::with(['genres', 'videos'])
+                ->where('movie_id', '!=', $movieId)
+                ->orderByDesc('popularity')
+                ->paginate($perPage);
+        }
+
+        return Movie::with(['genres', 'videos'])
+            ->whereHas('genres', function ($q) use ($genreIds) {
                 $q->whereIn('genres.genre_id', $genreIds);
-            }])
-            ->having('matching_genres_count', '>', 0)
+            })
             ->where('movie_id', '!=', $movieId)
-            ->orderByDesc('matching_genres_count')
             ->orderByDesc('popularity')
             ->paginate($perPage);
     }
@@ -141,16 +148,6 @@ class MovieService
     public function getSimilarBySlug(string $slug, int $perPage = 20)
     {
         $movie = Movie::with('genres')->where('slug', $slug)->firstOrFail();
-        $genreIds = $movie->genres->pluck('genre_id')->toArray();
-
-        return Movie::with('genres')
-            ->withCount(['genres as matching_genres_count' => function ($q) use ($genreIds) {
-                $q->whereIn('genres.genre_id', $genreIds);
-            }])
-            ->having('matching_genres_count', '>', 0)
-            ->where('movie_id', '!=', $movie->movie_id)
-            ->orderByDesc('matching_genres_count')
-            ->orderByDesc('popularity')
-            ->paginate($perPage);
+        return $this->getSimilar($movie->movie_id, $perPage);
     }
 }

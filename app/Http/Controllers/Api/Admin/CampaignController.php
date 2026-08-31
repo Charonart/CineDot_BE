@@ -39,20 +39,27 @@ class CampaignController extends Controller
         $page = (int) $request->get('page', 1);
         $campaigns = $query->paginate($perPage, ['*'], 'page', $page);
 
+        $allVoucherIds = $campaigns->getCollection()->pluck('vouchers.*.voucher_id')->flatten()->filter()->unique()->toArray();
+        $voucherStats = collect();
+        if (!empty($allVoucherIds)) {
+            $voucherStats = Booking::whereIn('voucher_id', $allVoucherIds)
+                ->whereIn('booking_status', ['completed', 'paid'])
+                ->selectRaw('voucher_id, SUM(discount_amount) as total_discount, SUM(final_amount) as total_revenue')
+                ->groupBy('voucher_id')
+                ->get()
+                ->keyBy('voucher_id');
+        }
+
         // Compute summary metrics for each campaign item
-        $items = collect($campaigns->items())->map(function ($camp) {
-            $voucherIds = $camp->vouchers->pluck('voucher_id')->filter();
+        $items = collect($campaigns->items())->map(function ($camp) use ($voucherStats) {
             $usedBudget = 0.0;
             $revenueGenerated = 0.0;
 
-            if ($voucherIds->isNotEmpty()) {
-                $usedBudget = (float) Booking::whereIn('voucher_id', $voucherIds)
-                    ->whereIn('booking_status', ['completed', 'paid'])
-                    ->sum('discount_amount');
-
-                $revenueGenerated = (float) Booking::whereIn('voucher_id', $voucherIds)
-                    ->whereIn('booking_status', ['completed', 'paid'])
-                    ->sum('final_amount');
+            foreach ($camp->vouchers as $v) {
+                if ($st = $voucherStats->get($v->voucher_id)) {
+                    $usedBudget += (float) $st->total_discount;
+                    $revenueGenerated += (float) $st->total_revenue;
+                }
             }
 
             $budget = (float) ($camp->budget ?? 0);

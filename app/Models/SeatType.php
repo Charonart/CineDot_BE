@@ -72,13 +72,19 @@ class SeatType extends Model
         }
 
         // Check if exists in cached/queried seat types
-        try {
-            $exists = static::where('seat_type', $cleaned)->exists();
-            if ($exists) {
-                return $cleaned;
+        static $cachedKeys = null;
+        if ($cachedKeys === null) {
+            try {
+                $cachedKeys = \Illuminate\Support\Facades\Cache::remember('seat_types:keys', 3600, function () {
+                    return static::pluck('seat_type')->map(fn($k) => strtolower($k))->flip()->toArray();
+                });
+            } catch (\Throwable $e) {
+                $cachedKeys = [];
             }
-        } catch (\Exception $e) {
-            // DB fallback
+        }
+
+        if (isset($cachedKeys[$cleaned])) {
+            return $cleaned;
         }
 
         // Fallback for vip / couple

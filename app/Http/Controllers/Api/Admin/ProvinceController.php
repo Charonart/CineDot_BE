@@ -44,6 +44,7 @@ class ProvinceController extends Controller
     public function store(StoreProvinceRequest $request)
     {
         $province = Province::create($request->validated());
+        \Illuminate\Support\Facades\Cache::forget('provinces:all');
 
         return response()->json([
             'success' => true,
@@ -72,6 +73,7 @@ class ProvinceController extends Controller
     {
         $province = Province::findOrFail($id);
         $province->update($request->validated());
+        \Illuminate\Support\Facades\Cache::forget('provinces:all');
 
         return response()->json([
             'success' => true,
@@ -87,6 +89,7 @@ class ProvinceController extends Controller
     {
         $province = Province::findOrFail($id);
         $province->delete();
+        \Illuminate\Support\Facades\Cache::forget('provinces:all');
 
         return response()->json([
             'success' => true,

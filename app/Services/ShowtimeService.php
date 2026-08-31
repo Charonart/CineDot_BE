@@ -56,9 +56,11 @@ class ShowtimeService
 
     public function getShowtimesByMovie($movieIdentifier, array $filters)
     {
-        $movie = is_numeric($movieIdentifier)
-            ? Movie::findOrFail((int) $movieIdentifier)
-            : Movie::where('slug', $movieIdentifier)->firstOrFail();
+        $movie = $movieIdentifier instanceof Movie
+            ? $movieIdentifier
+            : (is_numeric($movieIdentifier)
+                ? Movie::findOrFail((int) $movieIdentifier)
+                : Movie::where('slug', $movieIdentifier)->firstOrFail());
 
         $query = Showtime::with(['room.cinema.province'])
             ->withCount(['showtimeSeats as available_seats' => fn($q) => $q->where('status', 'available')])

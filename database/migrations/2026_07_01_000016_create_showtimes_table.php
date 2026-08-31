@@ -17,6 +17,11 @@ return new class extends Migration
             $table->json('layout_snaps')->nullable();
             $table->decimal('base_price', 12, 2)->default(0);
             $table->timestamps();
+
+            // Performance Indexes
+            $table->index('showtime_start');
+            $table->index(['movie_id', 'showtime_start']);
+            $table->index(['room_id', 'showtime_start']);
         });
     }
 

@@ -26,6 +26,10 @@ return new class extends Migration
             $table->integer('used_count')->default(0);
             $table->boolean('is_active')->default(true);
             $table->timestamps();
+
+            // Performance Indexes
+            $table->index(['code', 'is_active']);
+            $table->index(['is_active', 'valid_from', 'valid_until']);
         });
     }
 

@@ -93,6 +93,8 @@ class PricingRuleController extends Controller
             'is_active'      => $validated['is_active'] ?? true,
         ]);
 
+        \Illuminate\Support\Facades\Cache::forget('pricing_rules:active');
+
         return response()->json([
             'success' => true,
             'message' => 'Tạo quy tắc giá thành công.',
@@ -138,6 +140,7 @@ class PricingRuleController extends Controller
         }
 
         $rule->update($validated);
+        \Illuminate\Support\Facades\Cache::forget('pricing_rules:active');
 
         return response()->json([
             'success' => true,
@@ -153,6 +156,7 @@ class PricingRuleController extends Controller
     {
         $rule = PricingRule::findOrFail($id);
         $rule->delete();
+        \Illuminate\Support\Facades\Cache::forget('pricing_rules:active');
 
         return response()->json([
             'success' => true,
@@ -167,6 +171,7 @@ class PricingRuleController extends Controller
     {
         $rule = PricingRule::findOrFail($id);
         $rule->update(['is_active' => !$rule->is_active]);
+        \Illuminate\Support\Facades\Cache::forget('pricing_rules:active');
 
         return response()->json([
             'success' => true,

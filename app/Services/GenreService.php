@@ -8,6 +8,8 @@ class GenreService
 {
     public function getAll()
     {
-        return Genre::orderBy('genre_name')->get();
+        return \Illuminate\Support\Facades\Cache::remember('genres:all', 3600, function () {
+            return Genre::orderBy('genre_name')->get();
+        });
     }
 }

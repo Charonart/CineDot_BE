@@ -24,6 +24,12 @@ return new class extends Migration
             $table->integer('duration')->nullable();
             $table->enum('status', ['upcoming', 'now_showing', 'ended'])->default('upcoming');
             $table->timestamps();
+
+            // Performance Indexes
+            $table->index('popularity');
+            $table->index('status');
+            $table->index(['status', 'popularity']);
+            $table->index('release_date');
         });
     }
 

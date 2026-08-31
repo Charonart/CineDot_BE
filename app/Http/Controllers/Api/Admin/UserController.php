@@ -125,8 +125,8 @@ class UserController extends Controller
             }
         ])->findOrFail($id);
 
-        $totalSpent = (float) $user->bookings()->where('status', 'paid')->sum('total_price');
-        $paidBookingsCount = $user->bookings()->where('status', 'paid')->count();
+        $totalSpent = (float) $user->bookings()->whereIn('booking_status', ['completed', 'paid'])->sum('final_amount');
+        $paidBookingsCount = $user->bookings()->whereIn('booking_status', ['completed', 'paid'])->count();
 
         return response()->json([
             'success' => true,
@@ -141,9 +141,9 @@ class UserController extends Controller
                         'movie_title'  => $b->showtime?->movie?->title ?? 'N/A',
                         'cinema_name'  => $b->showtime?->room?->cinema?->cinema_name ?? 'N/A',
                         'room_name'    => $b->showtime?->room?->room_name ?? 'N/A',
-                        'show_time'    => $b->showtime?->start_time?->toISOString(),
-                        'total_price'  => (float) $b->total_price,
-                        'status'       => $b->status,
+                        'show_time'    => $b->showtime?->showtime_start ? \Carbon\Carbon::parse($b->showtime->showtime_start)->toISOString() : null,
+                        'total_price'  => (float) $b->final_amount,
+                        'status'       => $b->booking_status,
                         'created_at'   => $b->created_at?->toISOString(),
                     ];
                 }),

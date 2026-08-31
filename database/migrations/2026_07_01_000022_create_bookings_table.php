@@ -21,6 +21,11 @@ return new class extends Migration
             $table->text('notes')->nullable();
             $table->timestamp('checked_in_at')->nullable();
             $table->timestamps();
+
+            // Performance Indexes
+            $table->index(['user_id', 'created_at']);
+            $table->index(['showtime_id', 'booking_status']);
+            $table->index(['booking_status', 'created_at']);
         });
     }
 

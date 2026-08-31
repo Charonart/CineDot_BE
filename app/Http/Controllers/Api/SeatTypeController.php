@@ -13,10 +13,12 @@ class SeatTypeController extends Controller
      */
     public function index()
     {
-        $seatTypes = SeatType::where('is_active', true)
-            ->orderBy('sort_order', 'asc')
-            ->orderBy('surcharge_amount', 'asc')
-            ->get();
+        $seatTypes = \Illuminate\Support\Facades\Cache::remember('seat_types:active_list', 3600, function () {
+            return SeatType::where('is_active', true)
+                ->orderBy('sort_order', 'asc')
+                ->orderBy('surcharge_amount', 'asc')
+                ->get();
+        });
 
         return response()->json([
             'success' => true,

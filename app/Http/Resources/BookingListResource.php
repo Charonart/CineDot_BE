@@ -35,8 +35,10 @@ class BookingListResource extends JsonResource
             'movie'           => $movie ? [
                 'movie_id'   => $movie->movie_id,
                 'title'      => $movie->title,
+                'slug'       => $movie->slug,
                 'poster_url' => $movie->poster_path,
                 'duration'   => $movie->duration,
+                'age_rating' => $movie->adult ? 'T18' : 'P',
             ] : null,
             'cinema'          => $cinema ? [
                 'cinema_id'   => $cinema->cinema_id,
@@ -49,8 +51,8 @@ class BookingListResource extends JsonResource
             ] : null,
             'showtime'        => $showtime ? [
                 'showtime_id'    => $showtime->showtime_id,
-                'showtime_start' => $showtime->showtime_start,
-                'showtime_end'   => $showtime->showtime_end,
+                'showtime_start' => $showtime->showtime_start ? \Carbon\Carbon::parse($showtime->showtime_start)->toIso8601String() : null,
+                'showtime_end'   => $showtime->showtime_end ? \Carbon\Carbon::parse($showtime->showtime_end)->toIso8601String() : null,
             ] : null,
             'total_seats'     => count($seatNames),
             'seats_summary'   => implode(', ', $seatNames),

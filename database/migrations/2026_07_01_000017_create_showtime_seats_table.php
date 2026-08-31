@@ -16,6 +16,10 @@ return new class extends Migration
             $table->string('row_name', 10);
             $table->string('seat_number', 10);
             $table->enum('status', ['available', 'selecting', 'holding', 'booked', 'blocked'])->default('available');
+
+            // Performance Indexes
+            $table->index(['showtime_id', 'status']);
+            $table->index(['showtime_id', 'seat_type']);
         });
     }
 

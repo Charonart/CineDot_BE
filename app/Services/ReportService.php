@@ -73,11 +73,8 @@ class ReportService
         $query = $this->buildRevenueQuery($user, $filters);
 
         $totalRevenue = (float) (clone $query)->sum('final_amount');
-        $bookingIds = (clone $query)->pluck('booking_id');
 
-        $totalTicketsSold = $bookingIds->isNotEmpty()
-            ? (int) BookingSeat::whereIn('booking_id', $bookingIds)->count()
-            : 0;
+        $totalTicketsSold = (int) BookingSeat::whereIn('booking_id', (clone $query)->select('booking_id'))->count();
 
         $cinemaName = 'Tất cả cụm rạp';
         if (!empty($filters['cinema_id'])) {
@@ -105,7 +102,7 @@ class ReportService
         ];
 
         if ($groupBy === 'day') {
-            $reportData['chart'] = $this->getDailyChartData($query, $bookingIds, $startDate, $endDate);
+            $reportData['chart'] = $this->getDailyChartData($query, $startDate, $endDate);
         }
 
         return $reportData;
@@ -114,7 +111,7 @@ class ReportService
     /**
      * Aggregate daily revenue and tickets sold, with missing dates filled as 0.
      */
-    public function getDailyChartData(Builder $baseQuery, $bookingIds, ?string $startDate, ?string $endDate): array
+    public function getDailyChartData(Builder $baseQuery, ?string $startDate, ?string $endDate): array
     {
         // 1. Group revenue by date
         $dailyRevenueQuery = (clone $baseQuery)
@@ -123,16 +120,13 @@ class ReportService
             ->pluck('daily_revenue', 'date_val')
             ->toArray();
 
-        // 2. Group tickets sold by date
-        $dailyTicketsQuery = [];
-        if ($bookingIds->isNotEmpty()) {
-            $dailyTicketsQuery = BookingSeat::whereIn('booking_seats.booking_id', $bookingIds)
-                ->join('bookings', 'booking_seats.booking_id', '=', 'bookings.booking_id')
-                ->selectRaw('DATE(bookings.created_at) as date_val, COUNT(booking_seats.booking_seat_id) as daily_tickets')
-                ->groupBy(DB::raw('DATE(bookings.created_at)'))
-                ->pluck('daily_tickets', 'date_val')
-                ->toArray();
-        }
+        // 2. Group tickets sold by date via subquery
+        $dailyTicketsQuery = BookingSeat::whereIn('booking_seats.booking_id', (clone $baseQuery)->select('booking_id'))
+            ->join('bookings', 'booking_seats.booking_id', '=', 'bookings.booking_id')
+            ->selectRaw('DATE(bookings.created_at) as date_val, COUNT(booking_seats.booking_seat_id) as daily_tickets')
+            ->groupBy(DB::raw('DATE(bookings.created_at)'))
+            ->pluck('daily_tickets', 'date_val')
+            ->toArray();
 
         // Format dates into normalized Y-m-d string keys
         $dailyRevenue = [];

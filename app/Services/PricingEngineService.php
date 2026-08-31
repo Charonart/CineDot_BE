@@ -36,10 +36,12 @@ class PricingEngineService
         $timeStr = $showtimeStart->format('H:i'); // e.g. "19:00"
         $dateStr = $showtimeStart->format('Y-m-d'); // e.g. "2026-08-15"
 
-        // Fetch active pricing rules sorted by priority (higher priority first)
-        $activeRules = PricingRule::where('is_active', true)
-            ->orderBy('priority', 'desc')
-            ->get();
+        // Fetch active pricing rules sorted by priority (higher priority first) with caching
+        $activeRules = \Illuminate\Support\Facades\Cache::remember('pricing_rules:active', 300, function () {
+            return PricingRule::where('is_active', true)
+                ->orderBy('priority', 'desc')
+                ->get();
+        });
 
         $ticketsBreakdown = [];
         $subtotalTickets = 0;

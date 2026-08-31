@@ -44,6 +44,7 @@ class GenreController extends Controller
     public function store(StoreGenreRequest $request)
     {
         $genre = Genre::create($request->validated());
+        \Illuminate\Support\Facades\Cache::forget('genres:all');
 
         return response()->json([
             'success' => true,
@@ -72,6 +73,7 @@ class GenreController extends Controller
     {
         $genre = Genre::findOrFail($id);
         $genre->update($request->validated());
+        \Illuminate\Support\Facades\Cache::forget('genres:all');
 
         return response()->json([
             'success' => true,
@@ -87,6 +89,7 @@ class GenreController extends Controller
     {
         $genre = Genre::findOrFail($id);
         $genre->delete();
+        \Illuminate\Support\Facades\Cache::forget('genres:all');
 
         return response()->json([
             'success' => true,

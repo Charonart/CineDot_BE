@@ -23,12 +23,19 @@ class ReleaseSeatHoldInRedis
                 $seatId = $bookingSeat->showtime_seat_id ?? $bookingSeat->schedule_seat_id;
                 if ($seatId) {
                     $releasedSeatIds[] = (int) $seatId;
-                    Redis::del("hold:showtime:{$showtimeId}:seat:{$seatId}");
-                    Redis::del("hold:schedule:{$showtimeId}:seat:{$seatId}");
                 }
             }
 
             if (!empty($releasedSeatIds) && $showtimeId) {
+                try {
+                    Redis::pipeline(function ($pipe) use ($showtimeId, $releasedSeatIds) {
+                        foreach ($releasedSeatIds as $seatId) {
+                            $pipe->del("hold:showtime:{$showtimeId}:seat:{$seatId}");
+                            $pipe->del("hold:schedule:{$showtimeId}:seat:{$seatId}");
+                        }
+                    });
+                } catch (\Throwable $e) {}
+
                 \App\Models\ShowtimeSeat::whereIn('showtime_seat_id', $releasedSeatIds)
                     ->where('status', 'holding')
                     ->update(['status' => 'available']);
