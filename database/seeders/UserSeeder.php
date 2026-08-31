@@ -61,9 +61,10 @@ class UserSeeder extends Seeder
             ],
             [
                 'user_id' => 4,
-                'province_id' => null,
+                'role_id' => 1,
+                'province_id' => 1,
                 'username' => 'lequy27102006',
-                'password' => '$2y$12$1XTHwGnMvaAlO16I29m1e.RoOxov1WoD4t/8CWGsXE3s9/qVLIvPe',
+                'password' => Hash::make('Lequy2710'),
                 'email' => 'lequy27102006@gmail.com',
                 'fullname' => 'Nguyen Van B',
                 'avatar' => 'https://cdn.cinedot.vn/avatars/user1.jpg',

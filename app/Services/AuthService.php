@@ -18,14 +18,17 @@ class AuthService
     public function register(array $data)
     {
         $roleName = $data['role'] ?? 'customer';
-        unset($data['role_id'], $data['role']);
+        unset($data['role']);
 
+        $role = \App\Models\Role::where('name', $roleName)->first() ?? \App\Models\Role::where('name', 'customer')->first();
+        $roleId = $role ? $role->role_id : 3;
+
+        $data['role_id'] = $roleId;
         $data['password'] = Hash::make($data['password']);
         $user = User::create($data);
 
-        $role = \App\Models\Role::where('name', $roleName)->first() ?? \App\Models\Role::where('name', 'customer')->first();
         if ($role) {
-            \App\Models\UserRole::create([
+            \App\Models\UserRole::firstOrCreate([
                 'user_id'    => $user->user_id,
                 'role_id'    => $role->role_id,
                 'scope_type' => 'system',
@@ -46,8 +49,10 @@ class AuthService
 
     public function login(array $data)
     {
-        $user = User::where('email', $data['email'])
-            ->orWhere('username', $data['email'])
+        $emailInput = strtolower(trim($data['email']));
+
+        $user = User::whereRaw('LOWER(email) = ?', [$emailInput])
+            ->orWhereRaw('LOWER(username) = ?', [$emailInput])
             ->first();
 
         if (!$user || !Hash::check($data['password'], $user->password)) {

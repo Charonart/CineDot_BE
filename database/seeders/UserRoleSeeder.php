@@ -72,10 +72,10 @@ class UserRoleSeeder extends Seeder
             ];
         }
 
-        if ($customer2 && $customerRole) {
+        if ($customer2 && $adminRole) {
             $assignments[] = [
                 'user_id'    => $customer2->user_id,
-                'role_id'    => $customerRole->role_id,
+                'role_id'    => $adminRole->role_id,
                 'scope_type' => 'system',
                 'scope_id'   => null,
                 'created_at' => now(),
