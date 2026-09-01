@@ -54,17 +54,28 @@ class ShowtimeService
         return $showtimes->groupBy('movie_id')->map(function ($items) {
             $movie = $items->first()->movie;
             
-            $cinemaGroups = $items->groupBy(fn($s) => $s->room->cinema_id)->map(function ($cinemaItems) {
-                $cinema = $cinemaItems->first()->room->cinema;
+            $formatGroups = $items->groupBy(fn($s) => $s->room->screen_type ?? 'standard_2d')->map(function ($formatItems, $screenType) {
+                $cinemaGroups = $formatItems->groupBy(fn($s) => $s->room->cinema_id)->map(function ($cinemaItems) {
+                    $cinema = $cinemaItems->first()->room->cinema;
+                    return [
+                        'cinema' => $cinema,
+                        'times'  => $cinemaItems->values()
+                    ];
+                })->values();
+
+                $catalog = \App\Services\RoomFormatCatalog::getScreenTypes();
+                $formatInfo = $catalog[$screenType] ?? null;
+
                 return [
-                    'cinema' => $cinema,
-                    'times'  => \App\Http\Resources\ShowtimeResource::collection($cinemaItems->values())
+                    'screen_type' => $screenType,
+                    'format_name' => $formatInfo ? $formatInfo['name'] : '2D Digital Tiêu Chuẩn',
+                    'cinemas'     => $cinemaGroups,
                 ];
             })->values();
 
             return [
                 'movie'   => $movie,
-                'cinemas' => $cinemaGroups,
+                'formats' => $formatGroups,
             ];
         })->values();
     }
@@ -111,17 +122,28 @@ class ShowtimeService
 
         return $showtimes->groupBy(fn($s) => $s->showtime_start ? $s->showtime_start->format('Y-m-d') : '')
             ->map(function ($dateItems, $date) {
-                $cinemaGroups = $dateItems->groupBy(fn($s) => $s->room->cinema_id)->map(function ($cinemaItems) {
-                    $cinema = $cinemaItems->first()->room->cinema;
+                $formatGroups = $dateItems->groupBy(fn($s) => $s->room->screen_type ?? 'standard_2d')->map(function ($formatItems, $screenType) {
+                    $cinemaGroups = $formatItems->groupBy(fn($s) => $s->room->cinema_id)->map(function ($cinemaItems) {
+                        $cinema = $cinemaItems->first()->room->cinema;
+                        return [
+                            'cinema' => $cinema,
+                            'times'  => $cinemaItems->values()
+                        ];
+                    })->values();
+
+                    $catalog = \App\Services\RoomFormatCatalog::getScreenTypes();
+                    $formatInfo = $catalog[$screenType] ?? null;
+
                     return [
-                        'cinema' => $cinema,
-                        'times'  => \App\Http\Resources\ShowtimeResource::collection($cinemaItems->values())
+                        'screen_type' => $screenType,
+                        'format_name' => $formatInfo ? $formatInfo['name'] : '2D Digital Tiêu Chuẩn',
+                        'cinemas'     => $cinemaGroups,
                     ];
                 })->values();
 
                 return [
                     'date'    => $date,
-                    'cinemas' => $cinemaGroups,
+                    'formats' => $formatGroups,
                 ];
             })->values();
     }

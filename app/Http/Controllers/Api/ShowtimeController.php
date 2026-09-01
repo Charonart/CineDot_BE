@@ -29,10 +29,16 @@ class ShowtimeController extends Controller
         $results = $grouped->map(function ($item) {
             return [
                 'movie'   => new MovieResource($item['movie']),
-                'cinemas' => $item['cinemas']->map(function ($c) {
+                'formats' => $item['formats']->map(function ($f) {
                     return [
-                        'cinema' => new CinemaResource($c['cinema']),
-                        'times'  => ShowtimeResource::collection($c['times']),
+                        'screen_type' => $f['screen_type'],
+                        'format_name' => $f['format_name'],
+                        'cinemas'     => $f['cinemas']->map(function ($c) {
+                            return [
+                                'cinema' => new CinemaResource($c['cinema']),
+                                'times'  => ShowtimeResource::collection($c['times']),
+                            ];
+                        }),
                     ];
                 }),
             ];
@@ -73,10 +79,16 @@ class ShowtimeController extends Controller
         $results = $grouped->map(function ($item) {
             return [
                 'date'    => $item['date'],
-                'cinemas' => $item['cinemas']->map(function ($c) {
+                'formats' => $item['formats']->map(function ($f) {
                     return [
-                        'cinema' => new CinemaResource($c['cinema']),
-                        'times'  => ShowtimeResource::collection($c['times']),
+                        'screen_type' => $f['screen_type'],
+                        'format_name' => $f['format_name'],
+                        'cinemas'     => $f['cinemas']->map(function ($c) {
+                            return [
+                                'cinema' => new CinemaResource($c['cinema']),
+                                'times'  => ShowtimeResource::collection($c['times']),
+                            ];
+                        }),
                     ];
                 }),
             ];

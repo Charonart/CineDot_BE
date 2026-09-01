@@ -84,7 +84,13 @@ class CinemaController extends Controller
         $results = $grouped->map(function ($item) {
             return [
                 'movie' => new \App\Http\Resources\MovieResource($item['movie']),
-                'times' => \App\Http\Resources\ShowtimeResource::collection($item['times']),
+                'formats' => $item['formats']->map(function ($f) {
+                    return [
+                        'screen_type' => $f['screen_type'],
+                        'format_name' => $f['format_name'],
+                        'times'       => \App\Http\Resources\ShowtimeResource::collection($f['times']),
+                    ];
+                }),
             ];
         });
 

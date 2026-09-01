@@ -48,9 +48,20 @@ class CinemaService
             ->get();
 
         $grouped = $showtimes->groupBy('movie_id')->map(function ($times) {
+            $formatGroups = $times->groupBy(fn($s) => $s->room->screen_type ?? 'standard_2d')->map(function ($formatItems, $screenType) {
+                $catalog = \App\Services\RoomFormatCatalog::getScreenTypes();
+                $formatInfo = $catalog[$screenType] ?? null;
+
+                return [
+                    'screen_type' => $screenType,
+                    'format_name' => $formatInfo ? $formatInfo['name'] : '2D Digital Tiêu Chuẩn',
+                    'times'       => $formatItems->values(),
+                ];
+            })->values();
+
             return [
-                'movie' => $times->first()->movie,
-                'times' => $times->values(),
+                'movie'   => $times->first()->movie,
+                'formats' => $formatGroups,
             ];
         })->values();
 
