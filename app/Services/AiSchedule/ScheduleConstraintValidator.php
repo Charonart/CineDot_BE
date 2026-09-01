@@ -119,7 +119,7 @@ class ScheduleConstraintValidator
     }
 
     /**
-     * Kiểm tra xem 2 khoảng thời gian có bị chồng lấn (kèm buffer time) không
+     * Kiểm tra xem 2 khoảng thời gian trong cùng phòng có bị chồng lấn (kèm buffer time dọn phòng) không
      */
     public static function hasTimeOverlap(
         Carbon $start1,
@@ -129,10 +129,13 @@ class ScheduleConstraintValidator
         Carbon $end2,
         int $buf2
     ): bool {
-        $effStart1 = (clone $start1)->subMinutes($buf1);
-        $effEnd1 = (clone $end1)->addMinutes($buf1);
-
-        return ($start2->lessThan($effEnd1) && $end2->greaterThan($effStart1));
+        if ($start1->lessThanOrEqualTo($start2)) {
+            $busyUntil1 = (clone $end1)->addMinutes($buf1);
+            return $start2->lessThan($busyUntil1);
+        } else {
+            $busyUntil2 = (clone $end2)->addMinutes($buf2);
+            return $start1->lessThan($busyUntil2);
+        }
     }
 
     /**
@@ -150,7 +153,6 @@ class ScheduleConstraintValidator
 
                 if ((int) $st1['room_id'] !== (int) $st2['room_id']) {
                     $start1 = Carbon::parse($st1['showtime_start']);
-                    $start2 = Carbon::parse($st2['showtime_end'] ?? $st2['showtime_start']);
                     $diff = abs($start1->diffInMinutes(Carbon::parse($st2['showtime_start'])));
 
                     if ($diff < $minGapMinutes && $diff >= 0) {
@@ -161,7 +163,7 @@ class ScheduleConstraintValidator
 
                         $warnings[] = [
                             'type'    => 'staggering_congestion',
-                            'message' => "Giãn cách sảnh: Suất '{$m1}' ({$r1}) và '{$m2}' ({$r2}) bắt đầu cách nhau chỉ {$diff} phút (khuyến nghị $\ge$ {$minGapMinutes} phút).",
+                            'message' => "Giãn cách sảnh: Suất '{$m1}' ({$r1}) và '{$m2}' ({$r2}) bắt đầu cách nhau chỉ {$diff} phút (khuyến nghị >= {$minGapMinutes} phút).",
                         ];
                     }
                 }
@@ -170,4 +172,126 @@ class ScheduleConstraintValidator
 
         return $warnings;
     }
+
+    /**
+     * Tự động giải quyết và loại bỏ 100% xung đột thời gian (Auto-Heal & Snap Timeline)
+     * - Tự động lùi giờ bắt đầu đúng theo buffer dọn phòng
+     * - Luôn bảo vệ 100% các suất đã bán vé ($anchorShowtimes)
+     * - Đảm bảo showtime_end = showtime_start + duration thực tế của phim
+     */
+    public static function autoResolveConflicts(
+        array $draftShowtimes,
+        array $anchorShowtimes = [],
+        int $bufferMinutes = 15,
+        string $openingTime = '08:30',
+        string $closingTime = '23:30',
+        string $targetDate = '',
+        array $primeInfo = []
+    ): array {
+        if (empty($draftShowtimes)) {
+            return [];
+        }
+
+        $dateStr = !empty($targetDate) ? $targetDate : Carbon::parse($draftShowtimes[0]['showtime_start'])->format('Y-m-d');
+        $openCarbon = Carbon::parse("{$dateStr} {$openingTime}:00");
+        $closeLimitCarbon = Carbon::parse("{$dateStr} {$closingTime}:00")->addMinutes(90); // Cho phép suất cuối kết thúc muộn hơn đóng cửa 90p
+
+        $primeStartStr = $primeInfo['time_from'] ?? '18:00';
+        $primeEndStr = $primeInfo['time_to'] ?? '22:30';
+
+        // Phân nhóm theo Room
+        $draftsByRoom = [];
+        foreach ($draftShowtimes as $st) {
+            $rId = (int) $st['room_id'];
+            $draftsByRoom[$rId][] = $st;
+        }
+
+        $anchorsByRoom = [];
+        foreach ($anchorShowtimes as $anc) {
+            // Chỉ coi là Anchor cứng (bất khả xâm phạm) nếu suất đã có khách đặt vé hoặc bị khóa cứng
+            if (!empty($anc['is_locked']) || (int) ($anc['booked_seats'] ?? 0) > 0) {
+                $rId = (int) $anc['room_id'];
+                $anchorsByRoom[$rId][] = $anc;
+            }
+        }
+
+        $resolvedShowtimes = [];
+
+        foreach ($draftsByRoom as $roomId => $roomDrafts) {
+            // Sắp xếp các suất nháp và anchor theo giờ bắt đầu
+            usort($roomDrafts, fn ($a, $b) => strcmp($a['showtime_start'], $b['showtime_start']));
+            $roomAnchors = $anchorsByRoom[$roomId] ?? [];
+            usort($roomAnchors, fn ($a, $b) => strcmp($a['showtime_start'], $b['showtime_start']));
+
+            $roomPointer = clone $openCarbon;
+
+            foreach ($roomDrafts as $idx => $st) {
+                $duration = max(30, (int) ($st['duration'] ?? 120));
+                $proposedStart = Carbon::parse($st['showtime_start']);
+
+                // Giờ bắt đầu không được sớm hơn pointer hiện tại và không sớm hơn giờ mở cửa
+                $actualStart = $proposedStart->greaterThan($roomPointer)
+                    ? clone $proposedStart
+                    : clone $roomPointer;
+
+                if ($actualStart->lessThan($openCarbon)) {
+                    $actualStart = clone $openCarbon;
+                }
+
+                $actualEnd = (clone $actualStart)->addMinutes($duration);
+
+                // Kiểm tra va chạm với các suất Anchor trong phòng
+                $collisionWithAnchor = true;
+                $maxAnchorIterations = 10;
+                $iterations = 0;
+
+                while ($collisionWithAnchor && $iterations < $maxAnchorIterations) {
+                    $iterations++;
+                    $collisionWithAnchor = false;
+
+                    foreach ($roomAnchors as $anchor) {
+                        $anchorStart = Carbon::parse($anchor['showtime_start']);
+                        $anchorEnd = Carbon::parse($anchor['showtime_end']);
+                        $anchorBusyUntil = (clone $anchorEnd)->addMinutes((int) ($anchor['buffer_minutes'] ?? $bufferMinutes));
+
+                        $proposedBusyUntil = (clone $actualEnd)->addMinutes($bufferMinutes);
+
+                        // Nếu khoảng [actualStart, proposedBusyUntil] chạm vào [anchorStart, anchorBusyUntil]
+                        if ($actualStart->lessThan($anchorBusyUntil) && $proposedBusyUntil->greaterThan($anchorStart)) {
+                            $actualStart = clone $anchorBusyUntil;
+                            $actualEnd = (clone $actualStart)->addMinutes($duration);
+                            $collisionWithAnchor = true;
+                            break;
+                        }
+                    }
+                }
+
+                // Nếu sau khi lùi giờ mà suất chiếu bắt đầu quá muộn so với giờ đóng cửa
+                if ($actualStart->greaterThan($closeLimitCarbon)) {
+                    continue; // Bỏ qua suất bị tràn giờ đóng cửa
+                }
+
+                $startStr = $actualStart->format('H:i');
+                $isPrime = ($startStr >= $primeStartStr && $startStr <= $primeEndStr);
+
+                $st['showtime_start'] = $actualStart->format('Y-m-d H:i:s');
+                $st['showtime_end'] = $actualEnd->format('Y-m-d H:i:s');
+                $st['duration'] = $duration;
+                $st['buffer_minutes'] = $bufferMinutes;
+                $st['is_prime_time'] = $isPrime;
+                $st['temp_id'] = "draft_{$roomId}_" . $actualStart->format('Hi') . "_{$idx}";
+
+                $resolvedShowtimes[] = $st;
+
+                // Cập nhật pointer của phòng = Giờ kết thúc + thời gian dọn phòng (buffer)
+                $roomPointer = (clone $actualEnd)->addMinutes($bufferMinutes);
+            }
+        }
+
+        // Sắp xếp lại toàn bộ danh sách kết quả theo giờ bắt đầu
+        usort($resolvedShowtimes, fn ($a, $b) => strcmp($a['showtime_start'], $b['showtime_start']));
+
+        return $resolvedShowtimes;
+    }
 }
+

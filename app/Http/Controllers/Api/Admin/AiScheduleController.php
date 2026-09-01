@@ -234,25 +234,28 @@ class AiScheduleController extends Controller
     }
 
     /**
-     * 5. Sinh bản nháp lịch chiếu (Draft Showtimes)
+     * 5. Sinh bản nháp lịch chiếu (Draft Showtimes) - Hỗ trợ Multi-turn Copilot & Scope
      * POST /api/v1/admin/showtimes/ai/generate-draft
      */
     public function generateDraft(Request $request)
     {
         @set_time_limit(0);
         $validated = $request->validate([
-            'cinema_id'           => 'required|exists:cinemas,cinema_id',
-            'target_date'         => 'required|date_format:Y-m-d',
-            'mode'                => 'required|in:preset,prompt',
-            'strategy_id'         => 'nullable|string',
-            'prompt'              => 'nullable|string',
-            'selected_movie_ids'  => 'nullable|array',
-            'selected_movie_ids.*'=> 'integer|exists:movies,movie_id',
-            'selected_room_ids'   => 'nullable|array',
-            'selected_room_ids.*' => 'integer|exists:rooms,room_id',
-            'schedule_mode'       => 'nullable|string|in:smart_fill,optimize,replace_all',
-            'clean_existing_date' => 'nullable|boolean',
-            'override_config'     => 'nullable|array',
+            'cinema_id'               => 'required|exists:cinemas,cinema_id',
+            'target_date'             => 'required|date_format:Y-m-d',
+            'mode'                    => 'required|in:preset,prompt',
+            'strategy_id'             => 'nullable|string',
+            'prompt'                  => 'nullable|string',
+            'selected_movie_ids'      => 'nullable|array',
+            'selected_movie_ids.*'    => 'integer|exists:movies,movie_id',
+            'selected_room_ids'       => 'nullable|array',
+            'selected_room_ids.*'     => 'integer|exists:rooms,room_id',
+            'schedule_mode'           => 'nullable|string|in:smart_fill,optimize,replace_all',
+            'clean_existing_date'     => 'nullable|boolean',
+            'override_config'         => 'nullable|array',
+            'current_draft_showtimes' => 'nullable|array',
+            'chat_history'            => 'nullable|array',
+            'time_range'              => 'nullable|array',
         ]);
 
         try {
@@ -267,7 +270,10 @@ class AiScheduleController extends Controller
                 $validated['selected_movie_ids'] ?? [],
                 $validated['selected_room_ids'] ?? [],
                 $scheduleMode,
-                $validated['override_config'] ?? []
+                $validated['override_config'] ?? [],
+                $validated['current_draft_showtimes'] ?? [],
+                $validated['chat_history'] ?? [],
+                $validated['time_range'] ?? null
             );
 
             return response()->json([
@@ -328,7 +334,7 @@ class AiScheduleController extends Controller
         $cinemaId = (int) $validated['cinema_id'];
         $targetDate = $validated['target_date'];
         $draftShowtimes = $validated['draft_showtimes'];
-        $cleanExisting = (bool) ($validated['clean_existing_date'] ?? false);
+        $cleanExisting = isset($validated['clean_existing_date']) ? (bool) $validated['clean_existing_date'] : true;
 
         $createdShowtimes = [];
         $totalSeatsInserted = 0;
@@ -351,6 +357,7 @@ class AiScheduleController extends Controller
 
             // Cache danh sách ghế vật lý theo phòng để insert nhanh
             $roomSeatsCache = [];
+            $allSeatsToInsert = [];
 
             foreach ($draftShowtimes as $draft) {
                 $roomId = (int) $draft['room_id'];
@@ -374,21 +381,22 @@ class AiScheduleController extends Controller
                 }
 
                 $seats = $roomSeatsCache[$roomId];
-                $seatsToInsert = [];
                 foreach ($seats as $s) {
-                    $seatsToInsert[] = [
+                    $allSeatsToInsert[] = [
                         'showtime_id' => $showtime->showtime_id,
                         'seat_id'     => $s->seat_id,
                         'status'      => 'available',
                     ];
                 }
 
-                if (!empty($seatsToInsert)) {
-                    ShowtimeSeat::insert($seatsToInsert);
-                    $totalSeatsInserted += count($seatsToInsert);
-                }
-
                 $createdShowtimes[] = $showtime;
+            }
+
+            if (!empty($allSeatsToInsert)) {
+                foreach (array_chunk($allSeatsToInsert, 500) as $chunk) {
+                    ShowtimeSeat::insert($chunk);
+                }
+                $totalSeatsInserted = count($allSeatsToInsert);
             }
         });
 
@@ -402,3 +410,4 @@ class AiScheduleController extends Controller
         ]);
     }
 }
+
