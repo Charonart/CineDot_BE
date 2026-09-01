@@ -299,6 +299,22 @@ class PricingEngineService
             }
         }
 
+        // 6.1. Lọc theo định dạng màn hình (Screen Type): e.g. ["imax_laser", "standard_3d"]
+        if ($showtime && isset($conds['screen_types']) && is_array($conds['screen_types'])) {
+            $screenType = $showtime->room?->screen_type;
+            if ($screenType && !in_array(strtolower($screenType), array_map('strtolower', $conds['screen_types']))) {
+                return false;
+            }
+        }
+
+        // 6.2. Lọc theo công nghệ âm thanh (Sound Technology): e.g. ["dolby_atmos", "imax_sound"]
+        if ($showtime && isset($conds['sound_technologies']) && is_array($conds['sound_technologies'])) {
+            $soundTech = $showtime->room?->sound_technology;
+            if ($soundTech && !in_array(strtolower($soundTech), array_map('strtolower', $conds['sound_technologies']))) {
+                return false;
+            }
+        }
+
         // 7. Lọc theo số lượng vé tối thiểu: e.g. min_seats: 2
         if (isset($conds['min_seats']) && $seatCount < (int) $conds['min_seats']) {
             return false;

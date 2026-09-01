@@ -41,6 +41,7 @@ class MovieResource extends JsonResource
                     ? "https://www.youtube.com/watch?v={$trailer->key_value}"
                     : null
             ) : null,
+            'supportedFormats' => $this->supported_formats ?? [],
         ];
     }
 }

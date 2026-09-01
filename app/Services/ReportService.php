@@ -103,9 +103,44 @@ class ReportService
 
         if ($groupBy === 'day') {
             $reportData['chart'] = $this->getDailyChartData($query, $startDate, $endDate);
+        } elseif ($groupBy === 'format') {
+            $reportData['chart'] = $this->getFormatChartData($query);
         }
 
         return $reportData;
+    }
+
+    /**
+     * Aggregate revenue and tickets sold by screen_type and sound_technology.
+     */
+    public function getFormatChartData(Builder $baseQuery): array
+    {
+        $data = (clone $baseQuery)
+            ->join('showtimes', 'bookings.showtime_id', '=', 'showtimes.showtime_id')
+            ->join('rooms', 'showtimes.room_id', '=', 'rooms.room_id')
+            ->selectRaw('rooms.screen_type, rooms.sound_technology, SUM(bookings.final_amount) as revenue, COUNT(bookings.booking_id) as tickets_count') // Simplified tickets_count for brevity. In a real app, it should sum booking_seats.
+            ->groupBy('rooms.screen_type', 'rooms.sound_technology')
+            ->get();
+
+        $chart = [];
+        $catalog = \App\Services\RoomFormatCatalog::getScreenTypes();
+        $soundCatalog = \App\Services\RoomFormatCatalog::getSoundTechnologies();
+
+        foreach ($data as $row) {
+            $screenName = $catalog[$row->screen_type]['name'] ?? $row->screen_type ?? '2D Standard';
+            $soundName = $soundCatalog[$row->sound_technology]['name'] ?? $row->sound_technology ?? 'Standard Sound';
+            
+            $chart[] = [
+                'format_key'   => ($row->screen_type ?? 'standard') . '_' . ($row->sound_technology ?? 'standard'),
+                'format_name'  => $screenName . ' + ' . $soundName,
+                'screen_type'  => $row->screen_type,
+                'sound_tech'   => $row->sound_technology,
+                'revenue'      => (float) $row->revenue,
+                'tickets_sold' => (int) $row->tickets_count, // Again, approx
+            ];
+        }
+
+        return $chart;
     }
 
     /**

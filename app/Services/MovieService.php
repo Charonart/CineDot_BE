@@ -39,21 +39,24 @@ class MovieService
         }
 
         $perPage = $filters['limit'] ?? ($filters['per_page'] ?? 20);
-        return $query->orderByDesc('created_at')->paginate($perPage);
+        $result = $query->orderByDesc('created_at')->paginate($perPage);
+        return $this->attachSupportedFormats($result);
     }
 
     public function getTrending(int $perPage = 20)
     {
-        return Movie::with(['genres', 'videos'])
+        $result = Movie::with(['genres', 'videos'])
             ->orderByDesc('popularity')
             ->paginate($perPage);
+        return $this->attachSupportedFormats($result);
     }
 
     public function getPopular(int $perPage = 20)
     {
-        return Movie::with(['genres', 'videos'])
+        $result = Movie::with(['genres', 'videos'])
             ->orderByDesc('popularity')
             ->paginate($perPage);
+        return $this->attachSupportedFormats($result);
     }
 
     public function getNavbar()
@@ -92,35 +95,40 @@ class MovieService
                 ->get();
 
             return [
-                'now_showing' => $nowShowing,
-                'coming_soon' => $comingSoon,
-                'trending'    => $trending,
+                'now_showing' => $this->attachSupportedFormats($nowShowing),
+                'coming_soon' => $this->attachSupportedFormats($comingSoon),
+                'trending'    => $this->attachSupportedFormats($trending),
             ];
         });
     }
 
     public function search(string $keyword, int $perPage = 20)
     {
-        return Movie::with('genres')
+        $result = Movie::with('genres')
             ->where(function ($q) use ($keyword) {
                 $q->where('title', 'like', '%' . $keyword . '%')
                   ->orWhere('original_title', 'like', '%' . $keyword . '%');
             })
             ->orderByDesc('popularity')
             ->paginate($perPage);
+        return $this->attachSupportedFormats($result);
     }
 
     public function getDetailBySlug(string $slug)
     {
-        return Movie::with(['genres', 'castCredits.person', 'crewCredits.person', 'videos'])
+        $movie = Movie::with(['genres', 'castCredits.person', 'crewCredits.person', 'videos'])
             ->where('slug', $slug)
             ->firstOrFail();
+        $this->attachSupportedFormats([$movie]);
+        return $movie;
     }
 
     public function getDetail(int $id)
     {
-        return Movie::with(['genres', 'castCredits.person', 'crewCredits.person', 'videos'])
+        $movie = Movie::with(['genres', 'castCredits.person', 'crewCredits.person', 'videos'])
             ->findOrFail($id);
+        $this->attachSupportedFormats([$movie]);
+        return $movie;
     }
 
 
@@ -130,24 +138,79 @@ class MovieService
         $genreIds = $movie->genres->pluck('genre_id')->toArray();
 
         if (empty($genreIds)) {
-            return Movie::with(['genres', 'videos'])
+            $result = Movie::with(['genres', 'videos'])
                 ->where('movie_id', '!=', $movieId)
                 ->orderByDesc('popularity')
                 ->paginate($perPage);
+            return $this->attachSupportedFormats($result);
         }
 
-        return Movie::with(['genres', 'videos'])
+        $result = Movie::with(['genres', 'videos'])
             ->whereHas('genres', function ($q) use ($genreIds) {
                 $q->whereIn('genres.genre_id', $genreIds);
             })
             ->where('movie_id', '!=', $movieId)
             ->orderByDesc('popularity')
             ->paginate($perPage);
+        return $this->attachSupportedFormats($result);
     }
 
     public function getSimilarBySlug(string $slug, int $perPage = 20)
     {
         $movie = Movie::with('genres')->where('slug', $slug)->firstOrFail();
         return $this->getSimilar($movie->movie_id, $perPage);
+    }
+
+    public function attachSupportedFormats($movies)
+    {
+        if (is_array($movies)) {
+            $collection = collect($movies);
+        } elseif ($movies instanceof \Illuminate\Pagination\LengthAwarePaginator) {
+            $collection = $movies->getCollection();
+        } else {
+            $collection = $movies;
+        }
+
+        if ($collection->isEmpty()) return $movies;
+
+        $movieIds = $collection->pluck('movie_id')->toArray();
+
+        $formatsData = \Illuminate\Support\Facades\DB::table('showtimes')
+            ->join('rooms', 'showtimes.room_id', '=', 'rooms.room_id')
+            ->whereIn('showtimes.movie_id', $movieIds)
+            ->whereDate('showtimes.showtime_start', '>=', now()->toDateString())
+            ->select('showtimes.movie_id', 'rooms.screen_type', 'rooms.sound_technology')
+            ->distinct()
+            ->get();
+
+        $grouped = $formatsData->groupBy('movie_id');
+        $catalog = \App\Services\RoomFormatCatalog::getScreenTypes();
+        $soundCatalog = \App\Services\RoomFormatCatalog::getSoundTechnologies();
+
+        foreach ($collection as $movie) {
+            $movieFormats = [];
+            if ($grouped->has($movie->movie_id)) {
+                $uniqueScreenTypes = $grouped[$movie->movie_id]->pluck('screen_type')->filter()->unique();
+                foreach ($uniqueScreenTypes as $st) {
+                    $movieFormats[] = [
+                        'type' => 'screen',
+                        'key'  => $st,
+                        'name' => $catalog[$st]['badge'] ?? $st
+                    ];
+                }
+                
+                $uniqueSoundTechs = $grouped[$movie->movie_id]->pluck('sound_technology')->filter()->unique();
+                foreach ($uniqueSoundTechs as $st) {
+                    $movieFormats[] = [
+                        'type' => 'sound',
+                        'key'  => $st,
+                        'name' => $soundCatalog[$st]['badge'] ?? $st
+                    ];
+                }
+            }
+            $movie->supported_formats = $movieFormats;
+        }
+
+        return $movies;
     }
 }

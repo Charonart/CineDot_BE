@@ -162,6 +162,25 @@ class CinemaController extends Controller
             return response()->json(['success' => false, 'message' => 'Không tìm thấy định dạng rạp này'], 404);
         }
 
-        return response()->json(['success' => true, 'data' => $theaters[$key]]);
+        $theaterInfo = $theaters[$key];
+        
+        // Dynamically fetch actual cinemas that have this format
+        $cinemas = \App\Models\Cinema::with('province')
+            ->whereHas('rooms', function($q) use ($theaterInfo) {
+                if (!empty($theaterInfo['screen_type'])) {
+                    $q->where('screen_type', $theaterInfo['screen_type']);
+                }
+                // Only enforce sound technology strictly if it's the main selling point (like dolby_atmos itself)
+                // For screen types like IMAX, the sound tech is usually imax_sound, but we can just filter by screen_type to be safe.
+                if (isset($theaterInfo['sound_technology']) && empty($theaterInfo['screen_type'])) {
+                    $q->where('sound_technology', $theaterInfo['sound_technology']);
+                }
+            })
+            ->where('is_active', true)
+            ->get();
+
+        $theaterInfo['available_cinemas'] = \App\Http\Resources\CinemaResource::collection($cinemas);
+
+        return response()->json(['success' => true, 'data' => $theaterInfo]);
     }
 }
