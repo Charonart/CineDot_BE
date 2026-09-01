@@ -23,10 +23,12 @@ class CinemaResource extends JsonResource
             'cinema_address' => $this->cinema_address,
             'address'        => $this->cinema_address,
             'province'       => $this->whenLoaded('province', fn() => $this->province?->province_name),
+            'city'           => $this->whenLoaded('province', fn() => $this->province?->province_name),
             'phone'          => $this->phone,
             'email'          => $this->email,
             'description'    => $this->whenNotNull($this->description),
             'isActive'       => $this->is_active,
+            'updated_at'     => $this->updated_at?->toISOString() ?? $this->updated_at,
             'rooms'          => $this->whenLoaded('rooms', function () {
                 return $this->rooms->map(fn($r) => [
                     'room_id'     => $r->room_id,

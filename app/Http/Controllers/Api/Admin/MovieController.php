@@ -118,6 +118,8 @@ class MovieController extends Controller
 
             DB::commit();
             \Illuminate\Support\Facades\Cache::forget('movies:navbar');
+        \Illuminate\Support\Facades\Cache::forget('seo:sitemap:all');
+        \Illuminate\Support\Facades\Cache::forget('seo:sitemap:movies');
 
             return response()->json([
                 'success' => true,
@@ -198,6 +200,8 @@ class MovieController extends Controller
 
             DB::commit();
             \Illuminate\Support\Facades\Cache::forget('movies:navbar');
+        \Illuminate\Support\Facades\Cache::forget('seo:sitemap:all');
+        \Illuminate\Support\Facades\Cache::forget('seo:sitemap:movies');
 
             return response()->json([
                 'success' => true,
@@ -224,6 +228,8 @@ class MovieController extends Controller
         // Soft delete
         $movie->delete();
         \Illuminate\Support\Facades\Cache::forget('movies:navbar');
+        \Illuminate\Support\Facades\Cache::forget('seo:sitemap:all');
+        \Illuminate\Support\Facades\Cache::forget('seo:sitemap:movies');
 
         return response()->json([
             'success' => true,
@@ -287,6 +293,8 @@ class MovieController extends Controller
 
         $movie->update([$field => $value]);
         \Illuminate\Support\Facades\Cache::forget('movies:navbar');
+        \Illuminate\Support\Facades\Cache::forget('seo:sitemap:all');
+        \Illuminate\Support\Facades\Cache::forget('seo:sitemap:movies');
 
         $arr = $movie->fresh(['genres', 'videos'])->toArray();
         $arr['id'] = $movie->movie_id;
@@ -307,6 +315,8 @@ class MovieController extends Controller
         $nextStatus = $movie->status === 'now_showing' ? 'ended' : 'now_showing';
         $movie->update(['status' => $nextStatus]);
         \Illuminate\Support\Facades\Cache::forget('movies:navbar');
+        \Illuminate\Support\Facades\Cache::forget('seo:sitemap:all');
+        \Illuminate\Support\Facades\Cache::forget('seo:sitemap:movies');
 
         $arr = $movie->fresh(['genres', 'videos'])->toArray();
         $arr['id'] = $movie->movie_id;
@@ -364,6 +374,8 @@ class MovieController extends Controller
         }
 
         \Illuminate\Support\Facades\Cache::forget('movies:navbar');
+        \Illuminate\Support\Facades\Cache::forget('seo:sitemap:all');
+        \Illuminate\Support\Facades\Cache::forget('seo:sitemap:movies');
 
         return response()->json([
             'success' => true,

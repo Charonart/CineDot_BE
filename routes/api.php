@@ -118,6 +118,11 @@ Route::prefix('v1')->group(function () {
     Route::get('/showtimes/{id}/seats',   [ShowtimeController::class, 'seats']);
     Route::get('/showtimes/{id}/seat-status', [ShowtimeController::class, 'seatStatus']);
 
+    // ── SEO & Sitemap ─────────────────────────────────────────────────────────
+    Route::get('/sitemap',                [\App\Http\Controllers\Api\SitemapController::class, 'index']);
+    Route::get('/sitemap/movies',         [\App\Http\Controllers\Api\SitemapController::class, 'movies']);
+    Route::get('/sitemap/cinemas',        [\App\Http\Controllers\Api\SitemapController::class, 'cinemas']);
+
     // ── Test Resend ───────────────────────────────────────────────────────────
     Route::get('/test-email', function () {
         $resend = Resend::client(env('RESEND_API_KEY'));

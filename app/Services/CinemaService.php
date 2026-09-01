@@ -32,7 +32,21 @@ class CinemaService
 
     public function getDetailBySlug(string $slug)
     {
-        return Cinema::with(['province', 'rooms'])->where('slug', $slug)->firstOrFail();
+        $query = Cinema::with(['province', 'rooms']);
+
+        if (is_numeric($slug)) {
+            $cinema = $query->where(function ($q) use ($slug) {
+                $q->where('slug', $slug)->orWhere('cinema_id', (int) $slug);
+            })->first();
+        } else {
+            $cinema = $query->where('slug', $slug)->first();
+        }
+
+        if (!$cinema) {
+            abort(404, 'Không tìm thấy rạp chiếu.');
+        }
+
+        return $cinema;
     }
 
     public function getShowtimesBySlug(string $slug, string $date)
@@ -40,6 +54,7 @@ class CinemaService
         $cinema = $this->getDetailBySlug($slug);
         
         $showtimes = Showtime::with(['movie', 'room'])
+            ->withCount(['showtimeSeats as available_seats' => fn($q) => $q->where('status', 'available')])
             ->whereHas('room', function ($q) use ($cinema) {
                 $q->where('cinema_id', $cinema->cinema_id);
             })

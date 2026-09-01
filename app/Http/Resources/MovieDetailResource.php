@@ -66,6 +66,7 @@ class MovieDetailResource extends JsonResource
                     'official' => (bool) $v->official,
                 ])->values();
             }, []),
+            'updated_at'       => $this->updated_at?->toISOString() ?? $this->updated_at,
         ];
     }
 }

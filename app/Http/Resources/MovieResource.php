@@ -41,6 +41,7 @@ class MovieResource extends JsonResource
                     ? "https://www.youtube.com/watch?v={$trailer->key_value}"
                     : null
             ) : null,
+            'updated_at'       => $this->updated_at?->toISOString() ?? $this->updated_at,
         ];
     }
 }

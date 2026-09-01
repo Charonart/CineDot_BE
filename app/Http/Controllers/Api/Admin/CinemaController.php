@@ -78,6 +78,7 @@ class CinemaController extends Controller
 
         $cinema = Cinema::create($data);
         $cinema->load(['province', 'rooms']);
+        $this->clearSitemapCache();
 
         return response()->json([
             'success' => true,
@@ -115,6 +116,7 @@ class CinemaController extends Controller
 
         $cinema->update($data);
         $cinema->load(['province', 'rooms']);
+        $this->clearSitemapCache();
 
         return response()->json([
             'success' => true,
@@ -130,6 +132,7 @@ class CinemaController extends Controller
     {
         $cinema = Cinema::findOrFail($id);
         $cinema->delete();
+        $this->clearSitemapCache();
 
         return response()->json([
             'success' => true,
@@ -159,6 +162,7 @@ class CinemaController extends Controller
         }
 
         $cinema->update([$field => $value]);
+        $this->clearSitemapCache();
         $arr = $cinema->fresh(['province', 'rooms'])->toArray();
         $arr['id'] = $cinema->cinema_id;
 
@@ -176,6 +180,7 @@ class CinemaController extends Controller
     {
         $cinema = Cinema::findOrFail($id);
         $cinema->update(['is_active' => !$cinema->is_active]);
+        $this->clearSitemapCache();
 
         $arr = $cinema->fresh(['province', 'rooms'])->toArray();
         $arr['id'] = $cinema->cinema_id;
@@ -227,9 +232,17 @@ class CinemaController extends Controller
                 ], 422);
         }
 
+        $this->clearSitemapCache();
+
         return response()->json([
             'success' => true,
             'message' => $msg
         ]);
+    }
+
+    private function clearSitemapCache(): void
+    {
+        \Illuminate\Support\Facades\Cache::forget('seo:sitemap:all');
+        \Illuminate\Support\Facades\Cache::forget('seo:sitemap:cinemas');
     }
 }

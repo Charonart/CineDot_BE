@@ -112,9 +112,21 @@ class MovieService
 
     public function getDetailBySlug(string $slug)
     {
-        return Movie::with(['genres', 'castCredits.person', 'crewCredits.person', 'videos'])
-            ->where('slug', $slug)
-            ->firstOrFail();
+        $query = Movie::with(['genres', 'castCredits.person', 'crewCredits.person', 'videos']);
+
+        if (is_numeric($slug)) {
+            $movie = $query->where(function ($q) use ($slug) {
+                $q->where('slug', $slug)->orWhere('movie_id', (int) $slug);
+            })->first();
+        } else {
+            $movie = $query->where('slug', $slug)->first();
+        }
+
+        if (!$movie) {
+            abort(404, 'Không tìm thấy phim.');
+        }
+
+        return $movie;
     }
 
     public function getDetail(int $id)
