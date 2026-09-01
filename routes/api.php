@@ -164,6 +164,15 @@ Route::prefix('v1')->group(function () {
         Route::apiResource('cinemas.rooms', \App\Http\Controllers\Api\Admin\RoomController::class)->shallow();
         
         // Showtimes & Schedules
+        Route::prefix('showtimes/ai')->group(function () {
+            Route::get('config', [\App\Http\Controllers\Api\Admin\AiScheduleController::class, 'getConfig']);
+            Route::put('config', [\App\Http\Controllers\Api\Admin\AiScheduleController::class, 'updateConfig']);
+            Route::post('test-connection', [\App\Http\Controllers\Api\Admin\AiScheduleController::class, 'testConnection']);
+            Route::get('strategies', [\App\Http\Controllers\Api\Admin\AiScheduleController::class, 'getStrategies']);
+            Route::post('generate-draft', [\App\Http\Controllers\Api\Admin\AiScheduleController::class, 'generateDraft']);
+            Route::post('validate-draft', [\App\Http\Controllers\Api\Admin\AiScheduleController::class, 'validateDraft']);
+            Route::post('apply-draft', [\App\Http\Controllers\Api\Admin\AiScheduleController::class, 'applyDraft']);
+        });
         Route::post('showtimes/clone-date', [\App\Http\Controllers\Api\Admin\ScheduleController::class, 'cloneDate']);
         Route::apiResource('showtimes', \App\Http\Controllers\Api\Admin\ScheduleController::class);
         Route::apiResource('schedules', \App\Http\Controllers\Api\Admin\ScheduleController::class);

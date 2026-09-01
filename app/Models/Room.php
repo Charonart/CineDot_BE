@@ -22,12 +22,14 @@ class Room extends Model
         'sound_technology',
         'screen_config',
         'features',
+        'surcharge_amount',
         'total_seats',
         'is_active',
     ];
 
     protected $casts = [
         'is_active'        => 'boolean',
+        'surcharge_amount' => 'decimal:2',
         'total_seats'      => 'integer',
         'screen_config'    => 'array',
         'features'         => 'array',

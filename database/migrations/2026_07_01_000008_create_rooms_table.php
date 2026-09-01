@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('sound_technology', 50)->default('surround_71'); // surround_71, dolby_atmos, imax_sound
             $table->json('screen_config')->nullable(); // Canvas screen object: shape, aspect_ratio, width, curve_depth, side_walls
             $table->json('features')->nullable(); // Tags: laser_projection, dolby_atmos, recliner, etc.
+            $table->decimal('surcharge_amount', 12, 2)->default(0.00); // Phụ thu theo định dạng phòng (vd: IMAX +60k, 3D +30k)
             $table->integer('total_seats')->default(0);
             $table->boolean('is_active')->default(true);
             $table->timestamps();
