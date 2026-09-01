@@ -33,7 +33,8 @@ class BookingService
             $user = User::find($userId);
 
             // DB Lock in order to prevent deadlocks
-            $seats = ShowtimeSeat::whereIn('showtime_seat_id', $showtimeSeatIds)
+            $seats = ShowtimeSeat::with('seat')
+                ->whereIn('showtime_seat_id', $showtimeSeatIds)
                 ->where('showtime_id', $showtimeId)
                 ->orderBy('showtime_seat_id')
                 ->lockForUpdate()

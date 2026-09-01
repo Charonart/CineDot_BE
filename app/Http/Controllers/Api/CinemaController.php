@@ -101,31 +101,61 @@ class CinemaController extends Controller
     {
         $theaters = [
             'imax' => [
-                'name' => 'IMAX',
-                'description' => 'Trải nghiệm điện ảnh đỉnh cao với màn hình cong khổng lồ, phủ kín tầm nhìn và hệ thống âm thanh laser sống động, mang bạn vào trung tâm của bộ phim.',
-                'imageUrl' => 'https://example.com/imax-banner.jpg',
+                'name' => 'IMAX Laser',
+                'description' => 'Trải nghiệm điện ảnh đỉnh cao với màn hình cong khổng lồ tỷ lệ 1.90:1, máy chiếu Laser 4K kép và hệ thống âm thanh 12 kênh sống động.',
+                'imageUrl' => 'https://cdn.cinedot.vn/theaters/imax-laser-banner.jpg',
+                'screen_type' => 'imax_laser',
+                'sound_technology' => 'imax_sound',
             ],
-            '4dx' => [
-                'name' => '4DX',
-                'description' => 'Thưởng thức điện ảnh đa giác quan với ghế chuyển động theo cảnh phim, kết hợp các hiệu ứng môi trường như gió, sương, nước, và mùi hương.',
-                'imageUrl' => 'https://example.com/4dx-banner.jpg',
+            'screenx' => [
+                'name' => 'ScreenX 270°',
+                'description' => 'Hệ thống chiếu đa diện mở rộng hình ảnh tràn sang 2 bên tường phòng chiếu, tạo góc nhìn toàn cảnh 270 độ cực kỳ choáng ngợp.',
+                'imageUrl' => 'https://cdn.cinedot.vn/theaters/screenx-banner.jpg',
+                'screen_type' => 'screenx',
+                'sound_technology' => 'dolby_atmos',
+            ],
+            'dolby-cinema' => [
+                'name' => 'Dolby Cinema',
+                'description' => 'Sự kết hợp hoàn hảo giữa máy chiếu kép Dolby Vision HDR (màu đen sâu tuyệt đối) và âm thanh vòm không gian 3 chiều Dolby Atmos.',
+                'imageUrl' => 'https://cdn.cinedot.vn/theaters/dolby-cinema-banner.jpg',
+                'screen_type' => 'dolby_cinema',
+                'sound_technology' => 'dolby_atmos',
             ],
             'dolby-atmos' => [
                 'name' => 'Dolby Atmos',
-                'description' => 'Công nghệ âm thanh vòm đột phá, tạo ra không gian âm thanh 3D bao trùm từ mọi hướng, mang lại cảm giác chân thực đến từng chi tiết nhỏ nhất.',
-                'imageUrl' => 'https://example.com/dolby-banner.jpg',
+                'description' => 'Công nghệ âm thanh vòm vật thể 3D đột phá với dàn loa trần và loa tường riêng biệt, định vị âm thanh chính xác trong không gian 3 chiều.',
+                'imageUrl' => 'https://cdn.cinedot.vn/theaters/dolby-banner.jpg',
+                'screen_type' => 'standard_2d',
+                'sound_technology' => 'dolby_atmos',
+            ],
+            'onyx-led' => [
+                'name' => 'Samsung Onyx Cinema LED 4K',
+                'description' => 'Màn hình module LED tự phát sáng không cần máy chiếu, độ sáng gấp 10 lần, hỗ trợ tốc độ khung hình cao HFR 120fps siêu mượt.',
+                'imageUrl' => 'https://cdn.cinedot.vn/theaters/onyx-led-banner.jpg',
+                'screen_type' => 'onyx_led',
+                'sound_technology' => 'dolby_atmos',
+            ],
+            '4dx' => [
+                'name' => '4DX Motion Studio',
+                'description' => 'Thưởng thức điện ảnh đa giác quan với ghế chuyển động theo cảnh phim, kết hợp các hiệu ứng môi trường như gió, sương, nước, và mùi hương.',
+                'imageUrl' => 'https://cdn.cinedot.vn/theaters/4dx-banner.jpg',
+                'screen_type' => 'standard_3d',
+                'sound_technology' => 'dolby_atmos',
             ],
             'kids' => [
-                'name' => 'Kids',
+                'name' => 'Kids Cinema',
                 'description' => 'Phòng chiếu được thiết kế đặc biệt cho trẻ em với màu sắc rực rỡ, ghế ngồi thoải mái và âm lượng phù hợp để bảo vệ thính giác bé.',
-                'imageUrl' => 'https://example.com/kids-banner.jpg',
+                'imageUrl' => 'https://cdn.cinedot.vn/theaters/kids-banner.jpg',
+                'screen_type' => 'standard_2d',
+                'sound_technology' => 'surround_71',
             ],
         ];
 
-        if (!array_key_exists($type, $theaters)) {
+        $key = strtolower($type);
+        if (!array_key_exists($key, $theaters)) {
             return response()->json(['success' => false, 'message' => 'Không tìm thấy định dạng rạp này'], 404);
         }
 
-        return response()->json(['success' => true, 'data' => $theaters[$type]]);
+        return response()->json(['success' => true, 'data' => $theaters[$key]]);
     }
 }

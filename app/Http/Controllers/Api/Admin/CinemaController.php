@@ -24,7 +24,7 @@ class CinemaController extends Controller
         $searchableFields = ['cinema_name', 'cinema_address', 'phone', 'email'];
         $columnAliases = ['id' => 'cinema_id', 'name' => 'cinema_name', 'address' => 'cinema_address', 'status' => 'is_active'];
 
-        $query = Cinema::with(['province', 'rooms']);
+        $query = Cinema::with(['province', 'rooms.seats']);
 
         // Handle simple province_id filter if passed directly
         if ($request->has('province_id') && !empty($request->province_id) && !$request->has('filters.province_id')) {
@@ -91,7 +91,7 @@ class CinemaController extends Controller
      */
     public function show(string $id)
     {
-        $cinema = Cinema::with(['province', 'rooms'])->findOrFail($id);
+        $cinema = Cinema::with(['province', 'rooms.seats'])->findOrFail($id);
 
         return response()->json([
             'success' => true,

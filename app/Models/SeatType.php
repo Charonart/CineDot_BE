@@ -37,9 +37,21 @@ class SeatType extends Model
         'sort_order'       => 'integer',
     ];
 
+    public function seats()
+    {
+        return $this->hasMany(Seat::class, 'seat_type', 'seat_type');
+    }
+
     public function showtimeSeats()
     {
-        return $this->hasMany(ShowtimeSeat::class, 'seat_type', 'seat_type');
+        return $this->hasManyThrough(
+            ShowtimeSeat::class,
+            Seat::class,
+            'seat_type', // Foreign key on seats table
+            'seat_id',   // Foreign key on showtime_seats table
+            'seat_type', // Local key on seat_types table
+            'seat_id'    // Local key on seats table
+        );
     }
 
     /**

@@ -150,32 +150,20 @@ class ScheduleController extends Controller
                 'showtime_start' => $startTime,
                 'showtime_end'   => $endTime,
                 'base_price'     => $basePrice,
-                'layout_snaps'   => $room->seat_matrix,
             ]);
 
-            // 3. Nhân bản ghế cho suất chiếu từ seat_matrix của Phòng
-            $matrix = $room->seat_matrix ?? [];
+            // 3. Nhân bản ghế cho suất chiếu từ danh sách ghế vật lý của Phòng
+            $physicalSeats = \App\Models\Seat::where('room_id', $room->room_id)
+                ->where('is_active', true)
+                ->get();
+
             $seatsToInsert = [];
-
-            if (is_array($matrix)) {
-                foreach ($matrix as $seat) {
-                    if (is_array($seat)) {
-                        $seatIdStr = $seat['id'] ?? $seat['seat_id'] ?? '';
-                        $rowName = $seat['row_name'] ?? $seat['row'] ?? (strlen($seatIdStr) > 0 ? substr($seatIdStr, 0, 1) : 'A');
-                        $seatNumber = $seat['seat_number'] ?? $seat['number'] ?? (strlen($seatIdStr) > 1 ? substr($seatIdStr, 1) : '1');
-
-                        $rawType = (string) ($seat['seat_type'] ?? $seat['type'] ?? 'standard');
-                        $seatType = \App\Models\SeatType::resolveTypeKey($rawType);
-
-                        $seatsToInsert[] = [
-                            'showtime_id' => $showtime->showtime_id,
-                            'row_name'    => (string) $rowName,
-                            'seat_number' => (string) $seatNumber,
-                            'seat_type'   => $seatType,
-                            'status'      => 'available',
-                        ];
-                    }
-                }
+            foreach ($physicalSeats as $pSeat) {
+                $seatsToInsert[] = [
+                    'showtime_id' => $showtime->showtime_id,
+                    'seat_id'     => $pSeat->seat_id,
+                    'status'      => 'available',
+                ];
             }
 
             if (!empty($seatsToInsert)) {
@@ -402,30 +390,20 @@ class ScheduleController extends Controller
                     'showtime_start' => $targetStart,
                     'showtime_end'   => $targetEnd,
                     'base_price'     => $source->base_price,
-                    'layout_snaps'   => $source->layout_snaps ?? $source->room?->seat_matrix,
                 ]);
 
-                // Clone sơ đồ ghế
-                $matrix = $source->layout_snaps ?? $source->room?->seat_matrix ?? [];
-                $seatsToInsert = [];
-                if (is_array($matrix)) {
-                    foreach ($matrix as $seat) {
-                        if (is_array($seat)) {
-                            $seatIdStr = $seat['id'] ?? $seat['seat_id'] ?? '';
-                            $rowName = $seat['row_name'] ?? $seat['row'] ?? (strlen($seatIdStr) > 0 ? substr($seatIdStr, 0, 1) : 'A');
-                            $seatNumber = $seat['seat_number'] ?? $seat['number'] ?? (strlen($seatIdStr) > 1 ? substr($seatIdStr, 1) : '1');
-                            $rawType = (string) ($seat['seat_type'] ?? $seat['type'] ?? 'standard');
-                            $seatType = \App\Models\SeatType::resolveTypeKey($rawType);
+                // Clone sơ đồ ghế từ danh sách ghế vật lý của phòng
+                $physicalSeats = \App\Models\Seat::where('room_id', $source->room_id)
+                    ->where('is_active', true)
+                    ->get();
 
-                            $seatsToInsert[] = [
-                                'showtime_id' => $newShowtime->showtime_id,
-                                'row_name'    => (string) $rowName,
-                                'seat_number' => (string) $seatNumber,
-                                'seat_type'   => $seatType,
-                                'status'      => 'available',
-                            ];
-                        }
-                    }
+                $seatsToInsert = [];
+                foreach ($physicalSeats as $pSeat) {
+                    $seatsToInsert[] = [
+                        'showtime_id' => $newShowtime->showtime_id,
+                        'seat_id'     => $pSeat->seat_id,
+                        'status'      => 'available',
+                    ];
                 }
 
                 if (!empty($seatsToInsert)) {

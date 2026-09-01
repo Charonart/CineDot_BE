@@ -61,7 +61,6 @@ class UserSeeder extends Seeder
             ],
             [
                 'user_id' => 4,
-                'role_id' => 1,
                 'province_id' => 1,
                 'username' => 'lequy27102006',
                 'password' => Hash::make('Lequy2710'),

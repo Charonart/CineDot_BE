@@ -13,14 +13,12 @@ class Showtime extends Model
         'movie_id',
         'showtime_start',
         'showtime_end',
-        'layout_snaps',
         'base_price',
     ];
 
     protected $casts = [
         'showtime_start' => 'datetime',
         'showtime_end'   => 'datetime',
-        'layout_snaps'   => 'array',
         'base_price'     => 'decimal:2',
     ];
 

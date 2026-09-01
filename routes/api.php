@@ -103,6 +103,8 @@ Route::prefix('v1')->group(function () {
     Route::get('/cinemas/pricing',  [CinemaController::class, 'pricing']);
     Route::get('/cinemas/detail/{slug}', [CinemaController::class, 'showBySlug']);
     Route::get('/cinemas/detail/{slug}/showtimes', [CinemaController::class, 'showtimes']);
+    Route::get('/rooms',            [App\Http\Controllers\Api\RoomController::class, 'index']);
+    Route::get('/room-formats',     [App\Http\Controllers\Api\RoomController::class, 'formats']);
     Route::get('/rooms/{id}/seats', [App\Http\Controllers\Api\RoomController::class, 'seats']);
     Route::get('/rooms/{id}/layout', [App\Http\Controllers\Api\RoomController::class, 'layout']);
     Route::get('/seat-types',       [\App\Http\Controllers\Api\SeatTypeController::class, 'index']);

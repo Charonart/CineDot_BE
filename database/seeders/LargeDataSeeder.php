@@ -1480,112 +1480,187 @@ class LargeDataSeeder extends Seeder
         };
 
         $rooms = [];
-        $rooms[] = ['room_id' => 201, 'cinema_id' => 21, 'room_name' => 'Phòng 1 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 202, 'cinema_id' => 21, 'room_name' => 'Phòng 2 (Gold Class Premium)', 'room_type' => 'Gold Class Premium', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 203, 'cinema_id' => 21, 'room_name' => 'Phòng 3 (IMAX 3D)', 'room_type' => 'IMAX 3D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 204, 'cinema_id' => 22, 'room_name' => 'Phòng 1 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 205, 'cinema_id' => 22, 'room_name' => 'Phòng 2 (Gold Class Premium)', 'room_type' => 'Gold Class Premium', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 206, 'cinema_id' => 22, 'room_name' => 'Phòng 3 (IMAX 3D)', 'room_type' => 'IMAX 3D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 207, 'cinema_id' => 23, 'room_name' => 'Phòng 1 (IMAX 3D)', 'room_type' => 'IMAX 3D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 208, 'cinema_id' => 23, 'room_name' => 'Phòng 2 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 209, 'cinema_id' => 23, 'room_name' => 'Phòng 3 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 210, 'cinema_id' => 24, 'room_name' => 'Phòng 1 (ScreenX 4D)', 'room_type' => 'ScreenX 4D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 211, 'cinema_id' => 24, 'room_name' => 'Phòng 2 (Gold Class Premium)', 'room_type' => 'Gold Class Premium', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 212, 'cinema_id' => 24, 'room_name' => 'Phòng 3 (ScreenX 4D)', 'room_type' => 'ScreenX 4D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 213, 'cinema_id' => 25, 'room_name' => 'Phòng 1 (Gold Class Premium)', 'room_type' => 'Gold Class Premium', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 214, 'cinema_id' => 25, 'room_name' => 'Phòng 2 (IMAX 3D)', 'room_type' => 'IMAX 3D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 215, 'cinema_id' => 25, 'room_name' => 'Phòng 3 (Gold Class Premium)', 'room_type' => 'Gold Class Premium', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 216, 'cinema_id' => 26, 'room_name' => 'Phòng 1 (Gold Class Premium)', 'room_type' => 'Gold Class Premium', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 217, 'cinema_id' => 26, 'room_name' => 'Phòng 2 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 218, 'cinema_id' => 26, 'room_name' => 'Phòng 3 (ScreenX 4D)', 'room_type' => 'ScreenX 4D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 219, 'cinema_id' => 27, 'room_name' => 'Phòng 1 (Gold Class Premium)', 'room_type' => 'Gold Class Premium', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 220, 'cinema_id' => 27, 'room_name' => 'Phòng 2 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 221, 'cinema_id' => 27, 'room_name' => 'Phòng 3 (ScreenX 4D)', 'room_type' => 'ScreenX 4D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 222, 'cinema_id' => 28, 'room_name' => 'Phòng 1 (IMAX 3D)', 'room_type' => 'IMAX 3D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 223, 'cinema_id' => 28, 'room_name' => 'Phòng 2 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 224, 'cinema_id' => 28, 'room_name' => 'Phòng 3 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 225, 'cinema_id' => 29, 'room_name' => 'Phòng 1 (IMAX 3D)', 'room_type' => 'IMAX 3D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 226, 'cinema_id' => 29, 'room_name' => 'Phòng 2 (Gold Class Premium)', 'room_type' => 'Gold Class Premium', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 227, 'cinema_id' => 29, 'room_name' => 'Phòng 3 (IMAX 3D)', 'room_type' => 'IMAX 3D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 228, 'cinema_id' => 30, 'room_name' => 'Phòng 1 (ScreenX 4D)', 'room_type' => 'ScreenX 4D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 229, 'cinema_id' => 30, 'room_name' => 'Phòng 2 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 230, 'cinema_id' => 30, 'room_name' => 'Phòng 3 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 231, 'cinema_id' => 31, 'room_name' => 'Phòng 1 (ScreenX 4D)', 'room_type' => 'ScreenX 4D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 232, 'cinema_id' => 31, 'room_name' => 'Phòng 2 (ScreenX 4D)', 'room_type' => 'ScreenX 4D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 233, 'cinema_id' => 31, 'room_name' => 'Phòng 3 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 234, 'cinema_id' => 32, 'room_name' => 'Phòng 1 (IMAX 3D)', 'room_type' => 'IMAX 3D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 235, 'cinema_id' => 32, 'room_name' => 'Phòng 2 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 236, 'cinema_id' => 32, 'room_name' => 'Phòng 3 (Gold Class Premium)', 'room_type' => 'Gold Class Premium', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 237, 'cinema_id' => 33, 'room_name' => 'Phòng 1 (ScreenX 4D)', 'room_type' => 'ScreenX 4D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 238, 'cinema_id' => 33, 'room_name' => 'Phòng 2 (IMAX 3D)', 'room_type' => 'IMAX 3D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 239, 'cinema_id' => 33, 'room_name' => 'Phòng 3 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 240, 'cinema_id' => 34, 'room_name' => 'Phòng 1 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 241, 'cinema_id' => 34, 'room_name' => 'Phòng 2 (Gold Class Premium)', 'room_type' => 'Gold Class Premium', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 242, 'cinema_id' => 34, 'room_name' => 'Phòng 3 (Gold Class Premium)', 'room_type' => 'Gold Class Premium', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 243, 'cinema_id' => 35, 'room_name' => 'Phòng 1 (Gold Class Premium)', 'room_type' => 'Gold Class Premium', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 244, 'cinema_id' => 35, 'room_name' => 'Phòng 2 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 245, 'cinema_id' => 35, 'room_name' => 'Phòng 3 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 246, 'cinema_id' => 36, 'room_name' => 'Phòng 1 (IMAX 3D)', 'room_type' => 'IMAX 3D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 247, 'cinema_id' => 36, 'room_name' => 'Phòng 2 (ScreenX 4D)', 'room_type' => 'ScreenX 4D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 248, 'cinema_id' => 36, 'room_name' => 'Phòng 3 (ScreenX 4D)', 'room_type' => 'ScreenX 4D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 249, 'cinema_id' => 37, 'room_name' => 'Phòng 1 (ScreenX 4D)', 'room_type' => 'ScreenX 4D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 250, 'cinema_id' => 37, 'room_name' => 'Phòng 2 (IMAX 3D)', 'room_type' => 'IMAX 3D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 251, 'cinema_id' => 37, 'room_name' => 'Phòng 3 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 252, 'cinema_id' => 38, 'room_name' => 'Phòng 1 (Gold Class Premium)', 'room_type' => 'Gold Class Premium', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 253, 'cinema_id' => 38, 'room_name' => 'Phòng 2 (IMAX 3D)', 'room_type' => 'IMAX 3D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 254, 'cinema_id' => 38, 'room_name' => 'Phòng 3 (ScreenX 4D)', 'room_type' => 'ScreenX 4D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 255, 'cinema_id' => 39, 'room_name' => 'Phòng 1 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 256, 'cinema_id' => 39, 'room_name' => 'Phòng 2 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 257, 'cinema_id' => 39, 'room_name' => 'Phòng 3 (ScreenX 4D)', 'room_type' => 'ScreenX 4D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 258, 'cinema_id' => 40, 'room_name' => 'Phòng 1 (Gold Class Premium)', 'room_type' => 'Gold Class Premium', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 259, 'cinema_id' => 40, 'room_name' => 'Phòng 2 (Gold Class Premium)', 'room_type' => 'Gold Class Premium', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 260, 'cinema_id' => 40, 'room_name' => 'Phòng 3 (IMAX 3D)', 'room_type' => 'IMAX 3D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 261, 'cinema_id' => 41, 'room_name' => 'Phòng 1 (IMAX 3D)', 'room_type' => 'IMAX 3D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 262, 'cinema_id' => 41, 'room_name' => 'Phòng 2 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 263, 'cinema_id' => 41, 'room_name' => 'Phòng 3 (IMAX 3D)', 'room_type' => 'IMAX 3D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 264, 'cinema_id' => 42, 'room_name' => 'Phòng 1 (IMAX 3D)', 'room_type' => 'IMAX 3D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 265, 'cinema_id' => 42, 'room_name' => 'Phòng 2 (ScreenX 4D)', 'room_type' => 'ScreenX 4D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 266, 'cinema_id' => 42, 'room_name' => 'Phòng 3 (ScreenX 4D)', 'room_type' => 'ScreenX 4D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 267, 'cinema_id' => 43, 'room_name' => 'Phòng 1 (Gold Class Premium)', 'room_type' => 'Gold Class Premium', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 268, 'cinema_id' => 43, 'room_name' => 'Phòng 2 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 269, 'cinema_id' => 43, 'room_name' => 'Phòng 3 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 270, 'cinema_id' => 44, 'room_name' => 'Phòng 1 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 271, 'cinema_id' => 44, 'room_name' => 'Phòng 2 (Gold Class Premium)', 'room_type' => 'Gold Class Premium', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 272, 'cinema_id' => 44, 'room_name' => 'Phòng 3 (Gold Class Premium)', 'room_type' => 'Gold Class Premium', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 273, 'cinema_id' => 45, 'room_name' => 'Phòng 1 (ScreenX 4D)', 'room_type' => 'ScreenX 4D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 274, 'cinema_id' => 45, 'room_name' => 'Phòng 2 (Gold Class Premium)', 'room_type' => 'Gold Class Premium', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 275, 'cinema_id' => 45, 'room_name' => 'Phòng 3 (IMAX 3D)', 'room_type' => 'IMAX 3D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 276, 'cinema_id' => 46, 'room_name' => 'Phòng 1 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 277, 'cinema_id' => 46, 'room_name' => 'Phòng 2 (IMAX 3D)', 'room_type' => 'IMAX 3D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 278, 'cinema_id' => 46, 'room_name' => 'Phòng 3 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 279, 'cinema_id' => 47, 'room_name' => 'Phòng 1 (IMAX 3D)', 'room_type' => 'IMAX 3D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 280, 'cinema_id' => 47, 'room_name' => 'Phòng 2 (Gold Class Premium)', 'room_type' => 'Gold Class Premium', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 281, 'cinema_id' => 47, 'room_name' => 'Phòng 3 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 282, 'cinema_id' => 48, 'room_name' => 'Phòng 1 (ScreenX 4D)', 'room_type' => 'ScreenX 4D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 283, 'cinema_id' => 48, 'room_name' => 'Phòng 2 (ScreenX 4D)', 'room_type' => 'ScreenX 4D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 284, 'cinema_id' => 48, 'room_name' => 'Phòng 3 (IMAX 3D)', 'room_type' => 'IMAX 3D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 285, 'cinema_id' => 49, 'room_name' => 'Phòng 1 (IMAX 3D)', 'room_type' => 'IMAX 3D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 286, 'cinema_id' => 49, 'room_name' => 'Phòng 2 (ScreenX 4D)', 'room_type' => 'ScreenX 4D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 287, 'cinema_id' => 49, 'room_name' => 'Phòng 3 (IMAX 3D)', 'room_type' => 'IMAX 3D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 288, 'cinema_id' => 50, 'room_name' => 'Phòng 1 (IMAX 3D)', 'room_type' => 'IMAX 3D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 289, 'cinema_id' => 50, 'room_name' => 'Phòng 2 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 290, 'cinema_id' => 50, 'room_name' => 'Phòng 3 (Gold Class Premium)', 'room_type' => 'Gold Class Premium', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 291, 'cinema_id' => 51, 'room_name' => 'Phòng 1 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 292, 'cinema_id' => 51, 'room_name' => 'Phòng 2 (IMAX 3D)', 'room_type' => 'IMAX 3D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 293, 'cinema_id' => 51, 'room_name' => 'Phòng 3 (Gold Class Premium)', 'room_type' => 'Gold Class Premium', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 294, 'cinema_id' => 52, 'room_name' => 'Phòng 1 (Gold Class Premium)', 'room_type' => 'Gold Class Premium', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 295, 'cinema_id' => 52, 'room_name' => 'Phòng 2 (Gold Class Premium)', 'room_type' => 'Gold Class Premium', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 296, 'cinema_id' => 52, 'room_name' => 'Phòng 3 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 297, 'cinema_id' => 53, 'room_name' => 'Phòng 1 (Gold Class Premium)', 'room_type' => 'Gold Class Premium', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 298, 'cinema_id' => 53, 'room_name' => 'Phòng 2 (Gold Class Premium)', 'room_type' => 'Gold Class Premium', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 299, 'cinema_id' => 53, 'room_name' => 'Phòng 3 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 300, 'cinema_id' => 54, 'room_name' => 'Phòng 1 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 301, 'cinema_id' => 54, 'room_name' => 'Phòng 2 (ScreenX 4D)', 'room_type' => 'ScreenX 4D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 302, 'cinema_id' => 54, 'room_name' => 'Phòng 3 (IMAX 3D)', 'room_type' => 'IMAX 3D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 303, 'cinema_id' => 55, 'room_name' => 'Phòng 1 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 304, 'cinema_id' => 55, 'room_name' => 'Phòng 2 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
-        $rooms[] = ['room_id' => 305, 'cinema_id' => 55, 'room_name' => 'Phòng 3 (ScreenX 4D)', 'room_type' => 'ScreenX 4D', 'seat_matrix' => json_encode($generateLargeMatrix(10, 12)), 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 201, 'cinema_id' => 21, 'room_name' => 'Phòng 1 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 202, 'cinema_id' => 21, 'room_name' => 'Phòng 2 (Gold Class Premium)', 'room_type' => 'Gold Class Premium', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 203, 'cinema_id' => 21, 'room_name' => 'Phòng 3 (IMAX 3D)', 'room_type' => 'IMAX 3D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 204, 'cinema_id' => 22, 'room_name' => 'Phòng 1 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 205, 'cinema_id' => 22, 'room_name' => 'Phòng 2 (Gold Class Premium)', 'room_type' => 'Gold Class Premium', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 206, 'cinema_id' => 22, 'room_name' => 'Phòng 3 (IMAX 3D)', 'room_type' => 'IMAX 3D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 207, 'cinema_id' => 23, 'room_name' => 'Phòng 1 (IMAX 3D)', 'room_type' => 'IMAX 3D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 208, 'cinema_id' => 23, 'room_name' => 'Phòng 2 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 209, 'cinema_id' => 23, 'room_name' => 'Phòng 3 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 210, 'cinema_id' => 24, 'room_name' => 'Phòng 1 (ScreenX 4D)', 'room_type' => 'ScreenX 4D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 211, 'cinema_id' => 24, 'room_name' => 'Phòng 2 (Gold Class Premium)', 'room_type' => 'Gold Class Premium', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 212, 'cinema_id' => 24, 'room_name' => 'Phòng 3 (ScreenX 4D)', 'room_type' => 'ScreenX 4D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 213, 'cinema_id' => 25, 'room_name' => 'Phòng 1 (Gold Class Premium)', 'room_type' => 'Gold Class Premium', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 214, 'cinema_id' => 25, 'room_name' => 'Phòng 2 (IMAX 3D)', 'room_type' => 'IMAX 3D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 215, 'cinema_id' => 25, 'room_name' => 'Phòng 3 (Gold Class Premium)', 'room_type' => 'Gold Class Premium', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 216, 'cinema_id' => 26, 'room_name' => 'Phòng 1 (Gold Class Premium)', 'room_type' => 'Gold Class Premium', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 217, 'cinema_id' => 26, 'room_name' => 'Phòng 2 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 218, 'cinema_id' => 26, 'room_name' => 'Phòng 3 (ScreenX 4D)', 'room_type' => 'ScreenX 4D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 219, 'cinema_id' => 27, 'room_name' => 'Phòng 1 (Gold Class Premium)', 'room_type' => 'Gold Class Premium', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 220, 'cinema_id' => 27, 'room_name' => 'Phòng 2 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 221, 'cinema_id' => 27, 'room_name' => 'Phòng 3 (ScreenX 4D)', 'room_type' => 'ScreenX 4D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 222, 'cinema_id' => 28, 'room_name' => 'Phòng 1 (IMAX 3D)', 'room_type' => 'IMAX 3D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 223, 'cinema_id' => 28, 'room_name' => 'Phòng 2 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 224, 'cinema_id' => 28, 'room_name' => 'Phòng 3 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 225, 'cinema_id' => 29, 'room_name' => 'Phòng 1 (IMAX 3D)', 'room_type' => 'IMAX 3D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 226, 'cinema_id' => 29, 'room_name' => 'Phòng 2 (Gold Class Premium)', 'room_type' => 'Gold Class Premium', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 227, 'cinema_id' => 29, 'room_name' => 'Phòng 3 (IMAX 3D)', 'room_type' => 'IMAX 3D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 228, 'cinema_id' => 30, 'room_name' => 'Phòng 1 (ScreenX 4D)', 'room_type' => 'ScreenX 4D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 229, 'cinema_id' => 30, 'room_name' => 'Phòng 2 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 230, 'cinema_id' => 30, 'room_name' => 'Phòng 3 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 231, 'cinema_id' => 31, 'room_name' => 'Phòng 1 (ScreenX 4D)', 'room_type' => 'ScreenX 4D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 232, 'cinema_id' => 31, 'room_name' => 'Phòng 2 (ScreenX 4D)', 'room_type' => 'ScreenX 4D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 233, 'cinema_id' => 31, 'room_name' => 'Phòng 3 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 234, 'cinema_id' => 32, 'room_name' => 'Phòng 1 (IMAX 3D)', 'room_type' => 'IMAX 3D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 235, 'cinema_id' => 32, 'room_name' => 'Phòng 2 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 236, 'cinema_id' => 32, 'room_name' => 'Phòng 3 (Gold Class Premium)', 'room_type' => 'Gold Class Premium', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 237, 'cinema_id' => 33, 'room_name' => 'Phòng 1 (ScreenX 4D)', 'room_type' => 'ScreenX 4D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 238, 'cinema_id' => 33, 'room_name' => 'Phòng 2 (IMAX 3D)', 'room_type' => 'IMAX 3D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 239, 'cinema_id' => 33, 'room_name' => 'Phòng 3 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 240, 'cinema_id' => 34, 'room_name' => 'Phòng 1 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 241, 'cinema_id' => 34, 'room_name' => 'Phòng 2 (Gold Class Premium)', 'room_type' => 'Gold Class Premium', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 242, 'cinema_id' => 34, 'room_name' => 'Phòng 3 (Gold Class Premium)', 'room_type' => 'Gold Class Premium', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 243, 'cinema_id' => 35, 'room_name' => 'Phòng 1 (Gold Class Premium)', 'room_type' => 'Gold Class Premium', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 244, 'cinema_id' => 35, 'room_name' => 'Phòng 2 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 245, 'cinema_id' => 35, 'room_name' => 'Phòng 3 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 246, 'cinema_id' => 36, 'room_name' => 'Phòng 1 (IMAX 3D)', 'room_type' => 'IMAX 3D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 247, 'cinema_id' => 36, 'room_name' => 'Phòng 2 (ScreenX 4D)', 'room_type' => 'ScreenX 4D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 248, 'cinema_id' => 36, 'room_name' => 'Phòng 3 (ScreenX 4D)', 'room_type' => 'ScreenX 4D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 249, 'cinema_id' => 37, 'room_name' => 'Phòng 1 (ScreenX 4D)', 'room_type' => 'ScreenX 4D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 250, 'cinema_id' => 37, 'room_name' => 'Phòng 2 (IMAX 3D)', 'room_type' => 'IMAX 3D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 251, 'cinema_id' => 37, 'room_name' => 'Phòng 3 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 252, 'cinema_id' => 38, 'room_name' => 'Phòng 1 (Gold Class Premium)', 'room_type' => 'Gold Class Premium', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 253, 'cinema_id' => 38, 'room_name' => 'Phòng 2 (IMAX 3D)', 'room_type' => 'IMAX 3D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 254, 'cinema_id' => 38, 'room_name' => 'Phòng 3 (ScreenX 4D)', 'room_type' => 'ScreenX 4D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 255, 'cinema_id' => 39, 'room_name' => 'Phòng 1 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 256, 'cinema_id' => 39, 'room_name' => 'Phòng 2 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 257, 'cinema_id' => 39, 'room_name' => 'Phòng 3 (ScreenX 4D)', 'room_type' => 'ScreenX 4D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 258, 'cinema_id' => 40, 'room_name' => 'Phòng 1 (Gold Class Premium)', 'room_type' => 'Gold Class Premium', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 259, 'cinema_id' => 40, 'room_name' => 'Phòng 2 (Gold Class Premium)', 'room_type' => 'Gold Class Premium', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 260, 'cinema_id' => 40, 'room_name' => 'Phòng 3 (IMAX 3D)', 'room_type' => 'IMAX 3D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 261, 'cinema_id' => 41, 'room_name' => 'Phòng 1 (IMAX 3D)', 'room_type' => 'IMAX 3D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 262, 'cinema_id' => 41, 'room_name' => 'Phòng 2 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 263, 'cinema_id' => 41, 'room_name' => 'Phòng 3 (IMAX 3D)', 'room_type' => 'IMAX 3D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 264, 'cinema_id' => 42, 'room_name' => 'Phòng 1 (IMAX 3D)', 'room_type' => 'IMAX 3D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 265, 'cinema_id' => 42, 'room_name' => 'Phòng 2 (ScreenX 4D)', 'room_type' => 'ScreenX 4D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 266, 'cinema_id' => 42, 'room_name' => 'Phòng 3 (ScreenX 4D)', 'room_type' => 'ScreenX 4D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 267, 'cinema_id' => 43, 'room_name' => 'Phòng 1 (Gold Class Premium)', 'room_type' => 'Gold Class Premium', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 268, 'cinema_id' => 43, 'room_name' => 'Phòng 2 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 269, 'cinema_id' => 43, 'room_name' => 'Phòng 3 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 270, 'cinema_id' => 44, 'room_name' => 'Phòng 1 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 271, 'cinema_id' => 44, 'room_name' => 'Phòng 2 (Gold Class Premium)', 'room_type' => 'Gold Class Premium', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 272, 'cinema_id' => 44, 'room_name' => 'Phòng 3 (Gold Class Premium)', 'room_type' => 'Gold Class Premium', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 273, 'cinema_id' => 45, 'room_name' => 'Phòng 1 (ScreenX 4D)', 'room_type' => 'ScreenX 4D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 274, 'cinema_id' => 45, 'room_name' => 'Phòng 2 (Gold Class Premium)', 'room_type' => 'Gold Class Premium', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 275, 'cinema_id' => 45, 'room_name' => 'Phòng 3 (IMAX 3D)', 'room_type' => 'IMAX 3D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 276, 'cinema_id' => 46, 'room_name' => 'Phòng 1 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 277, 'cinema_id' => 46, 'room_name' => 'Phòng 2 (IMAX 3D)', 'room_type' => 'IMAX 3D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 278, 'cinema_id' => 46, 'room_name' => 'Phòng 3 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 279, 'cinema_id' => 47, 'room_name' => 'Phòng 1 (IMAX 3D)', 'room_type' => 'IMAX 3D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 280, 'cinema_id' => 47, 'room_name' => 'Phòng 2 (Gold Class Premium)', 'room_type' => 'Gold Class Premium', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 281, 'cinema_id' => 47, 'room_name' => 'Phòng 3 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 282, 'cinema_id' => 48, 'room_name' => 'Phòng 1 (ScreenX 4D)', 'room_type' => 'ScreenX 4D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 283, 'cinema_id' => 48, 'room_name' => 'Phòng 2 (ScreenX 4D)', 'room_type' => 'ScreenX 4D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 284, 'cinema_id' => 48, 'room_name' => 'Phòng 3 (IMAX 3D)', 'room_type' => 'IMAX 3D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 285, 'cinema_id' => 49, 'room_name' => 'Phòng 1 (IMAX 3D)', 'room_type' => 'IMAX 3D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 286, 'cinema_id' => 49, 'room_name' => 'Phòng 2 (ScreenX 4D)', 'room_type' => 'ScreenX 4D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 287, 'cinema_id' => 49, 'room_name' => 'Phòng 3 (IMAX 3D)', 'room_type' => 'IMAX 3D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 288, 'cinema_id' => 50, 'room_name' => 'Phòng 1 (IMAX 3D)', 'room_type' => 'IMAX 3D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 289, 'cinema_id' => 50, 'room_name' => 'Phòng 2 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 290, 'cinema_id' => 50, 'room_name' => 'Phòng 3 (Gold Class Premium)', 'room_type' => 'Gold Class Premium', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 291, 'cinema_id' => 51, 'room_name' => 'Phòng 1 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 292, 'cinema_id' => 51, 'room_name' => 'Phòng 2 (IMAX 3D)', 'room_type' => 'IMAX 3D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 293, 'cinema_id' => 51, 'room_name' => 'Phòng 3 (Gold Class Premium)', 'room_type' => 'Gold Class Premium', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 294, 'cinema_id' => 52, 'room_name' => 'Phòng 1 (Gold Class Premium)', 'room_type' => 'Gold Class Premium', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 295, 'cinema_id' => 52, 'room_name' => 'Phòng 2 (Gold Class Premium)', 'room_type' => 'Gold Class Premium', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 296, 'cinema_id' => 52, 'room_name' => 'Phòng 3 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 297, 'cinema_id' => 53, 'room_name' => 'Phòng 1 (Gold Class Premium)', 'room_type' => 'Gold Class Premium', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 298, 'cinema_id' => 53, 'room_name' => 'Phòng 2 (Gold Class Premium)', 'room_type' => 'Gold Class Premium', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 299, 'cinema_id' => 53, 'room_name' => 'Phòng 3 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 300, 'cinema_id' => 54, 'room_name' => 'Phòng 1 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 301, 'cinema_id' => 54, 'room_name' => 'Phòng 2 (ScreenX 4D)', 'room_type' => 'ScreenX 4D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 302, 'cinema_id' => 54, 'room_name' => 'Phòng 3 (IMAX 3D)', 'room_type' => 'IMAX 3D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 303, 'cinema_id' => 55, 'room_name' => 'Phòng 1 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 304, 'cinema_id' => 55, 'room_name' => 'Phòng 2 (Dolby Atmos 2D)', 'room_type' => 'Dolby Atmos 2D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $rooms[] = ['room_id' => 305, 'cinema_id' => 55, 'room_name' => 'Phòng 3 (ScreenX 4D)', 'room_type' => 'ScreenX 4D', 'total_seats' => 120, 'is_active' => true, 'created_at' => now()];
+        $detectRoomTech = function ($roomType) {
+            if (stripos($roomType, 'IMAX') !== false) {
+                return [
+                    'screen_type'      => 'imax_laser',
+                    'sound_technology' => 'imax_sound',
+                    'features'         => ['laser_projection', 'curved_screen', '12ch_imax_sound'],
+                    'screen_config'    => \App\Services\RoomFormatCatalog::getDefaultScreenConfig('imax_laser'),
+                ];
+            }
+            if (stripos($roomType, 'ScreenX') !== false) {
+                return [
+                    'screen_type'      => 'screenx',
+                    'sound_technology' => 'dolby_atmos',
+                    'features'         => ['three_wall_screen', '270_degree_view', 'dolby_atmos'],
+                    'screen_config'    => \App\Services\RoomFormatCatalog::getDefaultScreenConfig('screenx'),
+                ];
+            }
+            if (stripos($roomType, 'Dolby') !== false || stripos($roomType, 'Atmos') !== false) {
+                return [
+                    'screen_type'      => 'standard_2d',
+                    'sound_technology' => 'dolby_atmos',
+                    'features'         => ['dolby_atmos', '2k_laser'],
+                    'screen_config'    => \App\Services\RoomFormatCatalog::getDefaultScreenConfig('standard_2d'),
+                ];
+            }
+            if (stripos($roomType, 'Gold Class') !== false) {
+                return [
+                    'screen_type'      => 'standard_2d',
+                    'sound_technology' => 'dolby_atmos',
+                    'features'         => ['recliner_leather_seats', 'in_seat_service', 'dolby_atmos'],
+                    'screen_config'    => \App\Services\RoomFormatCatalog::getDefaultScreenConfig('standard_2d'),
+                ];
+            }
+            return [
+                'screen_type'      => 'standard_2d',
+                'sound_technology' => 'surround_71',
+                'features'         => ['2k_laser', '71_surround'],
+                'screen_config'    => \App\Services\RoomFormatCatalog::getDefaultScreenConfig('standard_2d'),
+            ];
+        };
+
+        foreach ($rooms as &$roomItem) {
+            $tech = $detectRoomTech($roomItem['room_type'] ?? '');
+            $roomItem['screen_type']      = $tech['screen_type'];
+            $roomItem['sound_technology'] = $tech['sound_technology'];
+            $roomItem['screen_config']    = json_encode($tech['screen_config']);
+            $roomItem['features']         = json_encode($tech['features']);
+            $roomItem['updated_at']       = now();
+        }
+        unset($roomItem);
+
         DB::table('rooms')->insertOrIgnore($rooms);
+
+        // Bulk insert physical seats for these rooms
+        $largeSeats = [];
+        foreach ($rooms as $r) {
+            $rId = $r['room_id'];
+            $matrix = $generateLargeMatrix(10, 12);
+            foreach ($matrix as $s) {
+                $largeSeats[] = [
+                    'room_id'     => $rId,
+                    'seat_type'   => \App\Models\SeatType::resolveTypeKey($s['type']),
+                    'row_name'    => $s['row_name'],
+                    'seat_number' => $s['seat_number'],
+                    'coord_x'     => $s['cx'],
+                    'coord_y'     => $s['cy'],
+                    'angle'       => $s['angle'],
+                    'is_active'   => true,
+                    'created_at'  => now(),
+                    'updated_at'  => now(),
+                ];
+            }
+        }
+        foreach (array_chunk($largeSeats, 500) as $chunk) {
+            DB::table('seats')->insertOrIgnore($chunk);
+        }
 
         // 4. Bulk Insert Movies (60 Movies: IDs 501 to 560)
         $movies = [];

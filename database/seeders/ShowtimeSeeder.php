@@ -80,7 +80,6 @@ class ShowtimeSeeder extends Seeder
                         'movie_id' => $movie->movie_id,
                         'showtime_start' => $startDateTime->format('Y-m-d H:i:s'),
                         'showtime_end' => $endDateTime->format('Y-m-d H:i:s'),
-                        'layout_snaps' => $room->seat_matrix,
                         'base_price' => $basePrice,
                         'created_at' => now(),
                         'updated_at' => now(),

@@ -34,6 +34,21 @@ class ShowtimeService
             $query->whereHas('room.cinema.province', fn($q) => $q->where('province_name', $province));
         }
 
+        if (!empty($filters['screen_type'])) {
+            $screenType = $filters['screen_type'];
+            $query->whereHas('room', fn($q) => $q->where('screen_type', $screenType));
+        }
+
+        if (!empty($filters['sound_technology'])) {
+            $soundTech = $filters['sound_technology'];
+            $query->whereHas('room', fn($q) => $q->where('sound_technology', $soundTech));
+        }
+
+        if (!empty($filters['room_type'])) {
+            $roomType = $filters['room_type'];
+            $query->whereHas('room', fn($q) => $q->where('room_type', 'ILIKE', "%{$roomType}%"));
+        }
+
         $showtimes = $query->get();
 
         return $showtimes->groupBy('movie_id')->map(function ($items) {
@@ -77,6 +92,21 @@ class ShowtimeService
             $query->whereHas('room', fn($q) => $q->where('cinema_id', $filters['cinema_id']));
         }
 
+        if (!empty($filters['screen_type'])) {
+            $screenType = $filters['screen_type'];
+            $query->whereHas('room', fn($q) => $q->where('screen_type', $screenType));
+        }
+
+        if (!empty($filters['sound_technology'])) {
+            $soundTech = $filters['sound_technology'];
+            $query->whereHas('room', fn($q) => $q->where('sound_technology', $soundTech));
+        }
+
+        if (!empty($filters['room_type'])) {
+            $roomType = $filters['room_type'];
+            $query->whereHas('room', fn($q) => $q->where('room_type', 'ILIKE', "%{$roomType}%"));
+        }
+
         $showtimes = $query->get();
 
         return $showtimes->groupBy(fn($s) => $s->showtime_start ? $s->showtime_start->format('Y-m-d') : '')
@@ -98,7 +128,7 @@ class ShowtimeService
     
     public function getShowtimeDetail(int $id)
     {
-        return Showtime::with(['movie.genres', 'room.cinema.province'])
+        return Showtime::with(['movie', 'room.cinema', 'showtimeSeats.seat.seatType'])
             ->withCount(['showtimeSeats as available_seats' => fn($q) => $q->where('status', 'available')])
             ->findOrFail($id);
     }

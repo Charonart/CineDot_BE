@@ -11,15 +11,12 @@ return new class extends Migration
         Schema::create('showtime_seats', function (Blueprint $table) {
             $table->id('showtime_seat_id');
             $table->foreignId('showtime_id')->constrained('showtimes', 'showtime_id')->cascadeOnDelete();
-            $table->string('seat_type');
-            $table->foreign('seat_type')->references('seat_type')->on('seat_types')->onDelete('cascade');
-            $table->string('row_name', 10);
-            $table->string('seat_number', 10);
+            $table->foreignId('seat_id')->constrained('seats', 'seat_id')->cascadeOnDelete();
             $table->enum('status', ['available', 'selecting', 'holding', 'booked', 'blocked'])->default('available');
 
             // Performance Indexes
+            $table->unique(['showtime_id', 'seat_id']);
             $table->index(['showtime_id', 'status']);
-            $table->index(['showtime_id', 'seat_type']);
         });
     }
 

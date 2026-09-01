@@ -120,12 +120,12 @@ class SeatTypeController extends Controller
             ], 422);
         }
 
-        // Check if any showtime seats are currently using this seat type
-        $usageCount = ShowtimeSeat::where('seat_type', $seatType->seat_type)->count();
+        // Check if any physical room seats are currently using this seat type
+        $usageCount = \App\Models\Seat::where('seat_type', $seatType->seat_type)->count();
         if ($usageCount > 0) {
             return response()->json([
                 'success' => false,
-                'message' => "Không thể xóa loại ghế '{$seatType->type_name}' vì đang được sử dụng trong {$usageCount} suất chiếu. Hãy chuyển trạng thái sang ngưng kích hoạt.",
+                'message' => "Không thể xóa loại ghế '{$seatType->type_name}' vì đang được sử dụng trong {$usageCount} ghế phòng chiếu. Hãy chuyển trạng thái sang ngưng kích hoạt.",
             ], 422);
         }
 

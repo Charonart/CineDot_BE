@@ -4,193 +4,227 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use App\Models\SeatType;
+use App\Services\RoomFormatCatalog;
 
 class RoomSeeder extends Seeder
 {
     public function run(): void
     {
-        $generateLayout = function ($layoutType, $rowsCount, $colsCount) {
+        $seatSize = 35;
+        $rowNames = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N'];
+
+        // 1. Layout Generator for IMAX Laser (Curved aisles & wing angles)
+        $generateImaxLayout = function () use ($seatSize, $rowNames) {
             $matrix = [];
-            $rowNames = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N'];
-            $seatSize = 35;
+            $rows = 8;
+            $cols = 14;
+            for ($r = 0; $r < $rows; $r++) {
+                $rowName = $rowNames[$r];
+                $actualCy = ($r + 1) * $seatSize + 20;
+                $seatNumber = 1;
+                for ($c = 1; $c <= $cols; $c++) {
+                    $actualCx = $c * $seatSize;
+                    if ($c > 3) $actualCx += 15;
+                    if ($c > 11) $actualCx += 15;
 
-            if ($layoutType === 'layout_1') {
-                // Layout 1: Central aisle, Couple at the back, some broken seats
-                for ($r = 0; $r < min($rowsCount, count($rowNames)); $r++) {
-                    $rowName = $rowNames[$r];
-                    $seatNumber = 1;
-                    $actualCx = 0;
-                    for ($c = 1; $c <= $colsCount; $c++) {
-                        $actualCx += $seatSize;
-                        
-                        // Central aisle
-                        if ($c == floor($colsCount / 2) + 1) {
-                            $actualCx += $seatSize; // Gap
-                        }
+                    $angle = 0;
+                    if ($c <= 3) $angle = 12 - ($c * 3);
+                    elseif ($c >= 12) $angle = - (12 - ((15 - $c) * 3));
 
-                        $type = ($r == $rowsCount - 1) ? 'COUPLE' : 'STD';
-                        if ($r >= 3 && $r < $rowsCount - 1) {
-                            $type = 'VIP';
-                        }
-                        
-                        $status = 'available';
-                        // Add some broken seats
-                        if ($r == 2 && $c == 3) $status = 'blocked';
-                        if ($r == 4 && $c == 5) $status = 'blocked';
+                    $type = ($r == $rows - 1) ? 'sweetbox' : (($r >= 2 && $r <= 6) ? 'vip' : 'standard');
 
-                        $matrix[] = [
-                            'id' => $rowName . $seatNumber,
-                            'type' => $type,
-                            'cx' => $actualCx,
-                            'cy' => ($r + 1) * $seatSize,
-                            'angle' => 0,
-                            'status' => $status
-                        ];
-                        $seatNumber++;
-                    }
-                }
-            } elseif ($layoutType === 'layout_2') {
-                // Layout 2: Two aisles, empty row in the middle, couple seats back 2 rows
-                $actualCy = 0;
-                for ($r = 0; $r < min($rowsCount, count($rowNames)); $r++) {
-                    $rowName = $rowNames[$r];
-                    $actualCy += $seatSize;
-                    
-                    // Empty row
-                    if ($r == 3) {
-                        $actualCy += $seatSize;
-                    }
-                    
-                    $seatNumber = 1;
-                    $actualCx = 0;
-                    for ($c = 1; $c <= $colsCount; $c++) {
-                        $actualCx += $seatSize;
-                        
-                        // Two aisles
-                        if ($c == 4 || $c == $colsCount - 2) {
-                            $actualCx += $seatSize;
-                        }
-
-                        $type = ($r >= $rowsCount - 2) ? 'COUPLE' : 'STD';
-                        
-                        $status = 'available';
-                        // Broken seats
-                        if ($r == 1 && $c == 2) $status = 'blocked';
-
-                        $matrix[] = [
-                            'id' => $rowName . $seatNumber,
-                            'type' => $type,
-                            'cx' => $actualCx,
-                            'cy' => $actualCy,
-                            'angle' => 0,
-                            'status' => $status
-                        ];
-                        $seatNumber++;
-                    }
-                }
-            } elseif ($layoutType === 'layout_3') {
-                // Layout 3: Gold Class / VIP only. Wide spacing. Curving (angle).
-                for ($r = 0; $r < min($rowsCount, count($rowNames)); $r++) {
-                    $rowName = $rowNames[$r];
-                    $seatNumber = 1;
-                    $actualCx = 0;
-                    for ($c = 1; $c <= $colsCount; $c++) {
-                        $actualCx += $seatSize * 1.5;
-                        
-                        // Omit corners to make it look curved
-                        if (($r == 0 && ($c == 1 || $c == $colsCount)) || 
-                            ($r == 1 && ($c == 1 || $c == $colsCount))) {
-                            continue; // Omit seat
-                        }
-
-                        $type = 'VIP';
-                        $status = 'available';
-                        if ($r == 3 && $c == 4) $status = 'blocked';
-
-                        $matrix[] = [
-                            'id' => $rowName . $seatNumber,
-                            'type' => $type,
-                            'cx' => (int) $actualCx,
-                            'cy' => (int) (($r + 1) * $seatSize * 1.5),
-                            'angle' => 0,
-                            'status' => $status
-                        ];
-                        $seatNumber++;
-                    }
-                }
-            } elseif ($layoutType === 'layout_4') {
-                // Layout 4: Sweetbox layout (Couples at the wings/sides), standard in the middle
-                for ($r = 0; $r < min($rowsCount, count($rowNames)); $r++) {
-                    $rowName = $rowNames[$r];
-                    $seatNumber = 1;
-                    $actualCx = 0;
-                    for ($c = 1; $c <= $colsCount; $c++) {
-                        $actualCx += $seatSize;
-
-                        $type = 'STD';
-                        if ($r > 2 && $r < $rowsCount - 1) {
-                            $type = 'VIP';
-                        }
-                        
-                        // Couples on the edges
-                        if ($c <= 2 || $c >= $colsCount - 1) {
-                            $type = 'COUPLE';
-                        }
-
-                        $status = 'available';
-                        if ($r == 2 && $c == 8) $status = 'blocked';
-                        
-                        $matrix[] = [
-                            'id' => $rowName . $seatNumber,
-                            'type' => $type,
-                            'cx' => $actualCx,
-                            'cy' => ($r + 1) * $seatSize,
-                            'angle' => 0,
-                            'status' => $status
-                        ];
-                        $seatNumber++;
-                    }
-                }
-            } else {
-                // Layout 5: Block layout. 3 blocks separated by 2 aisles. Center block is VIP. Back row Couple.
-                for ($r = 0; $r < min($rowsCount, count($rowNames)); $r++) {
-                    $rowName = $rowNames[$r];
-                    $seatNumber = 1;
-                    $actualCx = 0;
-                    for ($c = 1; $c <= $colsCount; $c++) {
-                        $actualCx += $seatSize;
-                        
-                        // 2 aisles
-                        if ($c == 4 || $c == $colsCount - 2) {
-                            $actualCx += $seatSize;
-                        }
-
-                        $type = 'STD';
-                        if ($c > 3 && $c < $colsCount - 2) {
-                            $type = 'VIP';
-                        }
-                        if ($r == $rowsCount - 1) {
-                            $type = 'COUPLE';
-                        }
-                        
-                        $status = 'available';
-                        // Broken seats
-                        if ($r == 0 && $c == 5) $status = 'blocked';
-                        if ($r == 5 && $c == 2) $status = 'blocked';
-
-                        $matrix[] = [
-                            'id' => $rowName . $seatNumber,
-                            'type' => $type,
-                            'cx' => $actualCx,
-                            'cy' => ($r + 1) * $seatSize,
-                            'angle' => 0,
-                            'status' => $status
-                        ];
-                        $seatNumber++;
-                    }
+                    $matrix[] = [
+                        'row_name'    => $rowName,
+                        'seat_number' => (string) $seatNumber++,
+                        'seat_type'   => $type,
+                        'coord_x'     => (int) $actualCx,
+                        'coord_y'     => (int) $actualCy,
+                        'angle'       => (int) $angle,
+                        'is_active'   => true,
+                    ];
                 }
             }
+            return $matrix;
+        };
 
+        // 2. Layout Generator for Dolby Cinema (Dual symmetrical aisles, VIP acoustic sweet spot)
+        $generateDolbyLayout = function () use ($seatSize, $rowNames) {
+            $matrix = [];
+            $rows = 8;
+            $cols = 12;
+            for ($r = 0; $r < $rows; $r++) {
+                $rowName = $rowNames[$r];
+                $actualCy = ($r + 1) * $seatSize + 15;
+                $seatNumber = 1;
+                for ($c = 1; $c <= $cols; $c++) {
+                    $actualCx = $c * $seatSize;
+                    if ($c > 3) $actualCx += 20; // Left aisle
+                    if ($c > 9) $actualCx += 20; // Right aisle
+
+                    $type = ($r == $rows - 1) ? 'couple' : (($r >= 3 && $r <= 6) ? 'vip' : 'standard');
+
+                    $matrix[] = [
+                        'row_name'    => $rowName,
+                        'seat_number' => (string) $seatNumber++,
+                        'seat_type'   => $type,
+                        'coord_x'     => (int) $actualCx,
+                        'coord_y'     => (int) $actualCy,
+                        'angle'       => 0,
+                        'is_active'   => true,
+                    ];
+                }
+            }
+            return $matrix;
+        };
+
+        // 3. Layout Generator for ScreenX (3 Blocks separated by wide aisles for 270 degree wall viewing)
+        $generateScreenXLayout = function () use ($seatSize, $rowNames) {
+            $matrix = [];
+            $rows = 7;
+            $cols = 12;
+            for ($r = 0; $r < $rows; $r++) {
+                $rowName = $rowNames[$r];
+                $actualCy = ($r + 1) * $seatSize + 25;
+                $seatNumber = 1;
+                for ($c = 1; $c <= $cols; $c++) {
+                    $actualCx = $c * $seatSize;
+                    if ($c > 4) $actualCx += 25;
+                    if ($c > 8) $actualCx += 25;
+
+                    $type = ($r == $rows - 1) ? 'couple' : (($r >= 2 && $r <= 5) ? 'vip' : 'standard');
+
+                    $matrix[] = [
+                        'row_name'    => $rowName,
+                        'seat_number' => (string) $seatNumber++,
+                        'seat_type'   => $type,
+                        'coord_x'     => (int) $actualCx,
+                        'coord_y'     => (int) $actualCy,
+                        'angle'       => 0,
+                        'is_active'   => true,
+                    ];
+                }
+            }
+            return $matrix;
+        };
+
+        // 4. Layout Generator for Samsung Onyx Cinema LED (Straight matrix, high-contrast zone)
+        $generateOnyxLedLayout = function () use ($seatSize, $rowNames) {
+            $matrix = [];
+            $rows = 7;
+            $cols = 12;
+            for ($r = 0; $r < $rows; $r++) {
+                $rowName = $rowNames[$r];
+                $actualCy = ($r + 1) * $seatSize + 15;
+                $seatNumber = 1;
+                for ($c = 1; $c <= $cols; $c++) {
+                    $actualCx = $c * $seatSize;
+                    if ($c > 6) $actualCx += 20; // Center aisle
+
+                    $type = ($r == $rows - 1) ? 'couple' : (($r >= 3) ? 'vip' : 'standard');
+
+                    $matrix[] = [
+                        'row_name'    => $rowName,
+                        'seat_number' => (string) $seatNumber++,
+                        'seat_type'   => $type,
+                        'coord_x'     => (int) $actualCx,
+                        'coord_y'     => (int) $actualCy,
+                        'angle'       => 0,
+                        'is_active'   => true,
+                    ];
+                }
+            }
+            return $matrix;
+        };
+
+        // 5. Layout Generator for Gold Class VIP (Spacious, couple recliners & bed seats)
+        $generateGoldClassLayout = function () use ($rowNames) {
+            $matrix = [];
+            $rows = 4;
+            $cols = 8;
+            $wideSeatW = 55;
+            $wideSeatH = 50;
+            for ($r = 0; $r < $rows; $r++) {
+                $rowName = $rowNames[$r];
+                $actualCy = ($r + 1) * $wideSeatH + 20;
+                $seatNumber = 1;
+                for ($c = 1; $c <= $cols; $c++) {
+                    $actualCx = $c * $wideSeatW;
+                    // Mini table gaps between pairs
+                    if ($c % 2 == 1) $actualCx += 10;
+                    if ($c == 5) $actualCx += 30; // Center walk aisle
+
+                    $type = ($r == $rows - 1) ? 'bed' : 'deluxe';
+
+                    $matrix[] = [
+                        'row_name'    => $rowName,
+                        'seat_number' => (string) $seatNumber++,
+                        'seat_type'   => $type,
+                        'coord_x'     => (int) $actualCx,
+                        'coord_y'     => (int) $actualCy,
+                        'angle'       => 0,
+                        'is_active'   => true,
+                    ];
+                }
+            }
+            return $matrix;
+        };
+
+        // 6. Layout Generator for Digital 3D Atmos
+        $generateDigital3DLayout = function () use ($seatSize, $rowNames) {
+            $matrix = [];
+            $rows = 8;
+            $cols = 12;
+            for ($r = 0; $r < $rows; $r++) {
+                $rowName = $rowNames[$r];
+                $actualCy = ($r + 1) * $seatSize + 15;
+                $seatNumber = 1;
+                for ($c = 1; $c <= $cols; $c++) {
+                    $actualCx = $c * $seatSize;
+                    if ($c == 4 || $c == 9) $actualCx += 15;
+
+                    $type = ($r == $rows - 1) ? 'couple' : (($r >= 3 && $r <= 6) ? 'vip' : 'standard');
+
+                    $matrix[] = [
+                        'row_name'    => $rowName,
+                        'seat_number' => (string) $seatNumber++,
+                        'seat_type'   => $type,
+                        'coord_x'     => (int) $actualCx,
+                        'coord_y'     => (int) $actualCy,
+                        'angle'       => 0,
+                        'is_active'   => true,
+                    ];
+                }
+            }
+            return $matrix;
+        };
+
+        // 7. Layout Generator for Digital 2D Standard
+        $generateStandard2DLayout = function () use ($seatSize, $rowNames) {
+            $matrix = [];
+            $rows = 8;
+            $cols = 12;
+            for ($r = 0; $r < $rows; $r++) {
+                $rowName = $rowNames[$r];
+                $actualCy = ($r + 1) * $seatSize + 15;
+                $seatNumber = 1;
+                for ($c = 1; $c <= $cols; $c++) {
+                    $actualCx = $c * $seatSize;
+                    if ($c > 6) $actualCx += 20; // Center aisle
+
+                    $type = ($r == $rows - 1) ? 'couple' : (($r >= 3 && $r <= 6) ? 'vip' : 'standard');
+
+                    $matrix[] = [
+                        'row_name'    => $rowName,
+                        'seat_number' => (string) $seatNumber++,
+                        'seat_type'   => $type,
+                        'coord_x'     => (int) $actualCx,
+                        'coord_y'     => (int) $actualCy,
+                        'angle'       => 0,
+                        'is_active'   => true,
+                    ];
+                }
+            }
             return $matrix;
         };
 
@@ -199,37 +233,120 @@ class RoomSeeder extends Seeder
             return;
         }
 
-        $roomTemplates = [
-            ['name' => 'Phòng 01 (IMAX Laser)', 'type' => 'IMAX Laser', 'rows' => 8, 'cols' => 12, 'layout' => 'layout_1'],
-            ['name' => 'Phòng 02 (2D Dolby Atmos)', 'type' => '2D Dolby Atmos', 'rows' => 7, 'cols' => 10, 'layout' => 'layout_2'],
-            ['name' => 'Phòng 03 (ScreenX 270°)', 'type' => 'ScreenX', 'rows' => 6, 'cols' => 12, 'layout' => 'layout_5'],
-            ['name' => 'Phòng 04 (Gold Class VIP)', 'type' => 'Gold Class', 'rows' => 5, 'cols' => 8, 'layout' => 'layout_3'],
-            ['name' => 'Phòng 05 (Sweetbox Couple)', 'type' => 'Standard', 'rows' => 6, 'cols' => 10, 'layout' => 'layout_4'],
+        $templates = [
+            [
+                'name'             => 'Phòng 01 (IMAX Laser 3D)',
+                'room_type'        => 'IMAX Laser 3D',
+                'screen_type'      => 'imax_laser',
+                'sound_technology' => 'imax_sound',
+                'screen_config'    => RoomFormatCatalog::getDefaultScreenConfig('imax_laser'),
+                'features'         => ['laser_projection', 'curved_screen', '12ch_imax_sound', 'sweetbox_seats'],
+                'generator'        => $generateImaxLayout,
+            ],
+            [
+                'name'             => 'Phòng 02 (Dolby Cinema Atmos)',
+                'room_type'        => 'Dolby Cinema',
+                'screen_type'      => 'dolby_cinema',
+                'sound_technology' => 'dolby_atmos',
+                'screen_config'    => RoomFormatCatalog::getDefaultScreenConfig('dolby_cinema'),
+                'features'         => ['dolby_vision_hdr', 'dolby_atmos', 'curved_screen', 'acoustic_walls'],
+                'generator'        => $generateDolbyLayout,
+            ],
+            [
+                'name'             => 'Phòng 03 (ScreenX 270° Atmos)',
+                'room_type'        => 'ScreenX 270°',
+                'screen_type'      => 'screenx',
+                'sound_technology' => 'dolby_atmos',
+                'screen_config'    => RoomFormatCatalog::getDefaultScreenConfig('screenx'),
+                'features'         => ['three_wall_screen', '270_degree_view', 'dolby_atmos'],
+                'generator'        => $generateScreenXLayout,
+            ],
+            [
+                'name'             => 'Phòng 04 (Samsung Onyx Cinema LED 4K)',
+                'room_type'        => 'Samsung Onyx Cinema LED',
+                'screen_type'      => 'onyx_led',
+                'sound_technology' => 'dolby_atmos',
+                'screen_config'    => RoomFormatCatalog::getDefaultScreenConfig('onyx_led'),
+                'features'         => ['samsung_onyx_led', '4k_dci', 'hfr_120fps', 'jbl_audio'],
+                'generator'        => $generateOnyxLedLayout,
+            ],
+            [
+                'name'             => 'Phòng 05 (Gold Class VIP Recliner)',
+                'room_type'        => 'Gold Class VIP',
+                'screen_type'      => 'standard_2d',
+                'sound_technology' => 'dolby_atmos',
+                'screen_config'    => RoomFormatCatalog::getDefaultScreenConfig('standard_2d'),
+                'features'         => ['recliner_leather_seats', 'in_seat_service', 'mini_table', 'dolby_atmos'],
+                'generator'        => $generateGoldClassLayout,
+            ],
+            [
+                'name'             => 'Phòng 06 (Digital 3D Dolby Atmos)',
+                'room_type'        => 'Digital 3D Atmos',
+                'screen_type'      => 'standard_3d',
+                'sound_technology' => 'dolby_atmos',
+                'screen_config'    => RoomFormatCatalog::getDefaultScreenConfig('standard_3d'),
+                'features'         => ['polarized_3d', 'dolby_atmos', 'sweetbox_seats'],
+                'generator'        => $generateDigital3DLayout,
+            ],
+            [
+                'name'             => 'Phòng 07 (Digital 2D Standard)',
+                'room_type'        => 'Digital 2D Standard',
+                'screen_type'      => 'standard_2d',
+                'sound_technology' => 'surround_71',
+                'screen_config'    => RoomFormatCatalog::getDefaultScreenConfig('standard_2d'),
+                'features'         => ['2k_laser', '71_surround'],
+                'generator'        => $generateStandard2DLayout,
+            ],
         ];
 
         $rooms = [];
+        $seats = [];
         $roomId = 1;
 
         foreach ($cinemas as $cinema) {
-            foreach ($roomTemplates as $tpl) {
-                $matrix = $generateLayout($tpl['layout'], $tpl['rows'], $tpl['cols']);
+            foreach ($templates as $tpl) {
+                $matrix = $tpl['generator']();
                 $totalSeats = count($matrix);
 
+                $currentRoomId = $roomId++;
                 $rooms[] = [
-                    'room_id' => $roomId++,
-                    'cinema_id' => $cinema->cinema_id,
-                    'room_name' => $tpl['name'],
-                    'room_type' => $tpl['type'],
-                    'seat_matrix' => json_encode($matrix),
-                    'total_seats' => $totalSeats,
-                    'is_active' => true,
-                    'created_at' => now(),
+                    'room_id'          => $currentRoomId,
+                    'cinema_id'        => $cinema->cinema_id,
+                    'room_name'        => $tpl['name'],
+                    'room_type'        => $tpl['room_type'],
+                    'screen_type'      => $tpl['screen_type'],
+                    'sound_technology' => $tpl['sound_technology'],
+                    'screen_config'    => json_encode($tpl['screen_config']),
+                    'features'         => json_encode($tpl['features']),
+                    'total_seats'      => $totalSeats,
+                    'is_active'        => true,
+                    'created_at'       => now(),
+                    'updated_at'       => now(),
                 ];
+
+                foreach ($matrix as $s) {
+                    $seats[] = [
+                        'room_id'     => $currentRoomId,
+                        'seat_type'   => SeatType::resolveTypeKey($s['seat_type']),
+                        'row_name'    => $s['row_name'],
+                        'seat_number' => $s['seat_number'],
+                        'coord_x'     => $s['coord_x'],
+                        'coord_y'     => $s['coord_y'],
+                        'angle'       => $s['angle'],
+                        'is_active'   => $s['is_active'],
+                        'created_at'  => now(),
+                        'updated_at'  => now(),
+                    ];
+                }
             }
         }
 
         foreach (array_chunk($rooms, 50) as $chunk) {
             DB::table('rooms')->insertOrIgnore($chunk);
+        }
+
+        foreach (array_chunk($seats, 500) as $chunk) {
+            DB::table('seats')->insertOrIgnore($chunk);
         }
     }
 }

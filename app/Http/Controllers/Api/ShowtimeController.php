@@ -112,10 +112,10 @@ class ShowtimeController extends Controller
      */
     public function seatStatus($id)
     {
-        $showtimeSeats = \App\Models\ShowtimeSeat::where('showtime_id', $id)->get();
+        $showtimeSeats = \App\Models\ShowtimeSeat::with('seat')->where('showtime_id', $id)->get();
         if ($showtimeSeats->isEmpty()) {
             $this->seatService->getScheduleSeats((int) $id);
-            $showtimeSeats = \App\Models\ShowtimeSeat::where('showtime_id', $id)->get();
+            $showtimeSeats = \App\Models\ShowtimeSeat::with('seat')->where('showtime_id', $id)->get();
         }
         $ttlSeconds = (int) env('HOLD_SEAT_EXPIRE_SECONDS', 600);
 
@@ -156,13 +156,18 @@ class ShowtimeController extends Controller
                 }
             }
 
+            $physical = $seat->seat;
+            $rName = $physical ? $physical->row_name : '';
+            $sNum = $physical ? (string) $physical->seat_number : '';
+            $sType = $physical ? $physical->seat_type : 'standard';
+
             $seatsData[] = [
                 'showtime_seat_id' => $seat->showtime_seat_id,
                 'showtime_id'      => (int) $seat->showtime_id,
-                'row_name'         => $seat->row_name,
-                'seat_number'      => $seat->seat_number,
-                'seat_code'        => $seat->row_name . $seat->seat_number,
-                'seat_type'        => $seat->seat_type,
+                'row_name'         => $rName,
+                'seat_number'      => $sNum,
+                'seat_code'        => $rName . $sNum,
+                'seat_type'        => $sType,
                 'status'           => $status,
             ];
         }

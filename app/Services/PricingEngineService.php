@@ -25,7 +25,7 @@ class PricingEngineService
         ?string $existingBookingCode = null
     ): array {
         $showtime = Showtime::with(['movie', 'room.cinema'])->findOrFail($showtimeId);
-        $seats = ShowtimeSeat::with('seatType')
+        $seats = ShowtimeSeat::with('seat.seatType')
             ->whereIn('showtime_seat_id', $showtimeSeatIds)
             ->where('showtime_id', $showtimeId)
             ->orderBy('showtime_seat_id')
@@ -48,13 +48,16 @@ class PricingEngineService
 
         foreach ($seats as $seat) {
             $basePrice = (float) $showtime->base_price;
-            $surcharge = $seat->seatType ? (float) $seat->seatType->surcharge_amount : 0.0;
+            $physicalSeat = $seat->seat;
+            $seatTypeModel = $physicalSeat?->seatType;
+            $seatTypeStr = $physicalSeat?->seat_type ?? 'standard';
+            $surcharge = $seatTypeModel ? (float) $seatTypeModel->surcharge_amount : 0.0;
 
             $appliedRuleData = null;
             $ruleModifier = 0.0;
 
             foreach ($activeRules as $rule) {
-                if ($this->matchesRuleConditions($rule, $dayOfWeek, $timeStr, $dateStr, $seat->seat_type, $showtime, count($seats), $user)) {
+                if ($this->matchesRuleConditions($rule, $dayOfWeek, $timeStr, $dateStr, $seatTypeStr, $showtime, count($seats), $user)) {
                     if ($rule->modifier_type === 'fixed_amount') {
                         $ruleModifier = (float) $rule->modifier_value;
                     } elseif ($rule->modifier_type === 'percentage') {
@@ -74,13 +77,16 @@ class PricingEngineService
             $finalSeatPrice = max(0, $basePrice + $surcharge + $ruleModifier);
             $subtotalTickets += $finalSeatPrice;
 
+            $rowName = $physicalSeat ? $physicalSeat->row_name : '';
+            $seatNum = $physicalSeat ? (string) $physicalSeat->seat_number : '';
+
             $ticketsBreakdown[] = [
                 'showtime_seat_id' => $seat->showtime_seat_id,
-                'seat_number' => $seat->row_name . $seat->seat_number,
-                'seat_type' => $seat->seat_type,
-                'base_price' => (int) round($basePrice),
-                'surcharge' => (int) round($surcharge),
-                'applied_rule' => $appliedRuleData,
+                'seat_number'      => $rowName . $seatNum,
+                'seat_type'        => $seatTypeStr,
+                'base_price'       => (int) round($basePrice),
+                'surcharge'        => (int) round($surcharge),
+                'applied_rule'     => $appliedRuleData,
                 'final_seat_price' => (int) round($finalSeatPrice),
             ];
         }

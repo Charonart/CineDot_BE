@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Seat;
 use App\Models\Showtime;
 use App\Models\ShowtimeSeat;
 use App\Models\SeatType;
@@ -14,94 +15,36 @@ class SeatService
         $showtime = Showtime::with(['movie', 'room.cinema'])->findOrFail($showtimeId);
         $room = $showtime->room;
 
-        // Parse layout_snaps or room seat_matrix
-        $layoutMatrix = $showtime->layout_snaps;
-        if (is_string($layoutMatrix)) {
-            $layoutMatrix = json_decode($layoutMatrix, true);
-        }
-        if (empty($layoutMatrix) && $room && $room->seat_matrix) {
-            $layoutMatrix = is_string($room->seat_matrix) ? json_decode($room->seat_matrix, true) : $room->seat_matrix;
-            // Backfill layout_snaps for showtime
-            if (!empty($layoutMatrix)) {
-                $showtime->update(['layout_snaps' => $layoutMatrix]);
-            }
-        }
-
-        // Parse room seat_matrix layout map
-        $matrixMap = [];
-        if (is_array($layoutMatrix)) {
-            foreach ($layoutMatrix as $mSeat) {
-                if (is_array($mSeat)) {
-                    $row = $mSeat['row_name'] ?? $mSeat['row'] ?? '';
-                    $num = (string)($mSeat['seat_number'] ?? $mSeat['number'] ?? '');
-                    $code = $row . $num;
-                    $sid = $mSeat['seat_id'] ?? $mSeat['id'] ?? $code;
-                    
-                    $canvasData = [
-                        'cx'    => isset($mSeat['cx']) ? (int) $mSeat['cx'] : (isset($mSeat['position_x']) ? (int) $mSeat['position_x'] : 0),
-                        'cy'    => isset($mSeat['cy']) ? (int) $mSeat['cy'] : (isset($mSeat['position_y']) ? (int) $mSeat['position_y'] : 0),
-                        'angle' => isset($mSeat['angle']) ? (int) $mSeat['angle'] : 0,
-                    ];
-
-                    if ($sid) {
-                        $matrixMap[(string)$sid] = $canvasData;
-                    }
-                    if ($code) {
-                        $matrixMap[(string)$code] = $canvasData;
-                    }
-                }
-            }
-        }
-
-        $seats = ShowtimeSeat::with('seatType')
+        $seats = ShowtimeSeat::with(['seat.seatType'])
             ->where('showtime_id', $showtimeId)
             ->get();
 
-        if ($seats->isEmpty() && is_array($layoutMatrix)) {
-            $newSeats = [];
-            // To prevent duplicates if the matrix has both string and object forms, use seat codes as keys
-            $addedCodes = [];
-            foreach ($layoutMatrix as $mSeat) {
-                if (!is_array($mSeat)) continue;
-                $row = $mSeat['row_name'] ?? $mSeat['row'] ?? '';
-                $num = (string)($mSeat['seat_number'] ?? $mSeat['number'] ?? '');
-                $code = $row . $num;
-                $sid = $mSeat['seat_id'] ?? $mSeat['id'] ?? $code;
-                
-                if (empty($sid)) continue;
-                
-                if (isset($addedCodes[$sid])) continue;
-                $addedCodes[$sid] = true;
+        // Auto-generate showtime_seats from Room's active physical seats if empty
+        if ($seats->isEmpty() && $room) {
+            $physicalSeats = Seat::where('room_id', $room->room_id)
+                ->where('is_active', true)
+                ->get();
 
-                // Extract row and number from ID if they are not explicitly set
-                if (empty($row) && preg_match('/^([A-Za-z]+)(\d+)$/', $sid, $m)) {
-                    $row = $m[1];
-                    $num = $m[2];
-                }
+            if ($physicalSeats->isNotEmpty()) {
+                $newSeats = $physicalSeats->map(function ($seat) use ($showtimeId) {
+                    return [
+                        'showtime_id' => $showtimeId,
+                        'seat_id'     => $seat->seat_id,
+                        'status'      => 'available',
+                    ];
+                })->toArray();
 
-                if (empty($row) || empty($num)) continue;
-
-                $rawType = (string) ($mSeat['seat_type'] ?? $mSeat['type'] ?? 'standard');
-                $seatTypeKey = SeatType::resolveTypeKey($rawType);
-
-                $newSeats[] = [
-                    'showtime_id' => $showtimeId,
-                    'seat_type'   => $seatTypeKey,
-                    'row_name'    => strtoupper($row),
-                    'seat_number' => $num,
-                    'status'      => $mSeat['status'] ?? 'available',
-                ];
-            }
-            if (!empty($newSeats)) {
-                \App\Models\ShowtimeSeat::insert($newSeats);
-                $seats = ShowtimeSeat::with('seatType')
+                ShowtimeSeat::insert($newSeats);
+                $seats = ShowtimeSeat::with(['seat.seatType'])
                     ->where('showtime_id', $showtimeId)
                     ->get();
             }
         }
 
         $seats = $seats->sortBy(function ($ss) {
-                return $ss->row_name . str_pad($ss->seat_number, 3, '0', STR_PAD_LEFT);
+                $row = $ss->seat?->row_name ?? '';
+                $num = $ss->seat?->seat_number ?? '';
+                return $row . str_pad($num, 3, '0', STR_PAD_LEFT);
             })
             ->values();
 
@@ -144,20 +87,28 @@ class SeatService
                 }
             }
 
-            $seatCode = $ss->row_name . $ss->seat_number;
-            $seatTypeModel = $ss->seatType;
+            $physicalSeat = $ss->seat;
+            $rowName = $physicalSeat ? $physicalSeat->row_name : '';
+            $seatNum = $physicalSeat ? (string) $physicalSeat->seat_number : '';
+            $seatCode = $rowName . $seatNum;
+            $seatType = $physicalSeat ? $physicalSeat->seat_type : 'standard';
+            $seatTypeModel = $physicalSeat ? $physicalSeat->seatType : null;
             $surcharge = $seatTypeModel ? (float) $seatTypeModel->surcharge_amount : 0.0;
             $finalPrice = (int) round($basePrice + $surcharge);
 
-            $canvas = $matrixMap[$seatCode] ?? $matrixMap[(string)$ss->showtime_seat_id] ?? ['cx' => 0, 'cy' => 0, 'angle' => 0];
+            $canvas = [
+                'cx'    => $physicalSeat ? (int) $physicalSeat->coord_x : 0,
+                'cy'    => $physicalSeat ? (int) $physicalSeat->coord_y : 0,
+                'angle' => $physicalSeat ? (int) $physicalSeat->angle : 0,
+            ];
 
             $seatList[] = [
                 'showtime_seat_id' => $ss->showtime_seat_id,
                 'seat_code'        => $seatCode,
-                'row_name'         => $ss->row_name,
-                'seat_number'      => (string) $ss->seat_number,
-                'seat_type'        => $ss->seat_type,
-                'type_name'        => $seatTypeModel ? $seatTypeModel->type_name : ucfirst($ss->seat_type),
+                'row_name'         => $rowName,
+                'seat_number'      => $seatNum,
+                'seat_type'        => $seatType,
+                'type_name'        => $seatTypeModel ? $seatTypeModel->type_name : ucfirst($seatType),
                 'color_code'       => $seatTypeModel ? $seatTypeModel->color_code : '#64748B',
                 'icon_name'        => $seatTypeModel ? $seatTypeModel->icon_name : 'seat',
                 'surcharge'        => (int) round($surcharge),
@@ -174,15 +125,23 @@ class SeatService
                 ->get();
         });
 
+        $screenConfig = $room ? $room->effective_screen_config : null;
+
         return [
             'showtime' => [
-                'showtime_id'    => $showtime->showtime_id,
-                'movie_title'    => $showtime->movie ? $showtime->movie->title : '',
-                'room_name'      => $showtime->room ? $showtime->room->room_name : '',
-                'cinema_name'    => ($showtime->room && $showtime->room->cinema) ? $showtime->room->cinema->cinema_name : '',
-                'base_price'     => (int) round($basePrice),
-                'showtime_start' => \Carbon\Carbon::parse($showtime->showtime_start)->toIso8601String(),
+                'showtime_id'      => $showtime->showtime_id,
+                'movie_title'      => $showtime->movie ? $showtime->movie->title : '',
+                'room_name'        => $room ? $room->room_name : '',
+                'room_type'        => $room ? $room->room_type : '',
+                'screen_type'      => $room ? $room->screen_type : 'standard_2d',
+                'sound_technology' => $room ? $room->sound_technology : 'surround_71',
+                'screen_config'    => $screenConfig,
+                'features'         => $room ? ($room->features ?? []) : [],
+                'cinema_name'      => ($room && $room->cinema) ? $room->cinema->cinema_name : '',
+                'base_price'       => (int) round($basePrice),
+                'showtime_start'   => \Carbon\Carbon::parse($showtime->showtime_start)->toIso8601String(),
             ],
+            'screen'     => $screenConfig,
             'seats'      => $seatList,
             'seat_types' => $allActiveSeatTypes,
         ];

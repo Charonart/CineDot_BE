@@ -12,11 +12,17 @@ return new class extends Migration
             $table->id('room_id');
             $table->foreignId('cinema_id')->constrained('cinemas', 'cinema_id')->cascadeOnDelete();
             $table->string('room_name');
-            $table->string('room_type')->nullable();
-            $table->json('seat_matrix')->nullable();
+            $table->string('room_type')->nullable(); // e.g., 'IMAX Laser', 'Dolby Cinema', 'ScreenX'
+            $table->string('screen_type', 50)->default('standard_2d'); // standard_2d, standard_3d, imax_laser, screenx, dolby_cinema, onyx_led
+            $table->string('sound_technology', 50)->default('surround_71'); // surround_71, dolby_atmos, imax_sound
+            $table->json('screen_config')->nullable(); // Canvas screen object: shape, aspect_ratio, width, curve_depth, side_walls
+            $table->json('features')->nullable(); // Tags: laser_projection, dolby_atmos, recliner, etc.
             $table->integer('total_seats')->default(0);
             $table->boolean('is_active')->default(true);
-            $table->timestamp('created_at')->nullable();
+            $table->timestamps();
+
+            $table->index('screen_type', 'idx_rooms_screen_type');
+            $table->index('sound_technology', 'idx_rooms_sound_tech');
         });
     }
 
