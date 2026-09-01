@@ -1121,7 +1121,7 @@ PROMPT;
                     break;
             }
 
-            if (empty($draftShowtimes) && !empty($sourceShowtimes)) {
+            if ($action !== 'DELETE_SHOWTIMES' && $action !== 'REMOVE_SHOWTIMES' && empty($draftShowtimes) && !empty($sourceShowtimes)) {
                 $draftShowtimes = $sourceShowtimes;
             }
 
@@ -1133,7 +1133,20 @@ PROMPT;
             Log::warning("AI Copilot fallback triggered: " . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
 
             // AUTO HEURISTIC FALLBACK
-            if (mb_stripos($userPrompt, 'sát') !== false || mb_stripos($userPrompt, 'khít') !== false || mb_stripos($userPrompt, 'nén') !== false) {
+            if (mb_stripos($userPrompt, 'xóa') !== false || mb_stripos($userPrompt, 'hủy') !== false || mb_stripos($userPrompt, 'bỏ bớt') !== false || mb_stripos($userPrompt, 'delete') !== false) {
+                $timeSlot = null;
+                if (mb_stripos($userPrompt, 'sáng') !== false) $timeSlot = 'morning';
+                elseif (mb_stripos($userPrompt, 'chiều') !== false) $timeSlot = 'afternoon';
+                elseif (mb_stripos($userPrompt, 'tối') !== false) $timeSlot = 'evening';
+                elseif (mb_stripos($userPrompt, 'đêm') !== false || mb_stripos($userPrompt, 'khuya') !== false) $timeSlot = 'night';
+
+                $delRes = $this->handleDeleteShowtimes($sourceShowtimes, $movies, [], null, $timeSlot, null, null, true);
+                $draftShowtimes = $delRes['draft_showtimes'];
+                $explanation = "Đã xóa {$delRes['deleted_count']} suất chiếu theo yêu cầu.";
+                if ($delRes['protected_count'] > 0) {
+                    $explanation .= " (Đã bảo vệ {$delRes['protected_count']} suất chiếu có khách đã đặt vé).";
+                }
+            } elseif (mb_stripos($userPrompt, 'sát') !== false || mb_stripos($userPrompt, 'khít') !== false || mb_stripos($userPrompt, 'nén') !== false) {
                 $draftShowtimes = $this->handleCompressTimeline(
                     $sourceShowtimes,
                     $rooms,
@@ -1167,7 +1180,7 @@ PROMPT;
                     $selectedRoomIds
                 );
                 $draftShowtimes = $solverResult['draft_showtimes'];
-                $explanation = "AI Copilot đã áp dụng Bộ giải thuật thông minh (Smart Solver): " . $solverResult['explanation'] . " (Ghi chú: " . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine() . ")";
+                $explanation = "AI Copilot đã áp dụng Bộ giải thuật thông minh (Smart Solver): " . $solverResult['explanation'];
             }
 
             return [

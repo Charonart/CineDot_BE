@@ -327,7 +327,7 @@ class AiScheduleController extends Controller
         $validated = $request->validate([
             'cinema_id'           => 'required|exists:cinemas,cinema_id',
             'target_date'         => 'required|date_format:Y-m-d',
-            'draft_showtimes'     => 'required|array|min:1',
+            'draft_showtimes'     => 'present|array',
             'clean_existing_date' => 'nullable|boolean',
         ]);
 
