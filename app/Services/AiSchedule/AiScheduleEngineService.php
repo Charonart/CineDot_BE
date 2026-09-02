@@ -93,13 +93,13 @@ class AiScheduleEngineService
     }
 
     /**
-     * Sinh / Tinh chỉnh bản nháp lịch chiếu (Hỗ trợ Multi-turn Copilot, Scope Protection & Rich Context)
+     * Sinh / Tinh chỉnh bản nháp lịch chiếu (100% Pure LLM-driven theo ý định người dùng)
      */
     public function generateDraft(
         int $cinemaId,
         string $targetDate,
-        string $mode = 'preset',
-        ?string $strategyId = 'prime_time_boost',
+        string $mode = 'prompt',
+        ?string $strategyId = null,
         ?string $userPrompt = null,
         array $selectedMovieIds = [],
         array $selectedRoomIds = [],
@@ -137,7 +137,7 @@ class AiScheduleEngineService
             throw new \Exception("Không tìm thấy phòng chiếu khả dụng theo bộ lọc tại rạp {$cinema->cinema_name}.");
         }
 
-        // 2. Lấy danh sách phim kèm Rich Metadata (doanh số 7 ngày gần nhất, thể loại, độ tuổi)
+        // 2. Lấy danh sách phim kèm Rich Metadata (thể loại, thời lượng, độ tuổi, doanh số)
         $moviesQuery = Movie::query();
         if (!empty($selectedMovieIds)) {
             $moviesQuery->whereIn('movie_id', $selectedMovieIds);
@@ -201,62 +201,40 @@ class AiScheduleEngineService
             ];
         }
 
-        $draftShowtimes = [];
-        $aiExplanation = '';
         $isRefinement = !empty($currentDraftShowtimes);
+        $effectivePrompt = !empty($userPrompt)
+            ? $userPrompt
+            : "Hãy phân tích danh sách phim (thể loại, thời lượng, độ hot) và các phòng chiếu để lập lịch chiếu toàn diện, tối ưu cho ngày {$targetDate}.";
 
-        if ($mode === 'prompt' && !empty($userPrompt)) {
-            // ── CHẾ ĐỘ COPILOT PROMPT (Hỗ trợ Multi-turn & Refinement) ──
-            $llmResult = $this->solvePromptWithLlm(
-                $config,
-                $cinema,
-                $rooms,
-                $movies,
-                $targetDate,
-                $userPrompt,
-                $existingShowtimes,
-                $currentDraftShowtimes,
-                $chatHistory,
-                $scheduleMode,
-                $primeInfo,
-                $bufferMinutes,
-                $staggeringGap,
-                $openingTime,
-                $closingTime,
-                $defaultBasePrice,
-                $selectedRoomIds,
-                $selectedMovieIds,
-                $overrideConfig
-            );
+        // ── CHẾ ĐỘ PURE LLM COPILOT (100% AI Suy luận theo ý Admin & Context) ──
+        $llmResult = $this->solvePromptWithLlm(
+            $config,
+            $cinema,
+            $rooms,
+            $movies,
+            $targetDate,
+            $effectivePrompt,
+            $existingShowtimes,
+            $currentDraftShowtimes,
+            $chatHistory,
+            $scheduleMode,
+            $primeInfo,
+            $bufferMinutes,
+            $staggeringGap,
+            $openingTime,
+            $closingTime,
+            $defaultBasePrice,
+            $selectedRoomIds,
+            $selectedMovieIds,
+            $overrideConfig
+        );
 
-            $draftShowtimes = $llmResult['draft_showtimes'];
-            $aiExplanation = $llmResult['explanation'] ?? 'AI Copilot đã cập nhật lịch chiếu theo yêu cầu của bạn.';
-        } else {
-            // ── CHẾ ĐỘ CHIẾN LƯỢC MẪU (Fast Heuristic Solver) ──
-            $ruleResult = $this->solvePresetSchedule(
-                $strategyId ?: 'prime_time_boost',
-                $cinema,
-                $rooms,
-                $movies,
-                $targetDate,
-                $existingShowtimes,
-                $currentDraftShowtimes,
-                $scheduleMode,
-                $primeInfo,
-                $bufferMinutes,
-                $staggeringGap,
-                $openingTime,
-                $closingTime,
-                $defaultBasePrice,
-                $selectedRoomIds
-            );
+        $draftShowtimes = $llmResult['draft_showtimes'];
+        $aiExplanation = $llmResult['explanation'] ?? 'AI Copilot đã cập nhật lịch chiếu theo yêu cầu của bạn.';
+        $aiThinkingSteps = $llmResult['thinking_steps'] ?? [];
 
-            $draftShowtimes = $ruleResult['draft_showtimes'];
-            $aiExplanation = $ruleResult['explanation'];
-        }
-
-        // Tự động chữa lành và căn chỉnh dòng thời gian (Auto-Heal & Collision Free)
-        $anchorShowtimes = ($scheduleMode === 'replace_all' || $mode === 'prompt')
+        // Tự động chữa lành và căn chỉnh dòng thời gian tránh xung đột (Collision Free)
+        $anchorShowtimes = ($scheduleMode === 'replace_all')
             ? array_values(array_filter($existingShowtimes, fn ($st) => !empty($st['is_locked']) || (int) ($st['booked_seats'] ?? 0) > 0))
             : $existingShowtimes;
 
@@ -286,8 +264,8 @@ class AiScheduleEngineService
             'summary' => array_merge($financialSummary, [
                 'total_showtimes'          => count($draftShowtimes),
                 'total_rooms_used'         => count(array_unique(array_column($draftShowtimes, 'room_id'))),
-                'strategy_id'              => $strategyId,
-                'mode'                     => $mode,
+                'strategy_id'              => null,
+                'mode'                     => 'prompt',
                 'is_refinement'            => $isRefinement,
                 'schedule_mode'            => $scheduleMode,
                 'target_date'              => $targetDate,
@@ -295,171 +273,11 @@ class AiScheduleEngineService
                 'cinema_name'              => $cinema->cinema_name,
                 'prime_time_info'          => $primeInfo,
                 'strategy_explanation'     => $aiExplanation,
+                'thinking_steps'           => $aiThinkingSteps,
             ]),
             'draft_showtimes'    => $draftShowtimes,
             'existing_showtimes' => $existingShowtimes,
             'validation'         => $validation,
-        ];
-    }
-
-    /**
-     * Thuật toán Solver Rule-Based xếp lịch tối ưu (Xoay tua phim công bằng & phân bổ theo khung giờ)
-     */
-    private function solvePresetSchedule(
-        string $strategyId,
-        Cinema $cinema,
-        $rooms,
-        $movies,
-        string $targetDate,
-        array $existingShowtimes,
-        array $currentDraftShowtimes,
-        string $scheduleMode,
-        array $primeInfo,
-        int $bufferMinutes,
-        int $staggeringGap,
-        string $openingTime,
-        string $closingTime,
-        float $defaultBasePrice,
-        array $selectedRoomIds = []
-    ): array {
-        $draftShowtimes = [];
-        $primeStartStr = $primeInfo['time_from'] ?? '18:00';
-        $primeEndStr = $primeInfo['time_to'] ?? '22:30';
-
-        // Phân nhóm phim theo thể loại & độ hot
-        $familyMovies = $movies->filter(function ($m) {
-            $genres = $m->genres->pluck('name')->map('strtolower')->toArray();
-            return in_array('hoạt hình', $genres) || in_array('animation', $genres) || in_array('gia đình', $genres) || in_array('family', $genres);
-        })->values();
-
-        $horrorMovies = $movies->filter(function ($m) {
-            $genres = $m->genres->pluck('name')->map('strtolower')->toArray();
-            $age = strtoupper($m->age_rating ?? '');
-            return in_array('kinh dị', $genres) || in_array('horror', $genres) || in_array('giật gân', $genres) || in_array('thriller', $genres) || in_array($age, ['T18', 'C18', '18+']);
-        })->values();
-
-        $blockbusterMovies = $movies->sortByDesc('popularity')->values();
-        $allMoviesList = $movies->values();
-
-        $movieRotationIndex = 0;
-        $roomIndex = 0;
-
-        foreach ($rooms as $room) {
-            if (!empty($selectedRoomIds) && !in_array($room->room_id, $selectedRoomIds)) {
-                continue;
-            }
-
-            $roomBasePrice = $this->calculateRoomBasePrice($room, $defaultBasePrice);
-            $staggerOffset = ($roomIndex * $staggeringGap) % 60;
-            $openCarbon = Carbon::parse("{$targetDate} {$openingTime}:00")->addMinutes($staggerOffset);
-            $closeCarbon = Carbon::parse("{$targetDate} {$closingTime}:00");
-
-            $roomExisting = array_filter($existingShowtimes, fn ($st) => (int) $st['room_id'] === (int) $room->room_id);
-            usort($roomExisting, fn ($a, $b) => strcmp($a['showtime_start'], $b['showtime_start']));
-
-            if ($scheduleMode === 'replace_all') {
-                $roomExisting = array_filter($roomExisting, fn ($st) => !empty($st['is_locked']));
-            } elseif ($scheduleMode === 'optimize') {
-                // Optimize mode: keep locked showtimes and showtimes with booked tickets, replace empty showtimes
-                $roomExisting = array_filter($roomExisting, fn ($st) => !empty($st['is_locked']) || (int) ($st['booked_seats'] ?? 0) > 0);
-            }
-
-            // Tìm các khoảng thời gian trống (Free Time Windows)
-            $freeIntervals = [];
-            $pointer = clone $openCarbon;
-
-            foreach ($roomExisting as $ex) {
-                $exStart = Carbon::parse($ex['showtime_start']);
-                $exEnd = Carbon::parse($ex['showtime_end'])->addMinutes($bufferMinutes);
-
-                if ($exStart->greaterThan($pointer)) {
-                    $freeIntervals[] = ['start' => clone $pointer, 'end' => clone $exStart];
-                }
-                if ($exEnd->greaterThan($pointer)) {
-                    $pointer = clone $exEnd;
-                }
-            }
-
-            if ($closeCarbon->greaterThan($pointer)) {
-                $freeIntervals[] = ['start' => clone $pointer, 'end' => clone $closeCarbon];
-            }
-
-            // Xếp phim vào từng khoảng trống
-            foreach ($freeIntervals as $interval) {
-                $slotPointer = clone $interval['start'];
-                $slotEnd = clone $interval['end'];
-
-                while ($slotPointer->lessThan($slotEnd)) {
-                    $timeOfDayStr = $slotPointer->format('H:i');
-                    $hour = $slotPointer->hour;
-                    $isPrimeTime = ($timeOfDayStr >= $primeStartStr && $timeOfDayStr <= $primeEndStr);
-
-                    $selectedMovie = null;
-
-                    // 1. Phim sáng & trưa (08:30 - 15:30): Ưu tiên gia đình/hoạt hình nếu có
-                    if ($hour < 16 && $familyMovies->isNotEmpty()) {
-                        $selectedMovie = $familyMovies[$movieRotationIndex % $familyMovies->count()];
-                    }
-                    // 2. Khung Giờ Vàng hoặc Phòng IMAX: Ưu tiên bom tấn top đầu
-                    elseif ($isPrimeTime || $strategyId === 'prime_time_boost' || in_array($room->screen_type, ['imax_laser', 'screenx'])) {
-                        $selectedMovie = $blockbusterMovies->first() ?: $allMoviesList->first();
-                    }
-                    // 3. Suất đêm muộn (sau 21:30): Ưu tiên phim kinh dị / 18+
-                    elseif ($hour >= 21 && $horrorMovies->isNotEmpty()) {
-                        $selectedMovie = $horrorMovies[$movieRotationIndex % $horrorMovies->count()];
-                    }
-                    // 4. Xoay tua đều danh mục phim
-                    else {
-                        $selectedMovie = $allMoviesList[$movieRotationIndex % $allMoviesList->count()];
-                    }
-
-                    $movieRotationIndex++;
-
-                    $duration = (int) ($selectedMovie->duration ?: 120);
-                    $showtimeStart = clone $slotPointer;
-                    $showtimeEnd = (clone $showtimeStart)->addMinutes($duration);
-
-                    if ($showtimeEnd->greaterThan($slotEnd)) {
-                        break;
-                    }
-
-                    $tempId = "draft_" . $room->room_id . "_" . $showtimeStart->format('Hi');
-                    $draftShowtimes[] = [
-                        'temp_id'        => $tempId,
-                        'movie_id'       => $selectedMovie->movie_id,
-                        'movie_title'    => $selectedMovie->title,
-                        'movie_poster'   => $selectedMovie->poster_path,
-                        'duration'       => $duration,
-                        'room_id'        => $room->room_id,
-                        'room_name'      => $room->room_name,
-                        'room_type'      => $room->room_type,
-                        'room_capacity'  => $room->total_seats,
-                        'showtime_start' => $showtimeStart->format('Y-m-d H:i:s'),
-                        'showtime_end'   => $showtimeEnd->format('Y-m-d H:i:s'),
-                        'base_price'     => $roomBasePrice,
-                        'buffer_minutes' => $bufferMinutes,
-                        'is_prime_time'  => $isPrimeTime,
-                    ];
-
-                    $slotPointer = (clone $showtimeEnd)->addMinutes($bufferMinutes);
-                }
-            }
-
-            $roomIndex++;
-        }
-
-        $draftCount = count($draftShowtimes);
-        if ($draftCount > 0) {
-            $explanation = "Đã xếp lịch thông minh với {$draftCount} suất chiếu (Xoay tua phim đều, ưu tiên hoạt hình buổi sáng, bom tấn giờ vàng và phim đêm).";
-        } elseif (!empty($existingShowtimes) && $scheduleMode === 'smart_fill') {
-            $explanation = "Ngày {$targetDate} đã kín lịch chiếu ở tất cả các phòng (" . count($existingShowtimes) . " suất hiện có). Nếu bạn muốn xếp lại lịch toàn bộ ngày, vui lòng chọn mục tiêu 'Tạo mới từ đầu (Ghi đè)'.";
-        } else {
-            $explanation = "Không tìm thấy khoảng thời gian trống khả dụng để xếp thêm suất chiếu theo bộ lọc hiện tại.";
-        }
-
-        return [
-            'draft_showtimes' => $draftShowtimes,
-            'explanation'     => $explanation,
         ];
     }
 
@@ -702,34 +520,69 @@ class AiScheduleEngineService
 
     /**
      * AGENT ACTION TOOL 4: Xóa bớt suất chiếu chưa bán vé (DELETE_SHOWTIMES)
+     * Hỗ trợ xóa chính xác theo target_temp_ids, xóa theo số lượng limit, hoặc lọc theo phòng/giờ/phim.
      */
     private function handleDeleteShowtimes(
         array $sourceShowtimes,
         $movies,
+        array $targetTempIds = [],
         array $roomIdsFilter = [],
         $movieIdentifier = null,
         ?string $timeSlot = null,
         ?string $timeFrom = null,
         ?string $timeTo = null,
+        ?int $limit = null,
+        bool $deleteAll = false,
         bool $unbookedOnly = true
     ): array {
         $resolved = [];
         $deletedCount = 0;
         $protectedCount = 0;
 
+        $hasSpecificFilter = !empty($targetTempIds)
+            || !empty($roomIdsFilter)
+            || !empty($movieIdentifier)
+            || !empty($timeSlot)
+            || !empty($timeFrom)
+            || !empty($timeTo);
+
+        // BẢO VỆ AN TOÀN: Nếu không có bất kỳ bộ lọc cụ thể nào và KHÔNG có cờ delete_all = true và không có limit
+        // Tuyệt đối không xóa bừa bãi toàn bộ lịch!
+        if (!$hasSpecificFilter && !$deleteAll && empty($limit)) {
+            return [
+                'draft_showtimes' => $sourceShowtimes,
+                'deleted_count'   => 0,
+                'protected_count' => 0,
+                'warning'         => 'Không có tiêu chí xóa cụ thể hoặc suất chiếu chỉ định. Hệ thống giữ nguyên lịch chiếu.',
+            ];
+        }
+
         foreach ($sourceShowtimes as $st) {
             $rId = (int) $st['room_id'];
             $mId = (int) $st['movie_id'];
+            $tempId = $st['temp_id'] ?? '';
             $bookedSeats = (int) ($st['booked_seats'] ?? 0);
             $isLocked = !empty($st['is_locked']);
 
             $start = Carbon::parse($st['showtime_start']);
             $timeStr = $start->format('H:i');
 
-            // Kiểm tra bộ lọc phòng
+            // Kiểm tra nếu đã đủ số lượng limit xóa
+            if ($limit !== null && $limit > 0 && $deletedCount >= $limit) {
+                $resolved[] = $st;
+                continue;
+            }
+
+            // 1. Kiểm tra lọc theo ID suất cụ thể
+            $isIdMatch = true;
+            if (!empty($targetTempIds)) {
+                $isIdMatch = in_array($tempId, $targetTempIds);
+            }
+
+            // 2. Kiểm tra bộ lọc phòng
             $isRoomMatch = empty($roomIdsFilter) || in_array($rId, $roomIdsFilter);
-            
-            // Kiểm tra bộ lọc giờ
+
+            // 3. Kiểm tra bộ lọc giờ
             $isTimeMatch = true;
             if ($timeFrom && $timeStr < $timeFrom) $isTimeMatch = false;
             if ($timeTo && $timeStr > $timeTo) $isTimeMatch = false;
@@ -747,7 +600,7 @@ class AiScheduleEngineService
                 }
             }
 
-            // Kiểm tra bộ lọc phim
+            // 4. Kiểm tra bộ lọc phim
             $isMovieMatch = true;
             if ($movieIdentifier) {
                 if (is_numeric($movieIdentifier) && $mId !== (int) $movieIdentifier) {
@@ -757,8 +610,9 @@ class AiScheduleEngineService
                 }
             }
 
-            // Nếu khớp điều kiện xóa
-            if ($isRoomMatch && $isTimeMatch && $isMovieMatch) {
+            $shouldDelete = $deleteAll || (!empty($targetTempIds) ? $isIdMatch : ($isIdMatch && $isRoomMatch && $isTimeMatch && $isMovieMatch));
+
+            if ($shouldDelete) {
                 if ($unbookedOnly && ($bookedSeats > 0 || $isLocked)) {
                     // ĐÃ CÓ VÉ BÁN HOẶC BỊ KHÓA -> BẢO VỆ TUYỆT ĐỐI KHÔNG XÓA
                     $protectedCount++;
@@ -777,6 +631,156 @@ class AiScheduleEngineService
             'deleted_count'   => $deletedCount,
             'protected_count' => $protectedCount,
         ];
+    }
+
+    /**
+     * AGENT ACTION TOOL 5: Cập nhật 1 suất chiếu cụ thể (UPDATE_SHOWTIME)
+     */
+    private function handleUpdateShowtime(
+        array $sourceShowtimes,
+        string $targetTempId,
+        $movies,
+        $rooms,
+        array $primeInfo,
+        string $targetDate,
+        ?string $newStartTime = null,
+        $newMovieIdOrTitle = null,
+        ?int $newRoomId = null,
+        float $defaultBasePrice = 100000.0
+    ): array {
+        $moviesById = $movies->keyBy('movie_id');
+        $roomsById = $rooms->keyBy('room_id');
+        $resolved = [];
+        $updated = false;
+
+        foreach ($sourceShowtimes as $st) {
+            $tempId = $st['temp_id'] ?? '';
+            if ($tempId === $targetTempId || (!$updated && empty($targetTempId))) {
+                if ($newRoomId && $roomsById->has($newRoomId)) {
+                    $st['room_id'] = $newRoomId;
+                    $roomObj = $roomsById->get($newRoomId);
+                    $st['room_name'] = $roomObj->room_name;
+                    $st['room_type'] = $roomObj->room_type;
+                    $st['room_capacity'] = $roomObj->total_seats;
+                    $st['base_price'] = $this->calculateRoomBasePrice($roomObj, $defaultBasePrice);
+                }
+
+                if ($newMovieIdOrTitle) {
+                    $targetMovie = null;
+                    if (is_numeric($newMovieIdOrTitle)) {
+                        $targetMovie = $moviesById->get((int) $newMovieIdOrTitle);
+                    }
+                    if (!$targetMovie && is_string($newMovieIdOrTitle)) {
+                        $targetMovie = $movies->first(fn ($m) => mb_stripos($m->title, $newMovieIdOrTitle) !== false);
+                    }
+                    if ($targetMovie) {
+                        $st['movie_id'] = $targetMovie->movie_id;
+                        $st['movie_title'] = $targetMovie->title;
+                        $st['movie_poster'] = $targetMovie->poster_path;
+                        $st['duration'] = (int) ($targetMovie->duration ?: 120);
+                    }
+                }
+
+                if ($newStartTime) {
+                    $startStr = strlen($newStartTime) <= 5 ? "{$targetDate} {$newStartTime}:00" : $newStartTime;
+                    $newStartCarbon = Carbon::parse($startStr);
+                    $duration = (int) ($st['duration'] ?? 120);
+                    $newEndCarbon = (clone $newStartCarbon)->addMinutes($duration);
+
+                    $timeStr = $newStartCarbon->format('H:i');
+                    $isPrime = ($timeStr >= ($primeInfo['time_from'] ?? '18:00') && $timeStr <= ($primeInfo['time_to'] ?? '22:30'));
+
+                    $st['showtime_start'] = $newStartCarbon->format('Y-m-d H:i:s');
+                    $st['showtime_end'] = $newEndCarbon->format('Y-m-d H:i:s');
+                    $st['is_prime_time'] = $isPrime;
+                }
+
+                $updated = true;
+            }
+            $resolved[] = $st;
+        }
+
+        usort($resolved, fn ($a, $b) => strcmp($a['showtime_start'], $b['showtime_start']));
+        return $resolved;
+    }
+
+    /**
+     * AGENT ACTION TOOL 6: Thêm 1 suất chiếu mới vào phòng/giờ chỉ định (ADD_SHOWTIME)
+     */
+    private function handleAddShowtime(
+        array $sourceShowtimes,
+        $movieIdOrTitle,
+        $roomIdOrName,
+        string $startTime,
+        $movies,
+        $rooms,
+        array $primeInfo,
+        string $targetDate,
+        int $bufferMinutes,
+        float $defaultBasePrice
+    ): array {
+        $moviesById = $movies->keyBy('movie_id');
+        $roomsById = $rooms->keyBy('room_id');
+
+        // Tìm phim
+        $targetMovie = null;
+        if (is_numeric($movieIdOrTitle)) {
+            $targetMovie = $moviesById->get((int) $movieIdOrTitle);
+        }
+        if (!$targetMovie && is_string($movieIdOrTitle)) {
+            $targetMovie = $movies->first(fn ($m) => mb_stripos($m->title, $movieIdOrTitle) !== false);
+        }
+        if (!$targetMovie) {
+            $targetMovie = $movies->first();
+        }
+
+        // Tìm phòng
+        $targetRoom = null;
+        if (is_numeric($roomIdOrName)) {
+            $targetRoom = $roomsById->get((int) $roomIdOrName);
+        }
+        if (!$targetRoom && is_string($roomIdOrName)) {
+            $targetRoom = $rooms->first(fn ($r) => mb_stripos($r->room_name, $roomIdOrName) !== false);
+        }
+        if (!$targetRoom) {
+            $targetRoom = $rooms->first();
+        }
+
+        if (!$targetMovie || !$targetRoom) {
+            return $sourceShowtimes;
+        }
+
+        $startStr = strlen($startTime) <= 5 ? "{$targetDate} {$startTime}:00" : $startTime;
+        $startCarbon = Carbon::parse($startStr);
+        $duration = (int) ($targetMovie->duration ?: 120);
+        $endCarbon = (clone $startCarbon)->addMinutes($duration);
+
+        $timeStr = $startCarbon->format('H:i');
+        $isPrime = ($timeStr >= ($primeInfo['time_from'] ?? '18:00') && $timeStr <= ($primeInfo['time_to'] ?? '22:30'));
+        $roomBasePrice = $this->calculateRoomBasePrice($targetRoom, $defaultBasePrice);
+
+        $newShowtime = [
+            'temp_id'        => "draft_add_{$targetRoom->room_id}_" . $startCarbon->format('Hi') . "_" . time(),
+            'movie_id'       => $targetMovie->movie_id,
+            'movie_title'    => $targetMovie->title,
+            'movie_poster'   => $targetMovie->poster_path,
+            'duration'       => $duration,
+            'room_id'        => $targetRoom->room_id,
+            'room_name'      => $targetRoom->room_name,
+            'room_type'      => $targetRoom->room_type,
+            'room_capacity'  => $targetRoom->total_seats,
+            'showtime_start' => $startCarbon->format('Y-m-d H:i:s'),
+            'showtime_end'   => $endCarbon->format('Y-m-d H:i:s'),
+            'base_price'     => $roomBasePrice,
+            'buffer_minutes' => $bufferMinutes,
+            'is_prime_time'  => $isPrime,
+            'booked_seats'   => 0,
+            'is_locked'      => false,
+        ];
+
+        $sourceShowtimes[] = $newShowtime;
+        usort($sourceShowtimes, fn ($a, $b) => strcmp($a['showtime_start'], $b['showtime_start']));
+        return $sourceShowtimes;
     }
 
     /**
@@ -828,99 +832,156 @@ class AiScheduleEngineService
                 'genres'              => $m->genres->pluck('name')->toArray(),
             ])->toArray();
 
+            // Rich Snapshot Context: Danh sách chi tiết các suất chiếu hiện có trên màn hình
+            $sourceShowtimesCompact = array_map(function ($st) {
+                return [
+                    'temp_id'      => $st['temp_id'] ?? ("draft_" . ($st['showtime_id'] ?? ($st['room_id'] . '_' . str_replace(':', '', substr($st['showtime_start'], 11, 5))))),
+                    'room_id'      => (int) $st['room_id'],
+                    'room_name'    => $st['room_name'] ?? ('Phòng ' . $st['room_id']),
+                    'movie_id'     => (int) $st['movie_id'],
+                    'movie_title'  => $st['movie_title'] ?? 'Phim',
+                    'start_time'   => substr($st['showtime_start'], 11, 5), // HH:mm
+                    'end_time'     => substr($st['showtime_end'] ?? '', 11, 5),   // HH:mm
+                    'duration'     => (int) ($st['duration'] ?? 120),
+                    'booked_seats' => (int) ($st['booked_seats'] ?? 0),
+                    'is_locked'    => !empty($st['is_locked']) || (int) ($st['booked_seats'] ?? 0) > 0,
+                    'is_prime'     => !empty($st['is_prime_time']),
+                ];
+            }, $sourceShowtimes);
+
             $sourceCount = count($sourceShowtimes);
             $roomsJson = $this->toJsonPretty($roomsData);
             $moviesJson = $this->toJsonPretty($moviesData);
+            $showtimesJson = $this->toJsonPretty($sourceShowtimesCompact);
 
             $systemPrompt = <<<PROMPT
-Bạn là Trợ Lý AI Điều Hành Rạp Chiếu Phim (CineDot AI Schedule Operator Agent).
-Nhiệm vụ của bạn là đọc yêu cầu của Admin và CHỌN HÀNH ĐỘNG (ACTION) phù hợp nhất để thực thi:
+Bạn là Trợ Lý AI Điều Hành Rạp Chiếu Phim Cao Cấp (CineDot AI Schedule Operator Agent).
+Nhiệm vụ của bạn là hiểu sâu sắc yêu cầu của Admin, phân tích danh sách suất chiếu hiện có và CHỌN HÀNH ĐỘNG (ACTION) chính xác để thực thi.
+
+=== THÔNG TIN VẬN HÀNH HIỆN TẠI ===
+- Rạp: {$cinema->cinema_name} | Ngày chiếu: {$targetDate}
+- Khung giờ hoạt động: {$openingTime} - {$closingTime} | Thời gian dọn phòng (buffer): {$bufferMinutes} phút
+- Khung giờ vàng (Prime Time): {$primeInfo['display_text']}
+- Tổng số suất chiếu đang hiển thị: {$sourceCount} suất
+
+=== DANH SÁCH PHÒNG CHIẾU ===
+{$roomsJson}
+
+=== DANH SÁCH PHIM ĐANG CÓ TẠI RẠP ===
+{$moviesJson}
+
+=== DANH SÁCH SUẤT CHIẾU HIỆN CÓ TRÊN TIMELINE (SNAPSHOT CONTEXT) ===
+{$showtimesJson}
 
 === CÁC ACTION TOOLS KHẢ DỤNG ===
-1. `COMPRESS_TIMELINE`: Kéo toàn bộ hoặc một số phòng chiếu sát nhau, khít giờ, xóa khoảng trống chờ thừa (Khớp với: 'sát nhau', 'liên tục', 'nối tiếp', 'rút ngắn thời gian chờ', 'khít giờ', 'nén giờ').
-   Params:
-   {
-     "action": "COMPRESS_TIMELINE",
-     "params": {
-       "room_ids": [] // để trống nếu áp dụng toàn bộ phòng, hoặc mảng [1, 2] nếu chỉ định phòng
-     },
-     "explanation": "Đã sắp xếp toàn bộ các suất chiếu nối tiếp liên tục (sát nhau) theo đúng thời gian dọn phòng {$bufferMinutes} phút."
-   }
 
-2. `SHIFT_SHOWTIMES`: Dời thời gian chiếu tiến hoặc lùi X phút (Khớp với: 'dời 30 phút', 'lùi 15p', 'đẩy sớm 20p').
-   Params:
-   {
-     "action": "SHIFT_SHOWTIMES",
-     "params": {
-       "shift_minutes": 30, // số phút (dương = lùi giờ, âm = đẩy sớm)
-       "room_ids": [] // mảng phòng áp dụng (để trống nếu tất cả)
-     },
-     "explanation": "Đã dời giờ các suất chiếu theo yêu cầu."
-   }
-
-3. `SWAP_OR_ASSIGN_MOVIE`: Đổi phim hoặc gán phim vào phòng/khung giờ chỉ định (Khớp với: 'đổi Người Nhện sang phòng 1', 'chiếu phim kinh dị sau 21h').
-   Params:
-   {
-     "action": "SWAP_OR_ASSIGN_MOVIE",
-     "params": {
-       "target_movie_id": 969681, // hoặc tên phim
-       "room_ids": [1],
-       "time_from": "20:00"
-     },
-     "explanation": "Đã đổi phim sang phòng chỉ định."
-   }
-
-4. `DELETE_SHOWTIMES`: Xóa bớt các suất chiếu thỏa mãn điều kiện theo phòng, phim, hoặc khung giờ (Khớp với: 'xóa suất sáng', 'xóa phim X', 'xóa phòng 1 sau 22h', 'bỏ bớt suất vắng khách', 'xóa bớt suất', 'giảm bớt lịch').
-   Params:
-   {
-     "action": "DELETE_SHOWTIMES",
-     "params": {
-       "room_ids": [], // mảng phòng cần xóa (để trống nếu tất cả)
-       "movie_id": null, // hoặc tên phim cần xóa
-       "time_slot": "morning", // 'morning' | 'afternoon' | 'evening' | 'night' | null
-       "time_from": null, // ví dụ '08:30'
-       "time_to": null // ví dụ '12:00'
-     },
-     "explanation": "Đã xóa bớt các suất chiếu thỏa mãn điều kiện (bảo vệ an toàn các suất đã có vé đặt)."
-   }
-
-5. `GENERATE_FULL_DAY`: Tạo mới hoàn toàn lịch chiếu cho cả ngày từ 08:30 đến 23:30 theo chiến lược (Khớp với: 'tạo lịch mới từ đầu', 'xếp lịch tối ưu giờ vàng', 'tạo lại toàn bộ ngày').
-   Params:
-   {
-     "action": "GENERATE_FULL_DAY",
-     "params": {
-       "strategy_id": "prime_time_boost" // prime_time_boost | max_showtimes | family_weekend | balanced_catalog
-     },
-     "explanation": "Đã lập lịch chiếu mới toàn diện theo chiến lược tối ưu."
-   }
-
-6. `CUSTOM_SCHEDULE_SPEC`: Chỉ khi Admin liệt kê danh sách cụ thể từng suất chiếu.
+1. `CUSTOM_SCHEDULE_SPEC`: AI tự do thiết kế và lập toàn bộ kế hoạch lịch chiếu cho một hoặc nhiều phòng (Dùng khi tạo mới lịch từ đầu, xếp lịch cả ngày, hoặc Admin có yêu cầu xếp lịch tùy biến toàn diện).
+   * Bạn hãy tính toán giờ bắt đầu và kết thúc từng suất theo thời lượng phim (duration), buffer dọn phòng ({$bufferMinutes} phút), giờ mở cửa ({$openingTime}) đến đóng cửa ({$closingTime}), và ƯU TIÊN TUYỆT ĐỐI THEO Ý ĐỊNH CỦA ADMIN trong prompt (ví dụ thể loại, phòng chiếu, khung giờ).
    Params:
    {
      "action": "CUSTOM_SCHEDULE_SPEC",
      "params": {
        "showtimes": [
-         { "movie_id": 1, "room_id": 1, "showtime_start": "{$targetDate} 09:00:00", "showtime_end": "{$targetDate} 11:00:00" }
+         {
+           "movie_id": 1, // ID hoặc Tên phim
+           "room_id": 1, // ID hoặc Tên phòng
+           "showtime_start": "{$targetDate} 09:00:00", // YYYY-MM-DD HH:mm:ss hoặc "09:00"
+           "showtime_end": "{$targetDate} 11:00:00" // (tùy chọn)
+         }
        ]
      },
-     "explanation": "..."
+     "explanation": "Đã lập lịch chiếu chi tiết dựa theo yêu cầu của Admin."
    }
 
-=== THÔNG SỐ VẬN HÀNH ===
-- Rạp: {$cinema->cinema_name} | Ngày: {$targetDate} | Giờ mở/đóng: {$openingTime} - {$closingTime} | Buffer dọn phòng: {$bufferMinutes}p
-- Số suất chiếu hiện có trên màn hình: {$sourceCount} suất
+2. `DELETE_SHOWTIMES`: Xóa 1 hoặc nhiều suất chiếu theo yêu cầu.
+   * Chú ý quan trọng:
+     - Nếu Admin bảo "xóa 1 lịch chiếu...", "xóa suất chiếu lúc 9:00 phòng 1", hãy chọn đúng `target_temp_ids: ["temp_id_cần_xóa"]` từ danh sách snapshot, hoặc đặt `limit: 1`.
+     - Tuyệt đối không xóa toàn bộ trừ khi Admin ghi rõ "xóa tất cả", "xóa toàn bộ lịch", "clear hết".
+   Params:
+   {
+     "action": "DELETE_SHOWTIMES",
+     "params": {
+       "target_temp_ids": ["draft_1_0900_0"], // Mảng temp_id của suất chiếu cụ thể cần xóa
+       "limit": 1, // Số lượng suất tối đa cần xóa
+       "room_ids": [], // Mảng phòng cần xóa (nếu lọc theo phòng)
+       "movie_id": null, // ID hoặc tên phim cần xóa
+       "time_slot": null, // 'morning' | 'afternoon' | 'evening' | 'night'
+       "time_from": null, // 'HH:mm'
+       "time_to": null, // 'HH:mm'
+       "delete_all": false // Chỉ true khi Admin yêu cầu xóa toàn bộ lịch chiếu trong ngày
+     },
+     "explanation": "Đã xóa suất chiếu theo yêu cầu của Admin (bảo vệ các suất đã có vé bán)."
+   }
 
-=== DANH SÁCH PHÒNG ===
-{$roomsJson}
+3. `UPDATE_SHOWTIME`: Cập nhật / dời / đổi phim cho 1 suất chiếu cụ thể.
+   Params:
+   {
+     "action": "UPDATE_SHOWTIME",
+     "params": {
+       "target_temp_id": "draft_1_0900_0", // temp_id của suất cần sửa
+       "new_start_time": "09:30", // giờ bắt đầu mới (HH:mm)
+       "new_movie_id": null, // ID hoặc tên phim mới (nếu đổi phim)
+       "new_room_id": null // ID phòng mới (nếu đổi phòng)
+     },
+     "explanation": "Đã dời giờ suất chiếu sang 09:30."
+   }
 
-=== DANH SÁCH PHIM ===
-{$moviesJson}
+4. `ADD_SHOWTIME`: Chèn thêm 1 suất chiếu mới vào phòng và giờ chỉ định.
+   Params:
+   {
+     "action": "ADD_SHOWTIME",
+     "params": {
+       "movie_id": 969681, // ID hoặc tên phim
+       "room_id": 1, // ID phòng chiếu
+       "start_time": "20:00" // Giờ bắt đầu (HH:mm)
+     },
+     "explanation": "Đã thêm 1 suất chiếu mới vào phòng 1 lúc 20:00."
+   }
+
+5. `COMPRESS_TIMELINE`: Kéo toàn bộ hoặc một số phòng chiếu sát nhau liên tục theo đúng buffer dọn phòng {$bufferMinutes} phút.
+   Params:
+   {
+     "action": "COMPRESS_TIMELINE",
+     "params": {
+       "room_ids": [] // để trống nếu áp dụng toàn bộ phòng, hoặc [1, 2]
+     },
+     "explanation": "Đã sắp xếp các suất chiếu sát khít nhau liên tục."
+   }
+
+6. `SHIFT_SHOWTIMES`: Dời thời gian chiếu tiến hoặc lùi X phút hàng loạt.
+   Params:
+   {
+     "action": "SHIFT_SHOWTIMES",
+     "params": {
+       "shift_minutes": 30, // số phút (dương = lùi, âm = đẩy sớm)
+       "room_ids": [],
+       "movie_ids": []
+     },
+     "explanation": "Đã dời các suất chiếu 30 phút."
+   }
+
+7. `SWAP_OR_ASSIGN_MOVIE`: Đổi phim hàng loạt hoặc gán phim vào phòng/khung giờ.
+   Params:
+   {
+     "action": "SWAP_OR_ASSIGN_MOVIE",
+     "params": {
+       "target_movie_id": 969681,
+       "source_movie_id": null,
+       "room_ids": [1],
+       "time_from": "18:00",
+       "time_to": "22:30"
+     },
+     "explanation": "Đã đổi phim trong khung giờ chỉ định."
+   }
 
 BẮT BUỘC TRẢ VỀ JSON THUẦN TÚY KHÔNG MARKDOWN DẠNG:
 {
-  "action": "COMPRESS_TIMELINE" | "SHIFT_SHOWTIMES" | "SWAP_OR_ASSIGN_MOVIE" | "DELETE_SHOWTIMES" | "GENERATE_FULL_DAY" | "CUSTOM_SCHEDULE_SPEC",
+  "action": "CUSTOM_SCHEDULE_SPEC" | "DELETE_SHOWTIMES" | "UPDATE_SHOWTIME" | "ADD_SHOWTIME" | "COMPRESS_TIMELINE" | "SHIFT_SHOWTIMES" | "SWAP_OR_ASSIGN_MOVIE",
   "params": { ... },
-  "explanation": "Giải thích hành động đã thực hiện cho Admin"
+  "explanation": "Giải thích chi tiết hành động đã thực hiện cho Admin",
+  "thinking_steps": [
+    { "title": "Bước phân tích 1", "detail": "Chi tiết", "status": "completed" }
+  ]
 }
 PROMPT;
 
@@ -938,33 +999,93 @@ PROMPT;
             $action = strtoupper($response['action'] ?? '');
             $params = $response['params'] ?? [];
             $explanation = $response['explanation'] ?? 'AI Copilot đã cập nhật lịch chiếu thành công.';
-
-            // Nếu không có source showtimes mà user muốn nén/dời/xóa, tạo baseline trước
-            if (empty($sourceShowtimes) && in_array($action, ['COMPRESS_TIMELINE', 'SHIFT_SHOWTIMES', 'SWAP_OR_ASSIGN_MOVIE', 'DELETE_SHOWTIMES'])) {
-                $baselineResult = $this->solvePresetSchedule(
-                    'prime_time_boost',
-                    $cinema,
-                    $rooms,
-                    $movies,
-                    $targetDate,
-                    [],
-                    [],
-                    'replace_all',
-                    $primeInfo,
-                    $bufferMinutes,
-                    $staggeringGap,
-                    $openingTime,
-                    $closingTime,
-                    $defaultBasePrice,
-                    $selectedRoomIds
-                );
-                $sourceShowtimes = $baselineResult['draft_showtimes'];
-            }
+            $thinkingSteps = $response['thinking_steps'] ?? [];
 
             // DISPATCH TO DETERMINISTIC ACTION HANDLERS
             $draftShowtimes = [];
 
             switch ($action) {
+                case 'DELETE_SHOWTIMES':
+                case 'REMOVE_SHOWTIMES':
+                    $targetTempIds = (array) ($params['target_temp_ids'] ?? ($params['temp_ids'] ?? []));
+                    if (!empty($params['target_temp_id'])) {
+                        $targetTempIds[] = (string) $params['target_temp_id'];
+                    }
+                    if (!empty($params['temp_id'])) {
+                        $targetTempIds[] = (string) $params['temp_id'];
+                    }
+
+                    $roomFilter = (array) ($params['room_ids'] ?? []);
+                    $movieIdent = $params['movie_id'] ?? ($params['movie_title'] ?? ($params['movie_name'] ?? null));
+                    $timeSlot = $params['time_slot'] ?? null;
+                    $timeFrom = $params['time_from'] ?? null;
+                    $timeTo = $params['time_to'] ?? null;
+                    $limit = isset($params['limit']) ? (int) $params['limit'] : null;
+                    $deleteAll = !empty($params['delete_all']);
+
+                    $delResult = $this->handleDeleteShowtimes(
+                        $sourceShowtimes,
+                        $movies,
+                        $targetTempIds,
+                        $roomFilter,
+                        $movieIdent,
+                        $timeSlot,
+                        $timeFrom,
+                        $timeTo,
+                        $limit,
+                        $deleteAll,
+                        true
+                    );
+                    $draftShowtimes = $delResult['draft_showtimes'];
+                    if (!empty($delResult['warning']) && $delResult['deleted_count'] === 0) {
+                        $explanation = $delResult['warning'];
+                    } else {
+                        $explanation = "Đã xóa {$delResult['deleted_count']} suất chiếu theo yêu cầu.";
+                        if ($delResult['protected_count'] > 0) {
+                            $explanation .= " (Đã bảo vệ {$delResult['protected_count']} suất chiếu có khách đã đặt vé).";
+                        }
+                    }
+                    break;
+
+                case 'UPDATE_SHOWTIME':
+                    $targetTempId = (string) ($params['target_temp_id'] ?? ($params['temp_id'] ?? ''));
+                    $newStartTime = $params['new_start_time'] ?? ($params['start_time'] ?? null);
+                    $newMovieId = $params['new_movie_id'] ?? ($params['movie_id'] ?? null);
+                    $newRoomId = isset($params['new_room_id']) ? (int) $params['new_room_id'] : null;
+
+                    $draftShowtimes = $this->handleUpdateShowtime(
+                        $sourceShowtimes,
+                        $targetTempId,
+                        $movies,
+                        $rooms,
+                        $primeInfo,
+                        $targetDate,
+                        $newStartTime,
+                        $newMovieId,
+                        $newRoomId,
+                        $defaultBasePrice
+                    );
+                    break;
+
+                case 'ADD_SHOWTIME':
+                    $movieId = $params['movie_id'] ?? ($params['movie_title'] ?? null);
+                    $roomId = $params['room_id'] ?? ($params['room_name'] ?? null);
+                    $startTime = $params['start_time'] ?? '19:00';
+
+                    $draftShowtimes = $this->handleAddShowtime(
+                        $sourceShowtimes,
+                        $movieId,
+                        $roomId,
+                        $startTime,
+                        $movies,
+                        $rooms,
+                        $primeInfo,
+                        $targetDate,
+                        $bufferMinutes,
+                        $defaultBasePrice
+                    );
+                    break;
+
                 case 'COMPRESS_TIMELINE':
                     $roomFilter = (array) ($params['room_ids'] ?? []);
                     $draftShowtimes = $this->handleCompressTimeline(
@@ -1014,109 +1135,22 @@ PROMPT;
                     );
                     break;
 
-                case 'DELETE_SHOWTIMES':
-                case 'REMOVE_SHOWTIMES':
-                    $roomFilter = (array) ($params['room_ids'] ?? []);
-                    $movieIdent = $params['movie_id'] ?? ($params['movie_title'] ?? ($params['movie_name'] ?? null));
-                    $timeSlot = $params['time_slot'] ?? null;
-                    $timeFrom = $params['time_from'] ?? null;
-                    $timeTo = $params['time_to'] ?? null;
-                    $delResult = $this->handleDeleteShowtimes(
-                        $sourceShowtimes,
-                        $movies,
-                        $roomFilter,
-                        $movieIdent,
-                        $timeSlot,
-                        $timeFrom,
-                        $timeTo,
-                        true
-                    );
-                    $draftShowtimes = $delResult['draft_showtimes'];
-                    $explanation = "Đã xóa bớt {$delResult['deleted_count']} suất chiếu theo yêu cầu.";
-                    if ($delResult['protected_count'] > 0) {
-                        $explanation .= " (Đã bảo vệ {$delResult['protected_count']} suất chiếu có khách đã đặt vé).";
-                    }
-                    break;
-
-                case 'GENERATE_FULL_DAY':
-                    $strategy = $params['strategy_id'] ?? 'prime_time_boost';
-                    $fullResult = $this->solvePresetSchedule(
-                        $strategy,
-                        $cinema,
-                        $rooms,
-                        $movies,
-                        $targetDate,
-                        [],
-                        [],
-                        'replace_all',
-                        $primeInfo,
-                        $bufferMinutes,
-                        $staggeringGap,
-                        $openingTime,
-                        $closingTime,
-                        $defaultBasePrice,
-                        $selectedRoomIds
-                    );
-                    $draftShowtimes = $fullResult['draft_showtimes'];
-                    break;
-
                 case 'CUSTOM_SCHEDULE_SPEC':
+                case 'GENERATE_FULL_DAY':
                 default:
                     $rawList = $params['showtimes'] ?? ($response['showtimes'] ?? []);
                     if (!empty($rawList)) {
-                        $moviesById = $movies->keyBy('movie_id');
-                        $roomsById = $rooms->keyBy('room_id');
-
-                        foreach ($rawList as $idx => $st) {
-                            $mId = (int) ($st['movie_id'] ?? 0);
-                            $rId = (int) ($st['room_id'] ?? 0);
-                            $movie = $moviesById->get($mId);
-                            $room = $roomsById->get($rId);
-                            if (!$movie || !$room) continue;
-
-                            $start = Carbon::parse($st['showtime_start']);
-                            $duration = (int) ($movie->duration ?: 120);
-                            $end = isset($st['showtime_end']) ? Carbon::parse($st['showtime_end']) : (clone $start)->addMinutes($duration);
-                            $timeStr = $start->format('H:i');
-                            $isPrime = ($timeStr >= ($primeInfo['time_from'] ?? '18:00') && $timeStr <= ($primeInfo['time_to'] ?? '22:30'));
-                            $calculatedRoomBasePrice = $this->calculateRoomBasePrice($room, $defaultBasePrice);
-
-                            $draftShowtimes[] = [
-                                'temp_id'        => "draft_ai_{$rId}_" . $start->format('Hi') . "_{$idx}",
-                                'movie_id'       => $movie->movie_id,
-                                'movie_title'    => $movie->title,
-                                'movie_poster'   => $movie->poster_path,
-                                'duration'       => $duration,
-                                'room_id'        => $room->room_id,
-                                'room_name'      => $room->room_name,
-                                'room_type'      => $room->room_type,
-                                'room_capacity'  => $room->total_seats,
-                                'showtime_start' => $start->format('Y-m-d H:i:s'),
-                                'showtime_end'   => $end->format('Y-m-d H:i:s'),
-                                'base_price'     => (float) ($st['base_price'] ?? $calculatedRoomBasePrice),
-                                'buffer_minutes' => $bufferMinutes,
-                                'is_prime_time'  => $isPrime,
-                            ];
-                        }
+                        $draftShowtimes = $this->parseCustomShowtimesSpec(
+                            $rawList,
+                            $movies,
+                            $rooms,
+                            $targetDate,
+                            $primeInfo,
+                            $bufferMinutes,
+                            $defaultBasePrice
+                        );
                     } else {
-                        // Fallback nén lịch nếu có từ khóa 'sát' hoặc 'khít'
-                        if (mb_stripos($userPrompt, 'sát') !== false || mb_stripos($userPrompt, 'khít') !== false || mb_stripos($userPrompt, 'nén') !== false) {
-                            $draftShowtimes = $this->handleCompressTimeline(
-                                $sourceShowtimes,
-                                $rooms,
-                                $movies,
-                                $bufferMinutes,
-                                $staggeringGap,
-                                $openingTime,
-                                $closingTime,
-                                $targetDate,
-                                $primeInfo,
-                                $defaultBasePrice,
-                                []
-                            );
-                        } else {
-                            $draftShowtimes = $sourceShowtimes;
-                        }
+                        $draftShowtimes = $sourceShowtimes;
                     }
                     break;
             }
@@ -1128,66 +1162,96 @@ PROMPT;
             return [
                 'draft_showtimes' => $draftShowtimes,
                 'explanation'     => $explanation,
+                'thinking_steps'  => $thinkingSteps,
             ];
         } catch (\Throwable $e) {
-            Log::warning("AI Copilot fallback triggered: " . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            Log::error("AI Copilot Provider Error: " . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            throw new \Exception("AI Provider không thể xử lý yêu cầu: " . $e->getMessage() . ". Vui lòng kiểm tra lại cấu hình API Key, Model AI hoặc đường truyền mạng.");
+        }
+    }
 
-            // AUTO HEURISTIC FALLBACK
-            if (mb_stripos($userPrompt, 'xóa') !== false || mb_stripos($userPrompt, 'hủy') !== false || mb_stripos($userPrompt, 'bỏ bớt') !== false || mb_stripos($userPrompt, 'delete') !== false) {
-                $timeSlot = null;
-                if (mb_stripos($userPrompt, 'sáng') !== false) $timeSlot = 'morning';
-                elseif (mb_stripos($userPrompt, 'chiều') !== false) $timeSlot = 'afternoon';
-                elseif (mb_stripos($userPrompt, 'tối') !== false) $timeSlot = 'evening';
-                elseif (mb_stripos($userPrompt, 'đêm') !== false || mb_stripos($userPrompt, 'khuya') !== false) $timeSlot = 'night';
+    /**
+     * Chuyển đổi và chuẩn hóa mảng suất chiếu sinh trực tiếp từ LLM (CUSTOM_SCHEDULE_SPEC)
+     */
+    private function parseCustomShowtimesSpec(
+        array $rawList,
+        $movies,
+        $rooms,
+        string $targetDate,
+        array $primeInfo,
+        int $bufferMinutes,
+        float $defaultBasePrice
+    ): array {
+        $moviesById = $movies->keyBy('movie_id');
+        $roomsById = $rooms->keyBy('room_id');
+        $draftShowtimes = [];
 
-                $delRes = $this->handleDeleteShowtimes($sourceShowtimes, $movies, [], null, $timeSlot, null, null, true);
-                $draftShowtimes = $delRes['draft_showtimes'];
-                $explanation = "Đã xóa {$delRes['deleted_count']} suất chiếu theo yêu cầu.";
-                if ($delRes['protected_count'] > 0) {
-                    $explanation .= " (Đã bảo vệ {$delRes['protected_count']} suất chiếu có khách đã đặt vé).";
-                }
-            } elseif (mb_stripos($userPrompt, 'sát') !== false || mb_stripos($userPrompt, 'khít') !== false || mb_stripos($userPrompt, 'nén') !== false) {
-                $draftShowtimes = $this->handleCompressTimeline(
-                    $sourceShowtimes,
-                    $rooms,
-                    $movies,
-                    $bufferMinutes,
-                    $staggeringGap,
-                    $openingTime,
-                    $closingTime,
-                    $targetDate,
-                    $primeInfo,
-                    $defaultBasePrice,
-                    []
-                );
-                $explanation = "Đã tự động nén toàn bộ các suất chiếu sát nhau theo 15 phút dọn phòng (Smart Solver Engine).";
-            } else {
-                $solverResult = $this->solvePresetSchedule(
-                    'prime_time_boost',
-                    $cinema,
-                    $rooms,
-                    $movies,
-                    $targetDate,
-                    $existingShowtimes,
-                    $currentDraftShowtimes,
-                    $scheduleMode,
-                    $primeInfo,
-                    $bufferMinutes,
-                    $staggeringGap,
-                    $openingTime,
-                    $closingTime,
-                    $defaultBasePrice,
-                    $selectedRoomIds
-                );
-                $draftShowtimes = $solverResult['draft_showtimes'];
-                $explanation = "AI Copilot đã áp dụng Bộ giải thuật thông minh (Smart Solver): " . $solverResult['explanation'];
+        foreach ($rawList as $idx => $st) {
+            $mIdentifier = $st['movie_id'] ?? ($st['movie_title'] ?? ($st['title'] ?? null));
+            $rIdentifier = $st['room_id'] ?? ($st['room_name'] ?? null);
+
+            $movie = null;
+            if (is_numeric($mIdentifier) && $moviesById->has((int) $mIdentifier)) {
+                $movie = $moviesById->get((int) $mIdentifier);
+            }
+            if (!$movie && is_string($mIdentifier)) {
+                $movie = $movies->first(fn ($m) => mb_stripos($m->title, (string) $mIdentifier) !== false);
+            }
+            if (!$movie) {
+                $movie = $movies->first();
             }
 
-            return [
-                'draft_showtimes' => $draftShowtimes,
-                'explanation'     => $explanation,
+            $room = null;
+            if (is_numeric($rIdentifier) && $roomsById->has((int) $rIdentifier)) {
+                $room = $roomsById->get((int) $rIdentifier);
+            }
+            if (!$room && is_string($rIdentifier)) {
+                $room = $rooms->first(fn ($r) => mb_stripos($r->room_name, (string) $rIdentifier) !== false);
+            }
+            if (!$room) {
+                $room = $rooms->first();
+            }
+
+            if (!$movie || !$room) continue;
+
+            $startRaw = $st['showtime_start'] ?? ($st['start_time'] ?? ($st['start'] ?? '09:00'));
+            $startStr = strlen($startRaw) <= 5 ? "{$targetDate} {$startRaw}:00" : $startRaw;
+            $start = Carbon::parse($startStr);
+
+            $duration = (int) ($movie->duration ?: 120);
+
+            if (!empty($st['showtime_end'])) {
+                $endRaw = $st['showtime_end'];
+                $endStr = strlen($endRaw) <= 5 ? "{$targetDate} {$endRaw}:00" : $endRaw;
+                $end = Carbon::parse($endStr);
+            } else {
+                $end = (clone $start)->addMinutes($duration);
+            }
+
+            $timeStr = $start->format('H:i');
+            $isPrime = ($timeStr >= ($primeInfo['time_from'] ?? '18:00') && $timeStr <= ($primeInfo['time_to'] ?? '22:30'));
+            $calculatedRoomBasePrice = $this->calculateRoomBasePrice($room, $defaultBasePrice);
+
+            $draftShowtimes[] = [
+                'temp_id'        => "draft_ai_{$room->room_id}_" . $start->format('Hi') . "_{$idx}",
+                'movie_id'       => $movie->movie_id,
+                'movie_title'    => $movie->title,
+                'movie_poster'   => $movie->poster_path,
+                'duration'       => $duration,
+                'room_id'        => $room->room_id,
+                'room_name'      => $room->room_name,
+                'room_type'      => $room->room_type,
+                'room_capacity'  => $room->total_seats,
+                'showtime_start' => $start->format('Y-m-d H:i:s'),
+                'showtime_end'   => $end->format('Y-m-d H:i:s'),
+                'base_price'     => (float) ($st['base_price'] ?? $calculatedRoomBasePrice),
+                'buffer_minutes' => $bufferMinutes,
+                'is_prime_time'  => $isPrime,
             ];
         }
+
+        usort($draftShowtimes, fn ($a, $b) => strcmp($a['showtime_start'], $b['showtime_start']));
+        return $draftShowtimes;
     }
 
     /**

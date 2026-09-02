@@ -187,54 +187,50 @@ class AiScheduleController extends Controller
     }
 
     /**
-     * 4. Danh sách các chiến lược mẫu (Strategy Presets)
+     * 4. Gợi ý prompt mẫu (Quick Prompt Suggestions)
      * GET /api/v1/admin/showtimes/ai/strategies
      */
     public function getStrategies()
     {
-        $strategies = [
+        $promptSuggestions = [
             [
-                'id'              => 'prime_time_boost',
-                'name'            => 'Tối Ưu Khung Giờ Vàng (Khuyên dùng)',
-                'description'     => 'Ưu tiên các phim bom tấn hot nhất vào phòng lớn và khung giờ vàng Pricing Rule (18:00 - 23:00).',
-                'icon'            => 'Flame',
-                'badge'           => 'Tối Đa Doanh Thu',
-                'recommended_for' => 'Thứ 6, Thứ 7, Chủ Nhật và ngày lễ',
-            ],
-            [
-                'id'              => 'max_showtimes',
-                'name'            => 'Tối Đa Số Lượng Suất Chiếu',
-                'description'     => 'Nén thời gian nghỉ và dàn trải liên tục giữa các phòng để chiếu được số ca tối đa.',
-                'icon'            => 'Zap',
-                'badge'           => 'Công Suất Cao',
-                'recommended_for' => 'Ngày cao điểm tết hoặc kỳ nghỉ lễ',
-            ],
-            [
-                'id'              => 'family_weekend',
-                'name'            => 'Gia Đình & Thiếu Nhi',
-                'description'     => 'Tập trung đẩy các phim hoạt hình, gia đình vào khung giờ sáng và chiều sớm trước 16h.',
+                'id'              => 'full_day_optimal',
+                'name'            => 'Lập lịch chiếu tối ưu cả ngày',
+                'description'     => 'Phân tích toàn bộ phim và phòng chiếu để tự động lên lịch chiếu toàn diện cho cả ngày.',
                 'icon'            => 'Sparkles',
-                'badge'           => 'Gia Đình',
-                'recommended_for' => 'Sáng cuối tuần và dịp nghỉ hè',
+                'prompt'          => 'Hãy phân tích danh sách phim (thể loại, thời lượng, độ hot) và lập lịch chiếu cả ngày tối ưu cho tất cả các phòng.',
             ],
             [
-                'id'              => 'balanced_catalog',
-                'name'            => 'Phân Bổ Đồng Đều Danh Mục Phim',
-                'description'     => 'Chia đều số suất chiếu cho tất cả các phim đang phát hành tại rạp.',
-                'icon'            => 'Scale',
-                'badge'           => 'Đa Dạng',
-                'recommended_for' => 'Các ngày thường trong tuần (T2 - T5)',
+                'id'              => 'prime_time_focus',
+                'name'            => 'Tập trung Khung Giờ Vàng (18:00 - 22:30)',
+                'description'     => 'Ưu tiên các phim bom tấn hot nhất vào phòng lớn / IMAX và khung giờ vàng.',
+                'icon'            => 'Flame',
+                'prompt'          => 'Ưu tiên các phim bom tấn hot nhất vào phòng lớn và khung giờ vàng từ 18:00 đến 22:30.',
+            ],
+            [
+                'id'              => 'family_morning',
+                'name'            => 'Ưu tiên Phim Hoạt hình / Gia đình buổi sáng',
+                'description'     => 'Xếp các phim hoạt hình, thiếu nhi vào khung giờ sáng và trưa trước 16:00.',
+                'icon'            => 'Sparkles',
+                'prompt'          => 'Đẩy các phim hoạt hình và gia đình lên các suất chiếu buổi sáng trước 16:00.',
+            ],
+            [
+                'id'              => 'compress_tight',
+                'name'            => 'Kéo sát các suất theo buffer dọn phòng',
+                'description'     => 'Sắp xếp các suất chiếu liên tục sát nhau theo đúng thời gian dọn phòng.',
+                'icon'            => 'Zap',
+                'prompt'          => 'Kéo toàn bộ suất chiếu sát nhau liên tục theo đúng thời gian dọn phòng.',
             ],
         ];
 
         return response()->json([
             'success' => true,
-            'data'    => $strategies
+            'data'    => $promptSuggestions
         ]);
     }
 
     /**
-     * 5. Sinh bản nháp lịch chiếu (Draft Showtimes) - Hỗ trợ Multi-turn Copilot & Scope
+     * 5. Sinh bản nháp lịch chiếu (Draft Showtimes) - 100% Pure LLM-driven Copilot
      * POST /api/v1/admin/showtimes/ai/generate-draft
      */
     public function generateDraft(Request $request)
@@ -243,7 +239,7 @@ class AiScheduleController extends Controller
         $validated = $request->validate([
             'cinema_id'               => 'required|exists:cinemas,cinema_id',
             'target_date'             => 'required|date_format:Y-m-d',
-            'mode'                    => 'required|in:preset,prompt',
+            'mode'                    => 'nullable|string|in:preset,prompt',
             'strategy_id'             => 'nullable|string',
             'prompt'                  => 'nullable|string',
             'selected_movie_ids'      => 'nullable|array',
@@ -260,13 +256,14 @@ class AiScheduleController extends Controller
 
         try {
             $scheduleMode = $validated['schedule_mode'] ?? ($validated['clean_existing_date'] ? 'replace_all' : 'smart_fill');
+            $prompt = $validated['prompt'] ?? null;
 
             $result = $this->engineService->generateDraft(
                 (int) $validated['cinema_id'],
                 $validated['target_date'],
-                $validated['mode'],
-                $validated['strategy_id'] ?? 'prime_time_boost',
-                $validated['prompt'] ?? null,
+                'prompt',
+                null,
+                $prompt,
                 $validated['selected_movie_ids'] ?? [],
                 $validated['selected_room_ids'] ?? [],
                 $scheduleMode,
