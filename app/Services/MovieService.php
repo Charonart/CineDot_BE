@@ -12,8 +12,12 @@ class MovieService
 
         if (!empty($filters['status'])) {
             $status = strtolower($filters['status']);
-            if ($status === 'coming_soon' || $status === 'upcoming') {
+            if ($status === 'coming_soon' || $status === 'upcoming' || $status === 'coming-soon') {
                 $query->whereIn('status', ['upcoming', 'coming_soon']);
+            } elseif ($status === 'now_showing' || $status === 'now-showing') {
+                $query->where('status', 'now_showing');
+            } elseif ($status === 'ended' || $status === 'stopped') {
+                $query->where('status', 'ended');
             } else {
                 $query->where('status', $status);
             }
@@ -38,8 +42,22 @@ class MovieService
             });
         }
 
+        if (!empty($filters['sort'])) {
+            if ($filters['sort'] === 'top_rated' || $filters['sort'] === 'rating' || $filters['sort'] === 'vote_average') {
+                $query->orderByDesc('vote_average');
+            } elseif ($filters['sort'] === 'popularity') {
+                $query->orderByDesc('popularity');
+            } elseif ($filters['sort'] === 'release_date') {
+                $query->orderByDesc('release_date');
+            } else {
+                $query->orderByDesc('created_at');
+            }
+        } else {
+            $query->orderByDesc('created_at');
+        }
+
         $perPage = $filters['limit'] ?? ($filters['per_page'] ?? 20);
-        return $query->orderByDesc('created_at')->paginate($perPage);
+        return $query->paginate($perPage);
     }
 
     public function getTrending(int $perPage = 20)

@@ -39,7 +39,7 @@ class CinemaService
     {
         $cinema = $this->getDetailBySlug($slug);
         
-        $showtimes = Showtime::with(['movie', 'room'])
+        $showtimes = Showtime::with(['movie.genres', 'room'])
             ->whereHas('room', function ($q) use ($cinema) {
                 $q->where('cinema_id', $cinema->cinema_id);
             })

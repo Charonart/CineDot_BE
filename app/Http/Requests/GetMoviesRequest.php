@@ -21,6 +21,7 @@ class GetMoviesRequest extends FormRequest
             'category' => ['nullable', 'string'],
             'search'   => ['nullable', 'string', 'max:100'],
             'genre_id' => ['nullable', 'integer', 'exists:genres,genre_id'],
+            'sort'     => ['nullable', 'string'],
         ];
     }
 }

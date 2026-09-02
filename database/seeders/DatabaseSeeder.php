@@ -26,6 +26,7 @@ class DatabaseSeeder extends Seeder
             RoomSeeder::class,
             GenreSeeder::class,
             MovieSeeder::class,
+            MovieRatingSeeder::class,
             MovieGenreSeeder::class,
             VideoSeeder::class,
             PersonSeeder::class,

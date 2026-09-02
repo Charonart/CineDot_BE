@@ -29,11 +29,15 @@ class CinemaResource extends JsonResource
             'isActive'       => $this->is_active,
             'rooms'          => $this->whenLoaded('rooms', function () {
                 return $this->rooms->map(fn($r) => [
-                    'room_id'     => $r->room_id,
-                    'room_name'   => $r->room_name,
-                    'room_type'   => $r->room_type,
-                    'total_seats' => $r->total_seats,
-                    'is_active'   => $r->is_active,
+                    'room_id'          => $r->room_id,
+                    'room_name'        => $r->room_name,
+                    'room_type'        => $r->room_type,
+                    'total_seats'      => $r->total_seats,
+                    'screen_type'      => $r->screen_type,
+                    'sound_technology' => $r->sound_technology,
+                    'screen_config'    => $r->effective_screen_config,
+                    'features'         => $r->features,
+                    'is_active'        => $r->is_active,
                 ])->values();
             }),
         ];

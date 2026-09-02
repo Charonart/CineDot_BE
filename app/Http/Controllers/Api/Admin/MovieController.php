@@ -20,10 +20,10 @@ class MovieController extends Controller
      */
     public function index(Request $request)
     {
-        $allowedFilters = ['title', 'original_title', 'status', 'release_date', 'duration', 'popularity', 'genres'];
-        $allowedSorts = ['movie_id', 'id', 'title', 'release_date', 'duration', 'popularity', 'created_at', 'status'];
-        $searchableFields = ['title', 'original_title', 'overview'];
-        $columnAliases = ['id' => 'movie_id'];
+        $allowedFilters = ['title', 'original_title', 'status', 'release_date', 'duration', 'popularity', 'genres', 'vote_average', 'vote_count', 'imdb_id', 'age_rating'];
+        $allowedSorts = ['movie_id', 'id', 'title', 'release_date', 'duration', 'popularity', 'created_at', 'status', 'vote_average', 'vote_count', 'rating', 'age_rating'];
+        $searchableFields = ['title', 'original_title', 'overview', 'imdb_id'];
+        $columnAliases = ['id' => 'movie_id', 'rating' => 'vote_average', 'voteCount' => 'vote_count', 'imdbId' => 'imdb_id', 'ageRating' => 'age_rating'];
 
         $query = Movie::with(['genres', 'videos']);
 
@@ -99,6 +99,22 @@ class MovieController extends Controller
                 $data['slug'] = Str::slug($data['title']) . '-' . time();
             }
 
+            if (isset($data['rating']) && !isset($data['vote_average'])) {
+                $data['vote_average'] = $data['rating'];
+            }
+            if (isset($data['voteCount']) && !isset($data['vote_count'])) {
+                $data['vote_count'] = $data['voteCount'];
+            }
+            if (isset($data['imdbId']) && !isset($data['imdb_id'])) {
+                $data['imdb_id'] = $data['imdbId'];
+            }
+            if (isset($data['ageRating']) && !isset($data['age_rating'])) {
+                $data['age_rating'] = $data['ageRating'];
+            }
+            if (isset($data['age_rating'])) {
+                $data['age_rating'] = strtoupper(trim($data['age_rating']));
+            }
+
             $movie = Movie::create($data);
 
             if ($request->has('genre_ids')) {
@@ -170,8 +186,20 @@ class MovieController extends Controller
                 }
             }
 
-            if (isset($data['title']) && $data['title'] !== $movie->title) {
-                $data['slug'] = Str::slug($data['title']) . '-' . time();
+            if (isset($data['rating']) && !isset($data['vote_average'])) {
+                $data['vote_average'] = $data['rating'];
+            }
+            if (isset($data['voteCount']) && !isset($data['vote_count'])) {
+                $data['vote_count'] = $data['voteCount'];
+            }
+            if (isset($data['imdbId']) && !isset($data['imdb_id'])) {
+                $data['imdb_id'] = $data['imdbId'];
+            }
+            if (isset($data['ageRating']) && !isset($data['age_rating'])) {
+                $data['age_rating'] = $data['ageRating'];
+            }
+            if (isset($data['age_rating'])) {
+                $data['age_rating'] = strtoupper(trim($data['age_rating']));
             }
 
             $movie->update($data);
@@ -266,12 +294,26 @@ class MovieController extends Controller
         $field = $request->input('field');
         $value = $request->input('value');
 
-        $allowedFields = ['title', 'original_title', 'status', 'release_date', 'duration', 'popularity', 'overview'];
+        $allowedFields = ['title', 'original_title', 'status', 'release_date', 'duration', 'popularity', 'overview', 'vote_average', 'vote_count', 'imdb_id', 'rating', 'voteCount', 'imdbId', 'age_rating', 'ageRating'];
         if (!in_array($field, $allowedFields, true)) {
             return response()->json([
                 'success' => false,
                 'message' => "Không cho phép cập nhật trường: {$field}"
             ], 422);
+        }
+
+        if ($field === 'rating') {
+            $field = 'vote_average';
+        } elseif ($field === 'voteCount') {
+            $field = 'vote_count';
+        } elseif ($field === 'imdbId') {
+            $field = 'imdb_id';
+        } elseif ($field === 'ageRating') {
+            $field = 'age_rating';
+        }
+
+        if ($field === 'age_rating') {
+            $value = strtoupper(trim((string) $value));
         }
 
         if ($field === 'status') {

@@ -136,7 +136,7 @@ Route::prefix('v1')->group(function () {
     });
 
     // ── Admin Routes ──────────────────────────────────────────────────────────
-    Route::prefix('admin')->middleware(['auth:sanctum', 'role:admin'])->group(function () {
+    Route::prefix('admin')->middleware(['auth:sanctum', 'role:admin,super_admin,cinema_manager,ticket_staff,fnb_staff,marketing,accountant,staff'])->group(function () {
         // Admin Dashboard 
         Route::get('dashboard/overview', [\App\Http\Controllers\Api\Admin\DashboardController::class, 'overview']);
         Route::get('dashboard/revenue-chart', [\App\Http\Controllers\Api\Admin\DashboardController::class, 'revenueChart']);

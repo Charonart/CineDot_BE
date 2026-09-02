@@ -20,25 +20,32 @@ class PaymentController extends Controller
         $userId = $request->user()->user_id;
 
         $bookingQuery = Booking::where('user_id', $userId);
-        if ($request->has('booking_id')) {
-            $bookingQuery->where('booking_id', $request->input('booking_id'));
-        } elseif ($request->has('booking_code')) {
+        if ($request->filled('booking_id') && is_numeric($request->input('booking_id'))) {
+            $bookingQuery->where('booking_id', (int) $request->input('booking_id'));
+        } elseif ($request->filled('booking_code')) {
             $bookingQuery->where('booking_code', $request->input('booking_code'));
+        } elseif ($request->filled('showtime_id')) {
+            $cleanShowtime = (int) str_replace('showtime-', '', $request->input('showtime_id'));
+            $bookingQuery->where('showtime_id', $cleanShowtime)->where('booking_status', 'pending');
+        } else {
+            $bookingQuery->where('booking_status', 'pending');
         }
         
-        $booking = $bookingQuery->first();
+        $booking = $bookingQuery->latest()->first();
         if (!$booking) {
             return response()->json([
                 'success' => false,
-                'message' => 'Không tìm thấy đơn đặt vé hợp lệ.'
+                'message' => 'Không tìm thấy đơn đặt vé hợp lệ. Vui lòng chọn ghế lại.'
             ], 404);
         }
 
         if (in_array($booking->booking_status, ['completed', 'paid'])) {
             return response()->json([
-                'success' => false,
+                'success' => true,
+                'payment_url' => env('FRONTEND_URL', 'http://localhost:3000') . '/booking/success?booking_code=' . $booking->booking_code,
+                'order_id' => $booking->booking_code,
                 'message' => 'Đơn hàng này đã được thanh toán thành công.'
-            ], 400);
+            ]);
         }
 
         // Check hold TTL expiration
@@ -92,8 +99,27 @@ class PaymentController extends Controller
         $paymentMethod = strtoupper($request->input('payment_method', 'VNPAY'));
         $amount = (float) ($booking->final_amount ?? $booking->total_amount);
 
+        // If booking is 100% discounted or free, confirm immediately
+        if ($amount <= 0) {
+            $this->bookingService->confirmBooking($booking->booking_id, [
+                'payment_method' => 'FREE_OR_VOUCHER',
+            ]);
+            $frontendUrl = env('FRONTEND_URL', 'http://localhost:3000');
+            return response()->json([
+                'success' => true,
+                'payment_url' => $frontendUrl . '/booking/success?booking_code=' . $booking->booking_code,
+                'order_id' => $booking->booking_code,
+                'amount' => 0,
+                'expires_at' => $expiresAt->toIso8601String(),
+                'idempotency_key' => $idempotencyKey,
+                'data' => [
+                    'payment_url' => $frontendUrl . '/booking/success?booking_code=' . $booking->booking_code
+                ]
+            ]);
+        }
+
         $vnp_Url = config('services.vnpay.url') ?: 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html';
-        $vnp_Returnurl = config('services.vnpay.return_url') ?: 'http://localhost:8000/api/v1/payments/vnpay/return';
+        $vnp_Returnurl = config('services.vnpay.return_url') ?: (env('APP_URL', 'http://localhost:8000') . '/api/v1/payments/vnpay/return');
         $vnp_TmnCode = config('services.vnpay.tmn_code') ?: 'X30Z4K1B';
         $vnp_HashSecret = config('services.vnpay.hash_secret') ?: 'GCCOFZVEFCGWUBXFNOVSPYEDLZHFMWWG';
 

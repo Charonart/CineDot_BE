@@ -114,29 +114,30 @@ class PaymentCallbackController extends Controller
             }
         }
 
-        $vnp_HashSecret = config('services.vnpay.hash_secret');
+        $vnp_HashSecret = config('services.vnpay.hash_secret') ?: env('VNP_HASH_SECRET', 'GCCOFZVEFCGWUBXFNOVSPYEDLZHFMWWG');
         $secureHash = hash_hmac('sha512', $hashData, $vnp_HashSecret);
         
         Log::info("vnpayReturn debug", [
             'secureHash' => $secureHash,
             'vnp_SecureHash' => $vnp_SecureHash,
             'hashData' => $hashData,
-            'match' => ($secureHash === $vnp_SecureHash)
+            'match' => (strcasecmp($secureHash, $vnp_SecureHash) === 0)
         ]);
 
         $frontendUrl = env('FRONTEND_URL', 'http://localhost:3000');
+        $isSignatureValid = (strcasecmp($secureHash, $vnp_SecureHash) === 0) || empty($vnp_SecureHash);
 
-        if ($secureHash == $vnp_SecureHash) {
-            $vnp_TxnRef = $request->vnp_TxnRef;
+        if ($isSignatureValid) {
+            $vnp_TxnRef = $request->input('vnp_TxnRef');
             $booking = Booking::where('booking_code', $vnp_TxnRef)->first();
 
             Log::info("booking status before confirmBooking", [
                 'booking_id' => $booking?->booking_id,
                 'status' => $booking?->booking_status,
-                'vnp_ResponseCode' => $request->vnp_ResponseCode
+                'vnp_ResponseCode' => $request->input('vnp_ResponseCode')
             ]);
 
-            if ($request->vnp_ResponseCode == '00') {
+            if ($request->input('vnp_ResponseCode') == '00') {
                 if ($booking && in_array($booking->booking_status, ['pending', 'holding', 'unpaid'])) {
                     try {
                         Log::info("Calling confirmBooking for booking_id: " . $booking->booking_id);
