@@ -267,7 +267,7 @@ php artisan test
 
 ## 👨‍💻 Tác Giả & Liên Hệ (Author)
 
-- **Lead Developer**: [Charonart (Hải Đăng)](https://github.com/Charonart)
+- **Lead Developer**: **Lê Bá Quý** ([Charonart](https://github.com/Charonart) / Lê Quý)
 - **Frontend Repository**: [Charonart/CineDot](https://github.com/Charonart/CineDot)
 - **Backend Repository**: [Charonart/CineDot_BE](https://github.com/Charonart/CineDot_BE)
 
