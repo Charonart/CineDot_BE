@@ -1,5 +1,20 @@
 # 🎬 CineDot Backend API - Cinema Booking Ecosystem
 
+<p align="center">
+  <img src="https://img.shields.io/badge/PHP-8.2-777BB4?style=for-the-badge&logo=php&logoColor=white" alt="PHP 8.2" />
+  <img src="https://img.shields.io/badge/Laravel-10.x-FF2D20?style=for-the-badge&logo=laravel&logoColor=white" alt="Laravel 10" />
+  <img src="https://img.shields.io/badge/PostgreSQL-15-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL 15" />
+  <img src="https://img.shields.io/badge/Redis-7.x-DC382D?style=for-the-badge&logo=redis&logoColor=white" alt="Redis 7" />
+  <img src="https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker" />
+  <img src="https://img.shields.io/badge/APIs-211_Endpoints-success?style=for-the-badge" alt="211 Endpoints" />
+  <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="License" />
+</p>
+
+> [!IMPORTANT]
+> 🔗 **Looking for the Frontend Client & Admin Portal?**  
+> Giao diện người dùng (Next.js 15, React 19, Tailwind CSS v4, WebGL OGL, AI CSP Engine) được lưu trữ tại:  
+> 👉 **[Charonart/CineDot](https://github.com/Charonart/CineDot)**
+
 > **CineDot** là hệ sinh thái Backend đặt vé xem phim trực tuyến hiệu năng cao được xây dựng trên nền tảng **Laravel 10**, **PostgreSQL 15**, và **Redis Caching / Distributed Locking**. Hệ thống cung cấp đầy đủ các giải pháp từ bán vé đa kênh, giữ ghế thời gian thực, tính giá đa tầng, soát vé tại quầy (POS), đến phân tích doanh thu chuyên sâu cho chuỗi rạp chiếu phim.
 
 ---
@@ -65,7 +80,7 @@ DB_HOST=db
 DB_PORT=5432
 DB_DATABASE=cinedot
 DB_USERNAME=postgres
-DB_PASSWORD=kochomuonok1
+DB_PASSWORD=your_postgres_password
 
 REDIS_HOST=redis
 REDIS_PORT=6379
@@ -250,5 +265,13 @@ php artisan test
 
 ---
 
+## 👨‍💻 Tác Giả & Liên Hệ (Author)
+
+- **Lead Developer**: [Charonart (Hải Đăng)](https://github.com/Charonart)
+- **Frontend Repository**: [Charonart/CineDot](https://github.com/Charonart/CineDot)
+- **Backend Repository**: [Charonart/CineDot_BE](https://github.com/Charonart/CineDot_BE)
+
+---
+
 ## 📄 Bản Quyền & Giấy Phép
-Dự án được phát triển cho nền tảng **CineDot Cinema Ecosystem**. Mọi quyền được bảo lưu.
+Dự án được phát triển cho hệ sinh thái **CineDot Cinema Ecosystem**. Mọi quyền được bảo lưu.

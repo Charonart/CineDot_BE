@@ -30,7 +30,7 @@ DB_HOST=db
 DB_PORT=5432
 DB_DATABASE=cinedot
 DB_USERNAME=postgres
-DB_PASSWORD=kochomuonok1
+DB_PASSWORD=your_postgres_password
 ```
 
 ### Bước 2: Khởi động Docker
